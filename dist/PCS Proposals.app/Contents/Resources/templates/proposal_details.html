@@ -1,0 +1,706 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% set ro = (readonly if readonly is defined else (read_only == 'Yes')) %}
+{% set is_blank = (is_blank if is_blank is defined else (folder_name == '__blank__')) %}
+<div class="container mt-4 {% if ro %}ro-mode{% endif %}" data-ro="{{ '1' if ro else '0' }}">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <style>
+    /* Read-only global styles */
+    .ro-mode .segmented label { pointer-events: none; opacity: 0.6; }
+    .ro-mode input[readonly], .ro-mode select[disabled], .ro-mode textarea[readonly] { cursor: not-allowed; }
+    /* Inline label+input row with fixed columns for perfect alignment */
+    .inline-input-row {
+      display: grid;
+      grid-template-columns: 160px 120px; /* label width, input width */
+      column-gap: 8px; /* matches .me-2 spacing roughly */
+      align-items: center;
+    }
+    .profit-value {
+      font-size: 13px !important;
+      font-weight: bold !important;
+      line-height: 1.2;
+    }
+    /* Profit section alignment */
+    #profit-section .label-cell {
+      display: flex;
+      align-items: center;
+    }
+    #profit-section .value-cell > .form-control-plaintext {
+      padding-top: 0;
+      padding-bottom: 0;
+      line-height: 1.2;
+      height: auto;
+    }
+    .form-label, label {
+      font-size: 13px !important;
+      font-family: inherit !important;
+      font-weight: bold !important;
+    }
+    .form-control, table, th, td, h4, h2, strong {
+      font-size: 12px;
+    }
+
+    .form-control {
+      padding: 0.2rem 0.4rem;
+      margin: 0;
+    }
+
+    .form-control.header-input {
+      width: 140px;
+      height: 22px;
+      padding: 2px 6px;
+    }
+
+    table th,
+    table td {
+      padding: 0.3rem 0.5rem;
+    }
+
+    .row > [class*='col-'] {
+      padding-right: 4px;
+      padding-left: 4px;
+      margin-bottom: 2px;
+    }
+
+    .row.mb-3,
+    .row.mb-4 {
+      margin-bottom: 0.375rem;
+    }
+
+    .text-end.mt-4 {
+      margin-top: 0.75rem;
+    }
+
+    .compact-input {
+      width: 80px;
+      margin-right: 6px;
+      height: 22px;
+      padding: 2px 4px;
+    }
+
+    .container .row:first-child,
+    .container .row.mb-1 {
+      margin-left: 0;
+    }
+
+
+    .tight-row {
+      margin-bottom: 0 !important;
+    }
+
+    /* Aligned 4-column grid for cost rows */
+    .cost-grid { display: grid; grid-template-columns: 180px 90px 90px 120px; column-gap: 4px; row-gap: 8px; align-items: center; }
+    .cost-grid .hdr { font-weight: 600; font-size: 12px; opacity: .8; }
+    .cost-grid .label {
+      white-space: nowrap;
+      font-size: 13px !important;
+      font-family: inherit !important;
+      font-weight: bold !important;
+    }
+    .cost-grid input[type="text"] { width: 100%; text-align: right; font-variant-numeric: tabular-nums; font-size: 13px !important; }
+    .cost-grid .readonly { background: transparent; border: none; }
+    .cost-grid input[type="text"] { padding: 2px 4px; }
+    .cost-grid input.total-col { text-align: left; }
+
+    /* Upper card grid to match cost breakdown look */
+    .header-grid { 
+      display: grid; 
+      grid-template-columns: 100px 140px 120px 140px 100px 120px 90px 120px; 
+      column-gap: 12px; 
+      row-gap: 8px; 
+      align-items: center; 
+    }
+    .header-grid .hdr-label {
+      white-space: nowrap;
+      font-size: 13px !important;
+      font-family: inherit !important;
+      font-weight: bold !important;
+    }
+    .header-grid input[type="text"], .header-grid select { width: 100%; text-align: right; font-variant-numeric: tabular-nums; padding: 2px 4px; height: 22px; font-size: 13px !important; }
+    .header-grid .readonly { background: transparent; border: none; }
+    .header-grid .btn-group { display: inline-flex; gap: 4px; }
+
+    /* Current Roof dropdown: adjust text size only (box size unchanged) */
+    .header-grid select.select-lg {
+      font-size: 13px !important;
+      line-height: normal;
+    }
+
+    /* Segmented control for Product */
+    .segmented { display: inline-flex; border: 1px solid #D0D5DD; border-radius: 8px; overflow: hidden; }
+    .segmented input[type="radio"] { position: absolute; opacity: 0; pointer-events: none; }
+    .segmented label { padding: 2px 12px; font-size: 12px; line-height: 20px; color: #344054; background: #fff; cursor: pointer; user-select: none; border-right: 1px solid #D0D5DD; }
+    .segmented label:last-of-type { border-right: none; }
+    .segmented input[type="radio"]:checked + label { background: #0d6efd; color: #fff; border-color: #0d6efd; }
+    .segmented label:hover { background: #f8fafc; }
+    /* Make Proposal Note input twice as long as default inline rows */
+    #proposal-note-section { grid-template-columns: 160px 450px; }
+    #proposal-language-section { grid-template-columns: 160px 450px; }
+    #customer-name-row { grid-template-columns: 80px 200px 110px 250px 60px 100px 50px 50px 70px 100px; }
+  </style>
+  <form id="proposalForm" method="POST" action="{{ url_for('update_proposal', folder_name=folder_name) }}">
+  <div class="inline-input-row mb-3" id="customer-name-row">
+    <label for="customer_name" class="form-label mb-0" style="min-width: 80px;">Customer</label>
+    <input type="text"
+           class="form-control"
+           style="width: 200px; text-align: left;"
+           name="customer_name"
+           id="customer_name"
+           list="customer_suggestions"
+           value="{{ data.customer_name or '' }}" {% if ro %}readonly{% endif %}>
+    <datalist id="customer_suggestions">
+      <option value="Advanced Roofing"></option>
+      <option value="All Season Exteriors"></option>
+      <option value="AVI"></option>
+      <option value="Big Bear"></option>
+      <option value="BRG Builds"></option>
+      <option value="Capital Roofing"></option>
+      <option value="Colorado Strong Capstone Roofing"></option>
+      <option value="d-7 Roofing"></option>
+      <option value="Elite Roofing"></option>
+      <option value="Forest Roofs"></option>
+      <option value="FTC Roofing"></option>
+      <option value="GEN3 Roofing"></option>
+      <option value="Glassford PM"></option>
+      <option value="Gorilla Roofing"></option>
+      <option value="Heritage Roofing"></option>
+      <option value="HPC Contractors"></option>
+      <option value="Industry Builders"></option>
+      <option value="Integrity Roofing"></option>
+      <option value="Knight Commercial"></option>
+      <option value="Levi"></option>
+      <option value="Lifetime Construction"></option>
+      <option value="Matrix"></option>
+      <option value="Maxx Roof"></option>
+      <option value="Overland"></option>
+      <option value="Peak Roofing"></option>
+      <option value="R3D Roofing"></option>
+      <option value="R3ng"></option>
+      <option value="Recovery Roofing"></option>
+      <option value="Red Diamond Roofing"></option>
+      <option value="Riley's Roofing"></option>
+      <option value="Rise Construction"></option>
+      <option value="Rocky Mountain Exteriors"></option>
+      <option value="Roofing Outfitters"></option>
+      <option value="Rooftec"></option>
+      <option value="RSBG"></option>
+      <option value="Scotts Roofing"></option>
+      <option value="SPI"></option>
+      <option value="Storm Exteriors"></option>
+      <option value="Trinity Construction"></option>
+      <option value="Zenith"></option>
+    </datalist>
+    <input type="hidden" name="customer_name_existing" value="{{ data.customer_name or '' }}">
+    <label for="street_address" class="form-label mb-0" style="min-width: 110px;">Street Address</label>
+    <input type="text"
+           class="form-control"
+           style="width: 250px; text-align: left;"
+           name="street_address"
+           id="street_address"
+           value="{{ data.street_address or '' }}" {% if ro %}readonly{% endif %}>
+    <label for="city" class="form-label mb-0" style="min-width: 35px;">City</label>
+    <input type="text"
+           class="form-control"
+           style="width: 100px; text-align: left;"
+           name="city"
+           id="city"
+           value="{{ data.city or '' }}" {% if ro %}readonly{% endif %}>
+    <label for="state" class="form-label mb-0" style="min-width: 50px;">State</label>
+    <select name="state" id="state" class="form-select" style="width: 55px; height: 22px; padding: 2px 4px; font-size: 12px;" {% if ro %}disabled{% endif %}>
+      {% set state_val = data.state or '' %}
+      {% set states = ['AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'] %}
+      <option value="" {% if not state_val %}selected{% endif %}></option>
+      {% for abbr in states %}
+        <option value="{{ abbr }}" {% if state_val == abbr %}selected{% endif %}>{{ abbr }}</option>
+      {% endfor %}
+    </select>
+    {% if ro %}
+      <input type="hidden" name="state" value="{{ data.state or '' }}">
+    {% endif %}
+    <label for="zip_code" class="form-label mb-0" style="min-width: 70px;">Zip Code</label>
+    <input type="text"
+           class="form-control"
+           style="width: 100px; text-align: left;"
+           name="zip_code"
+           id="zip_code"
+           value="{{ data.zip_code or '' }}" {% if ro %}readonly{% endif %}>
+  </div>
+    <input type="hidden" name="readonly" value="{{ '1' if ro else '0' }}">
+    <input type="hidden" name="read_only" value="{{ 'Yes' if ro else 'No' }}">
+    <input type="hidden" name="previous_squares" value="{{ data.squares }}">
+    <input type="hidden" name="previous_roof_type" value="{{ data.current_roof }}">
+    <input type="hidden" name="previous_product" value="{{ data.product }}">
+    <input type="hidden" name="previous_adjusted_coverage" value="{{ data.previous_adjusted_coverage if data.previous_adjusted_coverage is not none else 0 }}">
+    <input type="hidden" name="previous_submitted_by" value="{{ data.previous_submitted_by or data.submitted_by or '' }}">
+    <input type="hidden" name="previous_silicone_units_10" value="{{ data.previous_silicone_units_10 if data.previous_silicone_units_10 is not none else 0 }}">
+    <div class="header-grid mb-2">
+      
+      <!-- Squares -->
+      <div class="hdr-label"><strong>Squares</strong></div>
+      {% set val = data.squares %}
+      <input type="text" name="squares" style="text-align:left;"
+             value="{{ '' if val is none or val == 0 or val != val else '{:,.0f}'.format(val) }}" {% if ro %}readonly{% endif %}>
+
+      <!-- Product (segmented control) -->
+      <div class="hdr-label">Product</div>
+      <div>
+        <div class="segmented" role="group" aria-label="Product">
+          <input type="radio" id="product_gaco" name="product" value="Gaco" {% if data.product == 'Gaco' %}checked{% endif %} {% if ro %}disabled{% endif %}>
+          <label for="product_gaco">Gaco</label>
+          <input type="radio" id="product_uniflex" name="product" value="Uniflex" {% if data.product == 'Uniflex' %}checked{% endif %} {% if ro %}disabled{% endif %}>
+          <label for="product_uniflex">Uniflex</label>
+        </div>
+      </div>
+
+      <!-- 10 Yr Price/Sq -->
+      <div class="hdr-label">10 Yr Price/Sq</div>
+      {% set val = data.price_per_sq_10 %}
+      <input type="text" name="price_per_sq_10" style="text-align:left;"
+             value="{{ '' if val is none or val == 0 or val != val else '$' + '{:,.0f}'.format(val) }}"
+             class="{% if ro or (val is none or val == 0 or val != val) %}readonly{% endif %}"
+             {% if ro or (val is none or val == 0 or val != val) %}readonly{% endif %}>
+      
+      <!-- 10 Yr Price (readonly) -->
+      <div class="hdr-label">10 Yr Price</div>
+      {% set val = data.total_price_10 %}
+      <input type="text" class="readonly" name="total_price_10" style="text-align:left;" value="{{ '' if val is none or val == 0 or val != val else '$' + '{:,.0f}'.format(val) }}" readonly>
+
+      <!-- Current Roof -->
+      <div class="hdr-label">Current Roof</div>
+      <select id="current_roof" name="current_roof" class="select-lg" {% if ro %}disabled{% endif %}>
+        <option value="" {% if not data.current_roof %}selected{% endif %}>-- Select Roof Type --</option>
+        {% for option in ['TPO/EPDM', 'Metal', 'Mod Bit', 'Ballasted 60 mil', 'Ballasted 45 mil', 'Rock/Foam/Coat'] %}
+          <option value="{{ option }}" {% if data.current_roof == option %}selected{% endif %}>{{ option }}</option>
+        {% endfor %}
+      </select>
+
+      <!-- Warranty Incl -->
+      <div class="hdr-label">Warranty Incl</div>
+      <div>
+        <div class="form-check form-switch" style="text-align:left;">
+          <input class="form-check-input" type="checkbox" role="switch" id="warrantySwitch" name="warranty_incl" value="Yes" {% if data.warranty_incl == 'Yes' %}checked{% endif %} {% if ro %}disabled{% endif %}>
+          <label class="form-check-label mb-0" for="warrantySwitch" style="font-size: 12px;">Yes</label>
+        </div>
+      </div>
+
+      <!-- 15 Yr Price/Sq (readonly) -->
+      <div class="hdr-label">15 Yr Price/Sq</div>
+      {% set val = data.price_per_sq_15 %}
+      <input type="text" class="readonly" name="price_per_sq_15" style="text-align:left;" value="{{ '' if val is none or val == 0 or val != val else '$' + '{:,.0f}'.format(val) }}" readonly>
+      
+      <!-- 15 Yr Price (readonly) -->
+      <div class="hdr-label">15 Yr Price</div>
+      {% set val = data.total_price_15 %}
+      <input type="text" class="readonly" name="total_price_15" style="text-align:left;" value="{{ '' if val is none or val == 0 or val != val else '$' + '{:,.0f}'.format(val) }}" readonly>
+
+      <!-- Labor Days -->
+      <div class="hdr-label">Labor Days</div>
+      {% set val = data.labor_days %}
+      <input type="text" name="labor_days" style="text-align:left;"
+             value="{{ '' if val is none or val == 0 or val != val else '{:,.0f}'.format(val) }}"
+             class="{% if ro or (val is none or val == 0 or val != val) %}readonly{% endif %}"
+             {% if ro or (val is none or val == 0 or val != val) %}readonly{% endif %}>
+
+      <!-- Submitted By -->
+      <div class="hdr-label">Submitted By</div>
+      <select id="submitted_by" name="submitted_by" {% if ro %}disabled{% endif %}>
+        <option value="" {% if not data.submitted_by %}selected{% endif %}>-- Select Submitted By --</option>
+        {% set selected = data.submitted_by %}
+        {% for opt in ['David Estes','Mark Burcham','Richard Winger','Vern Abbott'] %}
+          <option value="{{ opt }}" {% if selected == opt %}selected{% endif %}>{{ opt }}</option>
+        {% endfor %}
+      </select>
+
+      <!-- 20 Yr Price/Sq (readonly) -->
+      <div class="hdr-label">20 Yr Price/Sq</div>
+      {% set val = data.price_per_sq_20 %}
+      <input type="text" class="readonly" name="price_per_sq_20" style="text-align:left;" value="{{ '' if val is none or val == 0 or val != val else '$' + '{:,.0f}'.format(val) }}" readonly>
+
+      <!-- 20 Yr Price (readonly) -->
+      <div class="hdr-label">20 Yr Price</div>
+      {% set val = data.total_price_20 %}
+      <input type="text" class="readonly" name="total_price_20" style="text-align:left;" value="{{ '' if val is none or val == 0 or val != val else '$' + '{:,.0f}'.format(val) }}" readonly>
+    </div>
+
+
+    
+    <!-- ===== Two-column grid below PCS Profit: Column A (left), Column B (right) ===== -->
+    <div class="row g-2 align-items-stretch mt-4" id="below-profit-grid">
+
+      <!-- Column A: Cost Breakdown (existing formatting preserved) -->
+      <div class="col-lg-6 col-md-6 d-flex">
+        <div class="container-fluid ps-0 h-100">
+          <!-- Cost Breakdown Header -->
+          <h5 class="fw-bold mb-3" style="font-size: 16px;">Cost Breakdown</h5>
+
+          <!-- Existing Cost Breakdown grid -->
+          <div class="cost-grid">
+            <div></div><div class="hdr">Units</div><div class="hdr">Cost/Unit</div><div class="hdr">Total Cost</div>
+
+            {% for item in [
+              ('Silicone','silicone_units_10','silicone_price','silicone_total'),
+              ('Gaco Patch','gaco_patch_units','gaco_patch_price','gaco_patch_total'),
+              ('Bleed Trap','bleed_trap_units','bleed_trap_price','bleed_trap_total'),
+              ('SW 1Flash','sw_1flash_units','sw_1flash_price','sw_1flash_total'),
+              ('SW Bleed Block','sw_bleed_block_units','sw_bleed_block_price','sw_bleed_block_total'),
+              ('Drainage Mat','drainage_mat_units','drainage_mat_price','drainage_mat_total'),
+              ('Foam','foam_units','foam_price','foam_total'),
+              ('Rock/Foam/Coat Labor', None, 'rfc_labor_price', 'rfc_labor_total'),
+              ('Scarifying Labor', None, None, 'scarifying_total'),
+              ('PCS Labor', 'labor_days', 'pcs_labor_price', 'pcs_labor_total'),
+              ('Travel', None, None, 'travel_total'),
+              ('Misc Costs', None, None, 'misc_costs_total'),
+              ('Warranty', None, None, 'warranty_10_total'),
+              ('Office Fees', None, None, 'office_fee_total'),
+              ('Commission Amt', None, None, 'commission_amt'),
+              ('Total Cost', None, None, 'total_cost')
+            ] %}
+              {% set label, units, price, total = item %}
+
+              {# Special case for Total Cost row: add fw-bold to label and input #}
+              {% if label == 'Total Cost' %}
+                <label class="label fw-bold">{{ label }}</label>
+              {% else %}
+                <div class="label">{{ label }}</div>
+              {% endif %}
+
+              {# Units column #}
+            {% if units %}
+                {% set uval = data.get(units) %}
+                {% if units == 'labor_days' %}
+                  <input type="text" class="readonly" name="{{ units }}" style="text-align:left;"
+                        value="{{ '' if (uval is none) or (uval == 0) or (uval != uval) else '{:,.0f}'.format(uval) }}" readonly>
+                {% else %}
+                  <input type="text" name="{{ units }}" style="text-align:left;"
+                        value="{{ '' if (uval is none) or (uval == 0) or (uval != uval) else '{:,.0f}'.format(uval) }}"
+                        class="{% if ro %}readonly{% endif %}"
+                        {% if ro %}readonly{% endif %}>
+                {% endif %}
+              {% else %}
+                <div></div>
+              {% endif %}
+
+              {# Cost/Unit column #}
+              {% if price %}
+                {% set pval = data.get(price) %}
+                {% if price in [
+                    'silicone_price','gaco_patch_price','bleed_trap_price','sw_1flash_price',
+                    'sw_bleed_block_price','drainage_mat_price','foam_price','rfc_labor_price','pcs_labor_price'] %}
+                  <input type="text" name="{{ price }}" style="text-align:left;"
+                        value="{{ '' if (pval is none) or (pval == 0) or (pval != pval) else '$' + '{:,.0f}'.format(pval) }}"
+                        class="{% if ro %}readonly{% endif %}"
+                        {% if ro %}readonly{% endif %}>
+                {% else %}
+                  <input type="text" name="{{ price }}"
+                        value="{{ '' if (pval is none) or (pval == 0) or (pval != pval) else '{:,.0f}'.format(pval) }}"
+                        class="{% if ro %}readonly{% endif %}"
+                        {% if ro %}readonly{% endif %}>
+                {% endif %}
+              {% else %}
+                <div></div>
+              {% endif %}
+
+              {# Total column #}
+              {% set tval = data.get(total) %}
+              {% if label == 'Total Cost' %}
+                <input type="text" class="readonly total-col fw-bold" name="{{ total }}" value="{{ '' if (tval is none) or (tval == 0) or (tval != tval) else '$' + '{:,.0f}'.format(tval) }}" readonly>
+              {% elif total in ['travel_total', 'misc_costs_total', 'scarifying_total'] %}
+                <input type="text" class="total-col{% if ro %} readonly{% endif %}" name="{{ total }}" value="{{ '' if (tval is none) or (tval == 0) or (tval != tval) else '$' + '{:,.0f}'.format(tval) }}" {% if ro %}readonly{% endif %}>
+              {% else %}
+                <input type="text" class="readonly total-col" name="{{ total }}" value="{{ '' if (tval is none) or (tval == 0) or (tval != tval) else '$' + '{:,.0f}'.format(tval) }}" readonly>
+              {% endif %}
+
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Column B: Adjusted Coverage (top) + Profit fields (middle) + Buttons (bottom sticky) -->
+      <div class="col-lg-6 col-md-6 d-flex">
+        <div class="w-100 d-flex flex-column">
+
+          <!-- Top: Adjusted Coverage inline -->
+          <div id="adjusted-coverage-section" class="inline-input-row mb-2 mt-5">
+            <label for="adjusted_coverage" class="col-form-label mb-0" style="min-width: 180px;"><strong>Adjust Coverage</strong></label>
+            <input type="number" step="0.05" min="-0.5" max="1.5" class="compact-input form-control"
+                   name="adjusted_coverage" id="adjusted_coverage" style="width: 100%; text-align: left;"
+                   value="{{ data.adjusted_coverage|default(0, true) }}" {% if ro %}readonly class="readonly"{% endif %}>
+          </div>
+
+          <!-- Office Fee (below Adjust Coverage) -->
+          <div class="inline-input-row mb-3" id="office-fee-section">
+            <label for="office_fee_pct" class="form-label mb-0" style="min-width: 180px;">Office Fee</label>
+            <input type="text"
+                   class="compact-input form-control"
+                   style="width: 100%; text-align: left;"
+                   name="office_fee_pct"
+                   id="office_fee_pct"
+                   value="{{ ((data.office_fee_pct | default(0, true)) * 100) | round(2) }}%" {% if ro %}readonly class="readonly"{% endif %}>
+          </div>
+
+          <!-- Proposal Note (below Office Fee) -->
+          <div class="inline-input-row mb-3" id="proposal-note-section">
+            <label for="proposal_note" class="form-label mb-0" style="min-width: 180px;">Profit Summary Note</label>
+            <input type="text"
+                   class="form-control"
+                   style="width: 450px; text-align: left;"
+                   name="proposal_note"
+                   id="proposal_note"
+                   value="{{ '' if (data.proposal_note is none) or (data.proposal_note != data.proposal_note) or ((data.proposal_note|string).lower() == 'nan') else data.proposal_note }}" {% if ro %}readonly{% endif %}>
+          </div>
+
+          <!-- Proposal Language (below Profit Summary Note) -->
+          <div class="inline-input-row mb-3" id="proposal-language-section">
+            <label for="proposal_language" class="form-label mb-0" style="min-width: 180px;">Proposal Language</label>
+            <input type="text"
+                   class="form-control"
+                   style="width: 450px; text-align: left;"
+                   name="proposal_language"
+                   id="proposal_language"
+                   value="{{ '' if (data.proposal_language is none) or (data.proposal_language != data.proposal_language) or ((data.proposal_language|string).lower() == 'nan') else data.proposal_language }}" {% if ro %}readonly{% endif %}>
+          </div>
+
+
+          <!-- Middle: Profit fields block, vertically centered -->
+          <div class="flex-grow-1 d-flex flex-column justify-content-center">
+            <div class="p-3 rounded" style="background: linear-gradient(to bottom, #f8f9fa, #e9ecef); display: inline-block;">
+              <div id="profit-section" class="row mb-3">
+                <div class="col-6 text-start fw-bold label-cell">PCS Profit</div>
+                <div class="col-6 value-cell">
+                  {% set val = data.pcs_profit %}
+                  <input type="text" class="form-control-plaintext profit-value" name="pcs_profit"
+                         value="{{ '' if val is none or val == 0 or val != val else '$' + '{:,.0f}'.format(val) }}" readonly>
+                </div>
+
+                <div class="col-6 text-start fw-bold label-cell">Percent Profit</div>
+                <div class="col-6 value-cell">
+                  {% set val = data.profit_pct %}
+                  <input type="text" class="form-control-plaintext profit-value" name="profit_pct"
+                         value="{{ '' if val is none or val == 0 or val != val else '{:.0%}'.format(val) }}" readonly>
+                </div>
+
+                <div class="col-6 text-start fw-bold label-cell">Daily Profit</div>
+                <div class="col-6 value-cell">
+                  {% set val = data.daily_profit %}
+                  <input type="text" class="form-control-plaintext profit-value" name="daily_profit"
+                         value="{{ '' if val is none or val == 0 or val != val else '$' + '{:,.0f}'.format(val) }}" readonly>
+                </div>
+
+                <div class="col-6 text-start fw-bold label-cell">Profit Share</div>
+                <div class="col-6 value-cell">
+                  {% set val = data.profit_share %}
+                  <input type="text" class="form-control-plaintext profit-value" name="profit_share"
+                         value="{{ '' if val is none or val == 0 or val != val else '$' + '{:,.0f}'.format(val) }}" readonly>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom: Buttons aligned and same width -->
+          <div class="mt-auto">
+            <div class="row justify-content-center g-2">
+              <div class="col-4">
+                <button type="submit" class="btn btn-outline-primary w-100" id="recalcButton" name="action" value="recalc" {% if ro %}disabled{% endif %}>
+                  <i class="bi bi-arrow-repeat me-1"></i> Recalculate
+                </button>
+              </div>
+              <div class="col-4">
+                <button type="submit" class="btn btn-outline-success w-100" id="createButton" name="action" value="{% if is_blank %}create{% else %}save{% endif %}" {% if ro %}disabled{% endif %}>
+                  <i class="bi bi-check2-square me-1"></i> {% if is_blank %}Create Proposal{% else %}Save Changes{% endif %}
+                </button>
+              </div>
+              <div class="col-4">
+                <a href="{{ url_for('proposal_list') }}" class="btn btn-outline-secondary w-100" onclick="clearProposalForm(); return true;">
+                  <i class="bi bi-arrow-left me-1"></i> Back to List
+                </a>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+
+  <script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const container = document.querySelector('.container.mt-4');
+    const isRO = container && container.getAttribute('data-ro') === '1';
+    console.log('isRO ->', isRO, 'type:', typeof isRO);
+    if (isRO) return;
+
+    // --- Submit-once guard (prevents double posts) ---
+    var isSubmitting = false;
+    function submitOnce() {
+      if (isSubmitting) return;
+      isSubmitting = true;
+      var form = document.getElementById('proposalForm');
+      if (form) {
+        (form.requestSubmit ? form.requestSubmit() : form.submit());
+      }
+      setTimeout(function(){ isSubmitting = false; }, 300);
+    }
+
+    // Ready gate for auto-calc
+    function isCalcReady() {
+      var squaresField   = document.querySelector('[name="squares"]');
+      var roofSelect     = document.getElementById('current_roof');
+      var productRadios  = document.querySelectorAll('input[name="product"]');
+      var submittedSelect= document.getElementById('submitted_by');
+
+      // New required fields
+      var customerField  = document.getElementById('customer_name');
+      var streetField    = document.getElementById('street_address');
+      var cityField      = document.getElementById('city');
+      var stateSelect    = document.getElementById('state');
+      var zipField       = document.getElementById('zip_code');
+
+      var squaresFilled    = squaresField && squaresField.value.trim() !== '' && squaresField.value !== '0';
+      var roofChosen       = roofSelect && roofSelect.value.trim() !== '';
+      var submittedChosen  = submittedSelect && submittedSelect.value.trim() !== '';
+
+      var productChosen = false;
+      if (productRadios && productRadios.length) {
+        productRadios.forEach(function(r){ if (r.checked) productChosen = true; });
+      }
+
+      var customerFilled = customerField && customerField.value.trim() !== '';
+      var streetFilled   = streetField && streetField.value.trim() !== '';
+      var cityFilled     = cityField && cityField.value.trim() !== '';
+      var stateChosen    = stateSelect && stateSelect.value.trim() !== '';
+      var zipFilled      = zipField && zipField.value.trim() !== '';
+
+      return squaresFilled && roofChosen && submittedChosen && productChosen &&
+             customerFilled && streetFilled && cityFilled && stateChosen && zipFilled;
+    }
+
+    // --- Enable/disable Recalculate button based on readiness ---
+    var recalcBtn = document.getElementById('recalcButton');
+    var createBtn = document.getElementById('createButton');
+    function updateRecalcDisabled() {
+      if (recalcBtn) {
+        recalcBtn.disabled = isRO || !isCalcReady();
+      }
+      if (createBtn) {
+        createBtn.disabled = isRO || !isCalcReady();
+      }
+    }
+
+    // Product radios + Warranty switch
+    var productRadios = document.querySelectorAll('input[name="product"]');
+    var warrantySwitch = document.getElementById('warrantySwitch');
+
+    if (productRadios && warrantySwitch) {
+      var suppressWarrantyChange = false;
+
+      productRadios.forEach(function (radio) {
+        radio.addEventListener('change', function () {
+          if (this && this.checked && this.value === 'Uniflex') {
+            // Force warranty to Yes when Uniflex is chosen
+            suppressWarrantyChange = true;
+            warrantySwitch.checked = true;
+            warrantySwitch.value = 'Yes';
+            setTimeout(function(){ suppressWarrantyChange = false; }, 50);
+          }
+          updateRecalcDisabled();
+          if (isCalcReady()) { submitOnce(); }
+        });
+      });
+
+      warrantySwitch.addEventListener('change', function () {
+        if (suppressWarrantyChange) return;
+        updateRecalcDisabled();
+        if (isCalcReady()) { submitOnce(); }
+      });
+    }
+
+    // Current Roof dropdown → submit on change
+    var roofSelect = document.getElementById('current_roof');
+    if (roofSelect) {
+      roofSelect.addEventListener('change', function () {
+        updateRecalcDisabled();
+        if (isCalcReady()) { submitOnce(); }
+      });
+    }
+
+    // Submitted By dropdown → submit on change
+    var submittedSelect = document.getElementById('submitted_by');
+    if (submittedSelect) {
+      submittedSelect.addEventListener('change', function () {
+        updateRecalcDisabled();
+        if (isCalcReady()) { submitOnce(); }
+      });
+    }
+
+    // Squares input → only toggle button state (do not auto-submit on typing)
+    var squaresFieldLive = document.querySelector('[name="squares"]');
+    if (squaresFieldLive) {
+      ['input','change','blur'].forEach(function(evt){
+        squaresFieldLive.addEventListener(evt, updateRecalcDisabled);
+      });
+    }
+
+    // New required fields → update button state on edit
+    var customerFieldLive = document.getElementById('customer_name');
+    if (customerFieldLive) {
+      ['input','change','blur'].forEach(function(evt){
+        customerFieldLive.addEventListener(evt, updateRecalcDisabled);
+      });
+    }
+    var streetFieldLive = document.getElementById('street_address');
+    if (streetFieldLive) {
+      ['input','change','blur'].forEach(function(evt){
+        streetFieldLive.addEventListener(evt, updateRecalcDisabled);
+      });
+    }
+    var cityFieldLive = document.getElementById('city');
+    if (cityFieldLive) {
+      ['input','change','blur'].forEach(function(evt){
+        cityFieldLive.addEventListener(evt, updateRecalcDisabled);
+      });
+    }
+    var stateSelectLive = document.getElementById('state');
+    if (stateSelectLive) {
+      stateSelectLive.addEventListener('change', updateRecalcDisabled);
+      stateSelectLive.addEventListener('blur', updateRecalcDisabled);
+    }
+    var zipFieldLive = document.getElementById('zip_code');
+    if (zipFieldLive) {
+      ['input','change','blur'].forEach(function(evt){
+        zipFieldLive.addEventListener(evt, updateRecalcDisabled);
+      });
+    }
+
+    updateRecalcDisabled();
+  });
+  </script>
+</form>
+<script>
+function clearProposalForm() {
+  const form = document.getElementById('proposalForm');
+  if (form) {
+    // Reset to server-rendered defaults
+    form.reset();
+
+    // Clear current values so browser doesn't persist them on back/forward
+    const fields = form.querySelectorAll('input, select, textarea');
+    fields.forEach(el => {
+      const type = (el.type || '').toLowerCase();
+      if (type === 'checkbox' || type === 'radio') {
+        el.checked = false;
+      } else if (el.tagName === 'SELECT') {
+        if (el.options && el.options.length > 0) el.selectedIndex = 0;
+      } else {
+        el.value = '';
+      }
+    });
+  }
+  // Clear any client-side storage data related to the form
+  try { sessionStorage.clear(); } catch (e) {}
+  try { localStorage.clear(); } catch (e) {}
+}
+</script>
+</div>
+{% endblock %}

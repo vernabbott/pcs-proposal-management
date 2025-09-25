@@ -1,0 +1,70 @@
+('/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+ 'Studio/PCS/build/PCS Proposals/PCS Proposals.pkg',
+ {'BINARY': True,
+  'DATA': True,
+  'EXECUTABLE': True,
+  'EXTENSION': True,
+  'PYMODULE': True,
+  'PYSOURCE': True,
+  'PYZ': False,
+  'SPLASH': True,
+  'SYMLINK': False},
+ [('pyi-contents-directory _internal', '', 'OPTION'),
+  ('PYZ-00.pyz',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/build/PCS Proposals/PYZ-00.pyz',
+   'PYZ'),
+  ('python3.13/lib-dynload/_struct.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_struct.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/zlib.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/zlib.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('struct',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/build/PCS Proposals/localpycs/struct.pyc',
+   'PYMODULE'),
+  ('pyimod01_archive',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/build/PCS Proposals/localpycs/pyimod01_archive.pyc',
+   'PYMODULE'),
+  ('pyimod02_importers',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/build/PCS Proposals/localpycs/pyimod02_importers.pyc',
+   'PYMODULE'),
+  ('pyimod03_ctypes',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/build/PCS Proposals/localpycs/pyimod03_ctypes.pyc',
+   'PYMODULE'),
+  ('pyiboot01_bootstrap',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/PyInstaller/loader/pyiboot01_bootstrap.py',
+   'PYSOURCE'),
+  ('pyi_rth_inspect',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/PyInstaller/hooks/rthooks/pyi_rth_inspect.py',
+   'PYSOURCE'),
+  ('pyi_rth_pkgutil',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/PyInstaller/hooks/rthooks/pyi_rth_pkgutil.py',
+   'PYSOURCE'),
+  ('pyi_rth_multiprocessing',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/PyInstaller/hooks/rthooks/pyi_rth_multiprocessing.py',
+   'PYSOURCE'),
+  ('pyi_rth_setuptools',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/PyInstaller/hooks/rthooks/pyi_rth_setuptools.py',
+   'PYSOURCE'),
+  ('run_app',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/run_app.py',
+   'PYSOURCE')],
+ 'Python',
+ True,
+ False,
+ False,
+ [],
+ 'arm64',
+ None,
+ None)

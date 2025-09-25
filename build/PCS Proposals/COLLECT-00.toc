@@ -1,0 +1,3341 @@
+([('PCS Proposals',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/build/PCS Proposals/PCS Proposals',
+   'EXECUTABLE'),
+  ('python3.13/lib-dynload/_struct.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_struct.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/zlib.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/zlib.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('Python.framework/Versions/3.13/Python',
+   '/Library/Frameworks/Python.framework/Versions/3.13/Python',
+   'BINARY'),
+  ('python3.13/lib-dynload/_csv.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_csv.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/grp.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/grp.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_lzma.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_lzma.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_bz2.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_bz2.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_statistics.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_statistics.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_contextvars.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_contextvars.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_decimal.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_decimal.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_pickle.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_pickle.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_hashlib.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_hashlib.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_sha3.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_sha3.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_blake2.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_blake2.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_md5.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_md5.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_sha1.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_sha1.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_sha2.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_sha2.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_random.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_random.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_bisect.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_bisect.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/math.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/math.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/array.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/array.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/select.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/select.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_socket.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_socket.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/unicodedata.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/unicodedata.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_datetime.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_datetime.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/binascii.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/binascii.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_opcode.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_opcode.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_json.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_json.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/resource.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/resource.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/syslog.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/syslog.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_posixsubprocess.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_posixsubprocess.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/fcntl.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/fcntl.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_ssl.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_ssl.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_queue.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_queue.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/mmap.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/mmap.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_posixshmem.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_posixshmem.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_ctypes.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_ctypes.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_multiprocessing.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_multiprocessing.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/pyexpat.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/pyexpat.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_scproxy.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_scproxy.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/termios.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/termios.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_asyncio.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_asyncio.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_curses.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_curses.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/readline.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/readline.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_multibytecodec.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_multibytecodec.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_codecs_jp.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_codecs_jp.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_codecs_kr.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_codecs_kr.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_codecs_iso2022.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_codecs_iso2022.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_codecs_cn.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_codecs_cn.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_codecs_tw.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_codecs_tw.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_codecs_hk.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_codecs_hk.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_heapq.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_heapq.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('markupsafe/_speedups.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/markupsafe/_speedups.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('numpy/_core/_multiarray_tests.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/numpy/_core/_multiarray_tests.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('numpy/_core/_multiarray_umath.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/numpy/_core/_multiarray_umath.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('charset_normalizer/md__mypyc.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/charset_normalizer/md__mypyc.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('charset_normalizer/md.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/charset_normalizer/md.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('psutil/_psutil_posix.abi3.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/psutil/_psutil_posix.abi3.so',
+   'EXTENSION'),
+  ('psutil/_psutil_osx.abi3.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/psutil/_psutil_osx.abi3.so',
+   'EXTENSION'),
+  ('numpy/linalg/_umath_linalg.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/numpy/linalg/_umath_linalg.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('numpy/random/mtrand.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/numpy/random/mtrand.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('numpy/random/bit_generator.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/numpy/random/bit_generator.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('numpy/random/_sfc64.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/numpy/random/_sfc64.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('numpy/random/_philox.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/numpy/random/_philox.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('numpy/random/_pcg64.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/numpy/random/_pcg64.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('numpy/random/_mt19937.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/numpy/random/_mt19937.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('numpy/random/_generator.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/numpy/random/_generator.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('numpy/random/_common.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/numpy/random/_common.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('numpy/random/_bounded_integers.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/numpy/random/_bounded_integers.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('numpy/fft/_pocketfft_umath.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/numpy/fft/_pocketfft_umath.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('xlwings/xlwingslib.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/xlwings/xlwingslib.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('lxml/etree.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/lxml/etree.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('lxml/_elementpath.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/lxml/_elementpath.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('lxml/sax.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/lxml/sax.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('lxml/objectify.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/lxml/objectify.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('lxml/html/diff.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/lxml/html/diff.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('lxml/html/_difflib.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/lxml/html/_difflib.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('lxml/builder.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/lxml/builder.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('aem/ae.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/aeosa/aem/ae.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_uuid.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_uuid.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/cmath.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/cmath.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/writers.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/writers.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_elementtree.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_elementtree.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('Foundation/_inlines.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/Foundation/_inlines.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('Foundation/_Foundation.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/Foundation/_Foundation.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('objc/_machsignals.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/objc/_machsignals.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('objc/_objc.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/objc/_objc.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('CoreFoundation/_inlines.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/CoreFoundation/_inlines.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('CoreFoundation/_CoreFoundation.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/CoreFoundation/_CoreFoundation.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('AppKit/_inlines.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/AppKit/_inlines.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('AppKit/_AppKit.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/AppKit/_AppKit.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('python3.13/lib-dynload/_sqlite3.cpython-313-darwin.so',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_sqlite3.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/window/indexers.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/window/indexers.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/window/aggregations.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/window/aggregations.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/tslibs/vectorized.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/tslibs/vectorized.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/tslibs/tzconversion.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/tslibs/tzconversion.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/tslibs/timezones.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/tslibs/timezones.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/tslibs/timestamps.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/tslibs/timestamps.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/tslibs/timedeltas.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/tslibs/timedeltas.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/tslibs/strptime.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/tslibs/strptime.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/tslibs/period.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/tslibs/period.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/tslibs/parsing.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/tslibs/parsing.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/tslibs/offsets.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/tslibs/offsets.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/tslibs/np_datetime.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/tslibs/np_datetime.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/tslibs/nattype.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/tslibs/nattype.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/tslibs/fields.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/tslibs/fields.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/tslibs/dtypes.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/tslibs/dtypes.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/tslibs/conversion.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/tslibs/conversion.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/tslibs/ccalendar.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/tslibs/ccalendar.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/tslibs/base.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/tslibs/base.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/tslib.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/tslib.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/testing.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/testing.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/sparse.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/sparse.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/sas.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/sas.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/reshape.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/reshape.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/properties.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/properties.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/parsers.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/parsers.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/pandas_parser.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/pandas_parser.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/pandas_datetime.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/pandas_datetime.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/ops_dispatch.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/ops_dispatch.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/ops.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/ops.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/missing.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/missing.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/lib.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/lib.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/json.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/json.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/join.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/join.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/interval.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/interval.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/internals.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/internals.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/indexing.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/indexing.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/index.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/index.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/hashtable.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/hashtable.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/hashing.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/hashing.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/groupby.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/groupby.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/byteswap.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/byteswap.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/arrays.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/arrays.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('pandas/_libs/algos.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/_libs/algos.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('Security/_Security.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/Security/_Security.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('WebKit/_WebKit.cpython-313-darwin.so',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/WebKit/_WebKit.cpython-313-darwin.so',
+   'EXTENSION'),
+  ('libcrypto.3.dylib',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/libcrypto.3.dylib',
+   'BINARY'),
+  ('libssl.3.dylib',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/libssl.3.dylib',
+   'BINARY'),
+  ('libncurses.6.dylib',
+   '/Library/Frameworks/Python.framework/Versions/3.13/lib/libncurses.6.dylib',
+   'BINARY'),
+  ('static/.keep',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/static/.keep',
+   'DATA'),
+  ('templates/base.html',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/templates/base.html',
+   'DATA'),
+  ('templates/proposal_details.html',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/templates/proposal_details.html',
+   'DATA'),
+  ('templates/proposal_list.html',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/templates/proposal_list.html',
+   'DATA'),
+  ('templates/success.html',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/templates/success.html',
+   'DATA'),
+  ('lxml/isoschematron/resources/xsl/iso-schematron-xslt1/iso_schematron_message.xsl',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/lxml/isoschematron/resources/xsl/iso-schematron-xslt1/iso_schematron_message.xsl',
+   'DATA'),
+  ('lxml/isoschematron/resources/xsl/iso-schematron-xslt1/readme.txt',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/lxml/isoschematron/resources/xsl/iso-schematron-xslt1/readme.txt',
+   'DATA'),
+  ('lxml/isoschematron/resources/xsl/iso-schematron-xslt1/iso_dsdl_include.xsl',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/lxml/isoschematron/resources/xsl/iso-schematron-xslt1/iso_dsdl_include.xsl',
+   'DATA'),
+  ('lxml/isoschematron/resources/xsl/iso-schematron-xslt1/iso_schematron_skeleton_for_xslt1.xsl',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/lxml/isoschematron/resources/xsl/iso-schematron-xslt1/iso_schematron_skeleton_for_xslt1.xsl',
+   'DATA'),
+  ('lxml/isoschematron/resources/xsl/XSD2Schtrn.xsl',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/lxml/isoschematron/resources/xsl/XSD2Schtrn.xsl',
+   'DATA'),
+  ('lxml/isoschematron/resources/xsl/iso-schematron-xslt1/iso_svrl_for_xslt1.xsl',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/lxml/isoschematron/resources/xsl/iso-schematron-xslt1/iso_svrl_for_xslt1.xsl',
+   'DATA'),
+  ('lxml/isoschematron/resources/xsl/RNG2Schtrn.xsl',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/lxml/isoschematron/resources/xsl/RNG2Schtrn.xsl',
+   'DATA'),
+  ('lxml/isoschematron/resources/xsl/iso-schematron-xslt1/iso_abstract_expand.xsl',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/lxml/isoschematron/resources/xsl/iso-schematron-xslt1/iso_abstract_expand.xsl',
+   'DATA'),
+  ('lxml/isoschematron/resources/rng/iso-schematron.rng',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/lxml/isoschematron/resources/rng/iso-schematron.rng',
+   'DATA'),
+  ('dateutil/zoneinfo/dateutil-zoneinfo.tar.gz',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/dateutil/zoneinfo/dateutil-zoneinfo.tar.gz',
+   'DATA'),
+  ('pandas/io/formats/templates/latex.tpl',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/io/formats/templates/latex.tpl',
+   'DATA'),
+  ('pandas/io/formats/templates/html_style.tpl',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/io/formats/templates/html_style.tpl',
+   'DATA'),
+  ('pandas/io/formats/templates/html.tpl',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/io/formats/templates/html.tpl',
+   'DATA'),
+  ('pandas/io/formats/templates/latex_longtable.tpl',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/io/formats/templates/latex_longtable.tpl',
+   'DATA'),
+  ('pandas/io/formats/templates/string.tpl',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/io/formats/templates/string.tpl',
+   'DATA'),
+  ('pandas/io/formats/templates/html_table.tpl',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/io/formats/templates/html_table.tpl',
+   'DATA'),
+  ('pandas/io/formats/templates/latex_table.tpl',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pandas/io/formats/templates/latex_table.tpl',
+   'DATA'),
+  ('pytz/zoneinfo/America/Managua',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Managua',
+   'DATA'),
+  ('pytz/zoneinfo/America/Maceio',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Maceio',
+   'DATA'),
+  ('pytz/zoneinfo/America/Blanc-Sablon',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Blanc-Sablon',
+   'DATA'),
+  ('pytz/zoneinfo/Israel',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Israel',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Magadan',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Magadan',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Atyrau',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Atyrau',
+   'DATA'),
+  ('pytz/zoneinfo/America/Noronha',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Noronha',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Tarawa',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Tarawa',
+   'DATA'),
+  ('pytz/zoneinfo/UCT',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/UCT',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Taipei',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Taipei',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Fiji',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Fiji',
+   'DATA'),
+  ('pytz/zoneinfo/America/Halifax',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Halifax',
+   'DATA'),
+  ('pytz/zoneinfo/Indian/Maldives',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Indian/Maldives',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Phnom_Penh',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Phnom_Penh',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Podgorica',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Podgorica',
+   'DATA'),
+  ('pytz/zoneinfo/America/Kralendijk',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Kralendijk',
+   'DATA'),
+  ('pytz/zoneinfo/America/Dominica',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Dominica',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Thimphu',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Thimphu',
+   'DATA'),
+  ('pytz/zoneinfo/America/Belem',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Belem',
+   'DATA'),
+  ('pytz/zoneinfo/America/Argentina/ComodRivadavia',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Argentina/ComodRivadavia',
+   'DATA'),
+  ('pytz/zoneinfo/America/Thule',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Thule',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Astrakhan',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Astrakhan',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Palau',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Palau',
+   'DATA'),
+  ('pytz/zoneinfo/Cuba',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Cuba',
+   'DATA'),
+  ('pytz/zoneinfo/zone1970.tab',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/zone1970.tab',
+   'DATA'),
+  ('pytz/zoneinfo/America/Virgin',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Virgin',
+   'DATA'),
+  ('pytz/zoneinfo/America/Adak',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Adak',
+   'DATA'),
+  ('pytz/zoneinfo/Etc/GMT-4',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Etc/GMT-4',
+   'DATA'),
+  ('pytz/zoneinfo/America/Panama',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Panama',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Kashgar',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Kashgar',
+   'DATA'),
+  ('pytz/zoneinfo/America/Argentina/Cordoba',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Argentina/Cordoba',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Paris',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Paris',
+   'DATA'),
+  ('pytz/zoneinfo/America/Tortola',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Tortola',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Saigon',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Saigon',
+   'DATA'),
+  ('pytz/zoneinfo/Australia/Hobart',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Australia/Hobart',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Pontianak',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Pontianak',
+   'DATA'),
+  ('pytz/zoneinfo/America/Bahia_Banderas',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Bahia_Banderas',
+   'DATA'),
+  ('pytz/zoneinfo/Antarctica/Troll',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Antarctica/Troll',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Bamako',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Bamako',
+   'DATA'),
+  ('pytz/zoneinfo/Australia/LHI',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Australia/LHI',
+   'DATA'),
+  ('pytz/zoneinfo/Australia/Yancowinna',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Australia/Yancowinna',
+   'DATA'),
+  ('pytz/zoneinfo/Iceland',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Iceland',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Tongatapu',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Tongatapu',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Douala',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Douala',
+   'DATA'),
+  ('pytz/zoneinfo/America/Asuncion',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Asuncion',
+   'DATA'),
+  ('pytz/zoneinfo/America/Atikokan',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Atikokan',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Krasnoyarsk',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Krasnoyarsk',
+   'DATA'),
+  ('pytz/zoneinfo/Chile/Continental',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Chile/Continental',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Omsk',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Omsk',
+   'DATA'),
+  ('pytz/zoneinfo/America/Chicago',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Chicago',
+   'DATA'),
+  ('pytz/zoneinfo/America/Edmonton',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Edmonton',
+   'DATA'),
+  ('pytz/zoneinfo/Antarctica/McMurdo',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Antarctica/McMurdo',
+   'DATA'),
+  ('pytz/zoneinfo/Australia/North',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Australia/North',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Helsinki',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Helsinki',
+   'DATA'),
+  ('pytz/zoneinfo/America/Puerto_Rico',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Puerto_Rico',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Tel_Aviv',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Tel_Aviv',
+   'DATA'),
+  ('pytz/zoneinfo/Etc/GMT+6',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Etc/GMT+6',
+   'DATA'),
+  ('pytz/zoneinfo/America/Santarem',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Santarem',
+   'DATA'),
+  ('pytz/zoneinfo/Mexico/BajaSur',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Mexico/BajaSur',
+   'DATA'),
+  ('pytz/zoneinfo/America/Argentina/La_Rioja',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Argentina/La_Rioja',
+   'DATA'),
+  ('pytz/zoneinfo/Antarctica/Vostok',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Antarctica/Vostok',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Uzhgorod',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Uzhgorod',
+   'DATA'),
+  ('pytz/zoneinfo/Indian/Christmas',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Indian/Christmas',
+   'DATA'),
+  ('pytz/zoneinfo/ROC',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/ROC',
+   'DATA'),
+  ('pytz/zoneinfo/Australia/West',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Australia/West',
+   'DATA'),
+  ('pytz/zoneinfo/Atlantic/Madeira',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Atlantic/Madeira',
+   'DATA'),
+  ('pytz/zoneinfo/Australia/Tasmania',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Australia/Tasmania',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Bratislava',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Bratislava',
+   'DATA'),
+  ('pytz/zoneinfo/Navajo',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Navajo',
+   'DATA'),
+  ('pytz/zoneinfo/America/North_Dakota/Center',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/North_Dakota/Center',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Rarotonga',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Rarotonga',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Ho_Chi_Minh',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Ho_Chi_Minh',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Sakhalin',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Sakhalin',
+   'DATA'),
+  ('pytz/zoneinfo/America/Ciudad_Juarez',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Ciudad_Juarez',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Honolulu',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Honolulu',
+   'DATA'),
+  ('pytz/zoneinfo/America/Grenada',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Grenada',
+   'DATA'),
+  ('pytz/zoneinfo/Etc/UTC',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Etc/UTC',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Chongqing',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Chongqing',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Ljubljana',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Ljubljana',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Tiraspol',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Tiraspol',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Zagreb',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Zagreb',
+   'DATA'),
+  ('pytz/zoneinfo/Antarctica/Rothera',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Antarctica/Rothera',
+   'DATA'),
+  ('pytz/zoneinfo/America/Atka',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Atka',
+   'DATA'),
+  ('pytz/zoneinfo/America/Cayman',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Cayman',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Belgrade',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Belgrade',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Truk',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Truk',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Copenhagen',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Copenhagen',
+   'DATA'),
+  ('pytz/zoneinfo/EET',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/EET',
+   'DATA'),
+  ('pytz/zoneinfo/America/Montserrat',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Montserrat',
+   'DATA'),
+  ('pytz/zoneinfo/Etc/GMT-10',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Etc/GMT-10',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Zurich',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Zurich',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Kirov',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Kirov',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Blantyre',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Blantyre',
+   'DATA'),
+  ('pytz/zoneinfo/Atlantic/Jan_Mayen',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Atlantic/Jan_Mayen',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Moscow',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Moscow',
+   'DATA'),
+  ('pytz/zoneinfo/Etc/Zulu',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Etc/Zulu',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Jerusalem',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Jerusalem',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Rangoon',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Rangoon',
+   'DATA'),
+  ('pytz/zoneinfo/America/Matamoros',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Matamoros',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Djibouti',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Djibouti',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Enderbury',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Enderbury',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Wallis',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Wallis',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Lusaka',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Lusaka',
+   'DATA'),
+  ('pytz/zoneinfo/Canada/Eastern',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Canada/Eastern',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Nouakchott',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Nouakchott',
+   'DATA'),
+  ('pytz/zoneinfo/Egypt',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Egypt',
+   'DATA'),
+  ('pytz/zoneinfo/America/Barbados',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Barbados',
+   'DATA'),
+  ('pytz/zoneinfo/America/St_Johns',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/St_Johns',
+   'DATA'),
+  ('pytz/zoneinfo/Brazil/Acre',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Brazil/Acre',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Tahiti',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Tahiti',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Ulaanbaatar',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Ulaanbaatar',
+   'DATA'),
+  ('pytz/zoneinfo/America/Vancouver',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Vancouver',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Freetown',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Freetown',
+   'DATA'),
+  ('pytz/zoneinfo/America/Argentina/Mendoza',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Argentina/Mendoza',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Tallinn',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Tallinn',
+   'DATA'),
+  ('pytz/zoneinfo/America/Juneau',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Juneau',
+   'DATA'),
+  ('pytz/zoneinfo/America/Phoenix',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Phoenix',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Stockholm',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Stockholm',
+   'DATA'),
+  ('pytz/zoneinfo/America/Mexico_City',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Mexico_City',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Auckland',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Auckland',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Isle_of_Man',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Isle_of_Man',
+   'DATA'),
+  ('pytz/zoneinfo/US/Hawaii',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/US/Hawaii',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Qyzylorda',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Qyzylorda',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/El_Aaiun',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/El_Aaiun',
+   'DATA'),
+  ('pytz/zoneinfo/America/Santiago',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Santiago',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Pago_Pago',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Pago_Pago',
+   'DATA'),
+  ('pytz/zoneinfo/America/New_York',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/New_York',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Bujumbura',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Bujumbura',
+   'DATA'),
+  ('pytz/zoneinfo/America/Indiana/Marengo',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Indiana/Marengo',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Marquesas',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Marquesas',
+   'DATA'),
+  ('pytz/zoneinfo/America/Port-au-Prince',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Port-au-Prince',
+   'DATA'),
+  ('pytz/zoneinfo/America/Godthab',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Godthab',
+   'DATA'),
+  ('pytz/zoneinfo/America/Denver',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Denver',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Bissau',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Bissau',
+   'DATA'),
+  ('pytz/zoneinfo/zonenow.tab',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/zonenow.tab',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Yakutsk',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Yakutsk',
+   'DATA'),
+  ('pytz/zoneinfo/Antarctica/Syowa',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Antarctica/Syowa',
+   'DATA'),
+  ('pytz/zoneinfo/America/Belize',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Belize',
+   'DATA'),
+  ('pytz/zoneinfo/Australia/Eucla',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Australia/Eucla',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Muscat',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Muscat',
+   'DATA'),
+  ('pytz/zoneinfo/America/Porto_Velho',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Porto_Velho',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Ulyanovsk',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Ulyanovsk',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Hovd',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Hovd',
+   'DATA'),
+  ('pytz/zoneinfo/Etc/GMT-3',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Etc/GMT-3',
+   'DATA'),
+  ('pytz/zoneinfo/America/Rainy_River',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Rainy_River',
+   'DATA'),
+  ('pytz/zoneinfo/US/Aleutian',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/US/Aleutian',
+   'DATA'),
+  ('pytz/zoneinfo/America/St_Barthelemy',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/St_Barthelemy',
+   'DATA'),
+  ('pytz/zoneinfo/America/Argentina/Salta',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Argentina/Salta',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Famagusta',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Famagusta',
+   'DATA'),
+  ('pytz/zoneinfo/Canada/Saskatchewan',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Canada/Saskatchewan',
+   'DATA'),
+  ('pytz/zoneinfo/America/Dawson',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Dawson',
+   'DATA'),
+  ('pytz/zoneinfo/GB-Eire',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/GB-Eire',
+   'DATA'),
+  ('pytz/zoneinfo/America/Lima',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Lima',
+   'DATA'),
+  ('pytz/zoneinfo/Australia/Queensland',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Australia/Queensland',
+   'DATA'),
+  ('pytz/zoneinfo/America/Los_Angeles',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Los_Angeles',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Mariehamn',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Mariehamn',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Damascus',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Damascus',
+   'DATA'),
+  ('pytz/zoneinfo/America/Santa_Isabel',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Santa_Isabel',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Seoul',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Seoul',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Dublin',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Dublin',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Tokyo',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Tokyo',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Amsterdam',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Amsterdam',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Maputo',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Maputo',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Kabul',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Kabul',
+   'DATA'),
+  ('pytz/zoneinfo/Atlantic/Bermuda',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Atlantic/Bermuda',
+   'DATA'),
+  ('pytz/zoneinfo/America/Indiana/Vincennes',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Indiana/Vincennes',
+   'DATA'),
+  ('pytz/zoneinfo/Atlantic/South_Georgia',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Atlantic/South_Georgia',
+   'DATA'),
+  ('pytz/zoneinfo/Etc/Greenwich',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Etc/Greenwich',
+   'DATA'),
+  ('pytz/zoneinfo/America/Curacao',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Curacao',
+   'DATA'),
+  ('pytz/zoneinfo/WET',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/WET',
+   'DATA'),
+  ('pytz/zoneinfo/US/Central',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/US/Central',
+   'DATA'),
+  ('pytz/zoneinfo/MST7MDT',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/MST7MDT',
+   'DATA'),
+  ('pytz/zoneinfo/America/Argentina/Catamarca',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Argentina/Catamarca',
+   'DATA'),
+  ('pytz/zoneinfo/America/Cayenne',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Cayenne',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Thimbu',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Thimbu',
+   'DATA'),
+  ('pytz/zoneinfo/America/Havana',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Havana',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Khartoum',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Khartoum',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Budapest',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Budapest',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Vilnius',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Vilnius',
+   'DATA'),
+  ('pytz/zoneinfo/Australia/Melbourne',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Australia/Melbourne',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Prague',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Prague',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Harare',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Harare',
+   'DATA'),
+  ('pytz/zoneinfo/Mexico/General',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Mexico/General',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Zaporozhye',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Zaporozhye',
+   'DATA'),
+  ('pytz/zoneinfo/America/Boise',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Boise',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Pohnpei',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Pohnpei',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Brazzaville',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Brazzaville',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Anadyr',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Anadyr',
+   'DATA'),
+  ('pytz/zoneinfo/Eire',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Eire',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Banjul',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Banjul',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Volgograd',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Volgograd',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Kyiv',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Kyiv',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Wake',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Wake',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Tripoli',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Tripoli',
+   'DATA'),
+  ('pytz/zoneinfo/America/Anchorage',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Anchorage',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Srednekolymsk',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Srednekolymsk',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Vientiane',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Vientiane',
+   'DATA'),
+  ('pytz/zoneinfo/GMT',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/GMT',
+   'DATA'),
+  ('pytz/zoneinfo/America/Anguilla',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Anguilla',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Colombo',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Colombo',
+   'DATA'),
+  ('pytz/zoneinfo/America/Pangnirtung',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Pangnirtung',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Ashkhabad',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Ashkhabad',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Yangon',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Yangon',
+   'DATA'),
+  ('pytz/zoneinfo/Etc/GMT-7',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Etc/GMT-7',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Shanghai',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Shanghai',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Gambier',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Gambier',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Ulan_Bator',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Ulan_Bator',
+   'DATA'),
+  ('pytz/zoneinfo/America/Whitehorse',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Whitehorse',
+   'DATA'),
+  ('pytz/zoneinfo/CET',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/CET',
+   'DATA'),
+  ('pytz/zoneinfo/Etc/GMT-14',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Etc/GMT-14',
+   'DATA'),
+  ('pytz/zoneinfo/America/St_Thomas',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/St_Thomas',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Yap',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Yap',
+   'DATA'),
+  ('pytz/zoneinfo/America/Yellowknife',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Yellowknife',
+   'DATA'),
+  ('pytz/zoneinfo/Atlantic/Faroe',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Atlantic/Faroe',
+   'DATA'),
+  ('pytz/zoneinfo/America/Moncton',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Moncton',
+   'DATA'),
+  ('pytz/zoneinfo/America/Shiprock',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Shiprock',
+   'DATA'),
+  ('pytz/zoneinfo/America/Ensenada',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Ensenada',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Sofia',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Sofia',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Singapore',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Singapore',
+   'DATA'),
+  ('pytz/zoneinfo/America/Guatemala',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Guatemala',
+   'DATA'),
+  ('pytz/zoneinfo/Etc/GMT+12',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Etc/GMT+12',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Dubai',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Dubai',
+   'DATA'),
+  ('pytz/zoneinfo/America/Indiana/Petersburg',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Indiana/Petersburg',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Riga',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Riga',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Ceuta',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Ceuta',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Chisinau',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Chisinau',
+   'DATA'),
+  ('pytz/zoneinfo/Kwajalein',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Kwajalein',
+   'DATA'),
+  ('pytz/zoneinfo/America/Argentina/Jujuy',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Argentina/Jujuy',
+   'DATA'),
+  ('pytz/zoneinfo/America/Creston',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Creston',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Lubumbashi',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Lubumbashi',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/San_Marino',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/San_Marino',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Gibraltar',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Gibraltar',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Kathmandu',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Kathmandu',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Brussels',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Brussels',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Brunei',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Brunei',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/London',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/London',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Ujung_Pandang',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Ujung_Pandang',
+   'DATA'),
+  ('pytz/zoneinfo/Etc/GMT+7',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Etc/GMT+7',
+   'DATA'),
+  ('pytz/zoneinfo/Hongkong',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Hongkong',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Belfast',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Belfast',
+   'DATA'),
+  ('pytz/zoneinfo/America/Knox_IN',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Knox_IN',
+   'DATA'),
+  ('pytz/zoneinfo/America/Glace_Bay',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Glace_Bay',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Nairobi',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Nairobi',
+   'DATA'),
+  ('pytz/zoneinfo/Australia/Victoria',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Australia/Victoria',
+   'DATA'),
+  ('pytz/zoneinfo/Canada/Newfoundland',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Canada/Newfoundland',
+   'DATA'),
+  ('pytz/zoneinfo/America/St_Kitts',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/St_Kitts',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Vaduz',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Vaduz',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Rome',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Rome',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Addis_Ababa',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Addis_Ababa',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Chungking',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Chungking',
+   'DATA'),
+  ('pytz/zoneinfo/America/Campo_Grande',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Campo_Grande',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Macao',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Macao',
+   'DATA'),
+  ('pytz/zoneinfo/Etc/GMT-1',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Etc/GMT-1',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Manila',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Manila',
+   'DATA'),
+  ('pytz/zoneinfo/MST',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/MST',
+   'DATA'),
+  ('pytz/zoneinfo/Atlantic/Stanley',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Atlantic/Stanley',
+   'DATA'),
+  ('pytz/zoneinfo/Etc/GMT-5',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Etc/GMT-5',
+   'DATA'),
+  ('pytz/zoneinfo/Canada/Yukon',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Canada/Yukon',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Oral',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Oral',
+   'DATA'),
+  ('pytz/zoneinfo/HST',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/HST',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Harbin',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Harbin',
+   'DATA'),
+  ('pytz/zoneinfo/America/Fortaleza',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Fortaleza',
+   'DATA'),
+  ('pytz/zoneinfo/America/Antigua',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Antigua',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Oslo',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Oslo',
+   'DATA'),
+  ('pytz/zoneinfo/America/Inuvik',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Inuvik',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Libreville',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Libreville',
+   'DATA'),
+  ('pytz/zoneinfo/America/Fort_Wayne',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Fort_Wayne',
+   'DATA'),
+  ('pytz/zoneinfo/Chile/EasterIsland',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Chile/EasterIsland',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Bahrain',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Bahrain',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Efate',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Efate',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Abidjan',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Abidjan',
+   'DATA'),
+  ('pytz/zoneinfo/Jamaica',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Jamaica',
+   'DATA'),
+  ('pytz/zoneinfo/Iran',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Iran',
+   'DATA'),
+  ('pytz/zoneinfo/America/North_Dakota/Beulah',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/North_Dakota/Beulah',
+   'DATA'),
+  ('pytz/zoneinfo/America/Indiana/Indianapolis',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Indiana/Indianapolis',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Kamchatka',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Kamchatka',
+   'DATA'),
+  ('pytz/zoneinfo/Canada/Pacific',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Canada/Pacific',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Guam',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Guam',
+   'DATA'),
+  ('pytz/zoneinfo/PRC',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/PRC',
+   'DATA'),
+  ('pytz/zoneinfo/Australia/NSW',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Australia/NSW',
+   'DATA'),
+  ('pytz/zoneinfo/tzdata.zi',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/tzdata.zi',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Tashkent',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Tashkent',
+   'DATA'),
+  ('pytz/zoneinfo/Atlantic/Canary',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Atlantic/Canary',
+   'DATA'),
+  ('pytz/zoneinfo/EST5EDT',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/EST5EDT',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Samarkand',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Samarkand',
+   'DATA'),
+  ('pytz/zoneinfo/Etc/GMT-11',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Etc/GMT-11',
+   'DATA'),
+  ('pytz/zoneinfo/America/Buenos_Aires',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Buenos_Aires',
+   'DATA'),
+  ('pytz/zoneinfo/America/Guyana',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Guyana',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Kwajalein',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Kwajalein',
+   'DATA'),
+  ('pytz/zoneinfo/America/Sitka',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Sitka',
+   'DATA'),
+  ('pytz/zoneinfo/America/Cordoba',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Cordoba',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Kiritimati',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Kiritimati',
+   'DATA'),
+  ('pytz/zoneinfo/America/Cuiaba',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Cuiaba',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Ponape',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Ponape',
+   'DATA'),
+  ('pytz/zoneinfo/US/Alaska',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/US/Alaska',
+   'DATA'),
+  ('pytz/zoneinfo/GB',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/GB',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Samara',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Samara',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Sarajevo',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Sarajevo',
+   'DATA'),
+  ('pytz/zoneinfo/Australia/Perth',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Australia/Perth',
+   'DATA'),
+  ('pytz/zoneinfo/Brazil/West',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Brazil/West',
+   'DATA'),
+  ('pytz/zoneinfo/Etc/GMT-2',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Etc/GMT-2',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Port_Moresby',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Port_Moresby',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Asmera',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Asmera',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Funafuti',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Funafuti',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Dushanbe',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Dushanbe',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Cairo',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Cairo',
+   'DATA'),
+  ('pytz/zoneinfo/Canada/Mountain',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Canada/Mountain',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Riyadh',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Riyadh',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Kiev',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Kiev',
+   'DATA'),
+  ('pytz/zoneinfo/Indian/Comoro',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Indian/Comoro',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Gaza',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Gaza',
+   'DATA'),
+  ('pytz/zoneinfo/America/Indiana/Tell_City',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Indiana/Tell_City',
+   'DATA'),
+  ('pytz/zoneinfo/America/Indianapolis',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Indianapolis',
+   'DATA'),
+  ('pytz/zoneinfo/Libya',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Libya',
+   'DATA'),
+  ('pytz/zoneinfo/Atlantic/Cape_Verde',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Atlantic/Cape_Verde',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Tirane',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Tirane',
+   'DATA'),
+  ('pytz/zoneinfo/America/Nome',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Nome',
+   'DATA'),
+  ('pytz/zoneinfo/America/Scoresbysund',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Scoresbysund',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Nauru',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Nauru',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Tomsk',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Tomsk',
+   'DATA'),
+  ('pytz/zoneinfo/US/Eastern',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/US/Eastern',
+   'DATA'),
+  ('pytz/zoneinfo/US/East-Indiana',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/US/East-Indiana',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Galapagos',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Galapagos',
+   'DATA'),
+  ('pytz/zoneinfo/US/Indiana-Starke',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/US/Indiana-Starke',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Jakarta',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Jakarta',
+   'DATA'),
+  ('pytz/zoneinfo/America/Eirunepe',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Eirunepe',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Bougainville',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Bougainville',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Istanbul',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Istanbul',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Urumqi',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Urumqi',
+   'DATA'),
+  ('pytz/zoneinfo/America/La_Paz',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/La_Paz',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Madrid',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Madrid',
+   'DATA'),
+  ('pytz/zoneinfo/Etc/GMT+9',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Etc/GMT+9',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Vladivostok',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Vladivostok',
+   'DATA'),
+  ('pytz/zoneinfo/America/Miquelon',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Miquelon',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Monrovia',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Monrovia',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Easter',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Easter',
+   'DATA'),
+  ('pytz/zoneinfo/Etc/GMT+5',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Etc/GMT+5',
+   'DATA'),
+  ('pytz/zoneinfo/America/Port_of_Spain',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Port_of_Spain',
+   'DATA'),
+  ('pytz/zoneinfo/America/Nipigon',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Nipigon',
+   'DATA'),
+  ('pytz/zoneinfo/America/Swift_Current',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Swift_Current',
+   'DATA'),
+  ('pytz/zoneinfo/America/Danmarkshavn',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Danmarkshavn',
+   'DATA'),
+  ('pytz/zoneinfo/Etc/GMT-9',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Etc/GMT-9',
+   'DATA'),
+  ('pytz/zoneinfo/America/Boa_Vista',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Boa_Vista',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Malabo',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Malabo',
+   'DATA'),
+  ('pytz/zoneinfo/Universal',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Universal',
+   'DATA'),
+  ('pytz/zoneinfo/America/Grand_Turk',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Grand_Turk',
+   'DATA'),
+  ('pytz/zoneinfo/America/Winnipeg',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Winnipeg',
+   'DATA'),
+  ('pytz/zoneinfo/Australia/Broken_Hill',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Australia/Broken_Hill',
+   'DATA'),
+  ('pytz/zoneinfo/America/Tegucigalpa',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Tegucigalpa',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Samoa',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Samoa',
+   'DATA'),
+  ('pytz/zoneinfo/America/Dawson_Creek',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Dawson_Creek',
+   'DATA'),
+  ('pytz/zoneinfo/NZ-CHAT',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/NZ-CHAT',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Lome',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Lome',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Guernsey',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Guernsey',
+   'DATA'),
+  ('pytz/zoneinfo/America/Rosario',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Rosario',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Porto-Novo',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Porto-Novo',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Pyongyang',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Pyongyang',
+   'DATA'),
+  ('pytz/zoneinfo/Indian/Mahe',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Indian/Mahe',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Ouagadougou',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Ouagadougou',
+   'DATA'),
+  ('pytz/zoneinfo/America/Recife',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Recife',
+   'DATA'),
+  ('pytz/zoneinfo/America/Coyhaique',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Coyhaique',
+   'DATA'),
+  ('pytz/zoneinfo/Indian/Cocos',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Indian/Cocos',
+   'DATA'),
+  ('pytz/zoneinfo/Etc/GMT+2',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Etc/GMT+2',
+   'DATA'),
+  ('pytz/zoneinfo/America/Punta_Arenas',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Punta_Arenas',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Warsaw',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Warsaw',
+   'DATA'),
+  ('pytz/zoneinfo/America/Indiana/Vevay',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Indiana/Vevay',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Bucharest',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Bucharest',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Tbilisi',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Tbilisi',
+   'DATA'),
+  ('pytz/zoneinfo/America/Regina',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Regina',
+   'DATA'),
+  ('pytz/zoneinfo/Australia/Adelaide',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Australia/Adelaide',
+   'DATA'),
+  ('pytz/zoneinfo/America/Coral_Harbour',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Coral_Harbour',
+   'DATA'),
+  ('pytz/zoneinfo/America/Argentina/Tucuman',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Argentina/Tucuman',
+   'DATA'),
+  ('pytz/zoneinfo/America/Argentina/Ushuaia',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Argentina/Ushuaia',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Algiers',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Algiers',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Apia',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Apia',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Casablanca',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Casablanca',
+   'DATA'),
+  ('pytz/zoneinfo/America/Ojinaga',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Ojinaga',
+   'DATA'),
+  ('pytz/zoneinfo/America/Metlakatla',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Metlakatla',
+   'DATA'),
+  ('pytz/zoneinfo/America/Detroit',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Detroit',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Kuching',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Kuching',
+   'DATA'),
+  ('pytz/zoneinfo/America/Marigot',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Marigot',
+   'DATA'),
+  ('pytz/zoneinfo/America/Nuuk',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Nuuk',
+   'DATA'),
+  ('pytz/zoneinfo/Etc/UCT',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Etc/UCT',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Mogadishu',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Mogadishu',
+   'DATA'),
+  ('pytz/zoneinfo/America/Mendoza',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Mendoza',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Berlin',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Berlin',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Baghdad',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Baghdad',
+   'DATA'),
+  ('pytz/zoneinfo/Antarctica/South_Pole',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Antarctica/South_Pole',
+   'DATA'),
+  ('pytz/zoneinfo/Portugal',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Portugal',
+   'DATA'),
+  ('pytz/zoneinfo/America/Montevideo',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Montevideo',
+   'DATA'),
+  ('pytz/zoneinfo/NZ',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/NZ',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Ndjamena',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Ndjamena',
+   'DATA'),
+  ('pytz/zoneinfo/America/Bahia',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Bahia',
+   'DATA'),
+  ('pytz/zoneinfo/Antarctica/DumontDUrville',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Antarctica/DumontDUrville',
+   'DATA'),
+  ('pytz/zoneinfo/Antarctica/Palmer',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Antarctica/Palmer',
+   'DATA'),
+  ('pytz/zoneinfo/Australia/Sydney',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Australia/Sydney',
+   'DATA'),
+  ('pytz/zoneinfo/America/Araguaina',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Araguaina',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Pitcairn',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Pitcairn',
+   'DATA'),
+  ('pytz/zoneinfo/Canada/Atlantic',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Canada/Atlantic',
+   'DATA'),
+  ('pytz/zoneinfo/America/Paramaribo',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Paramaribo',
+   'DATA'),
+  ('pytz/zoneinfo/Etc/GMT+1',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Etc/GMT+1',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Qatar',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Qatar',
+   'DATA'),
+  ('pytz/zoneinfo/America/Aruba',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Aruba',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Vatican',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Vatican',
+   'DATA'),
+  ('pytz/zoneinfo/CST6CDT',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/CST6CDT',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Aden',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Aden',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Amman',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Amman',
+   'DATA'),
+  ('pytz/zoneinfo/UTC',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/UTC',
+   'DATA'),
+  ('pytz/zoneinfo/America/Iqaluit',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Iqaluit',
+   'DATA'),
+  ('pytz/zoneinfo/America/Rio_Branco',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Rio_Branco',
+   'DATA'),
+  ('pytz/zoneinfo/Antarctica/Casey',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Antarctica/Casey',
+   'DATA'),
+  ('pytz/zoneinfo/Brazil/East',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Brazil/East',
+   'DATA'),
+  ('pytz/zoneinfo/America/Indiana/Winamac',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Indiana/Winamac',
+   'DATA'),
+  ('pytz/zoneinfo/Etc/Universal',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Etc/Universal',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Macau',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Macau',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Windhoek',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Windhoek',
+   'DATA'),
+  ('pytz/zoneinfo/Etc/GMT+10',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Etc/GMT+10',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Tehran',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Tehran',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Johnston',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Johnston',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Dhaka',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Dhaka',
+   'DATA'),
+  ('pytz/zoneinfo/leapseconds',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/leapseconds',
+   'DATA'),
+  ('pytz/zoneinfo/America/St_Lucia',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/St_Lucia',
+   'DATA'),
+  ('pytz/zoneinfo/America/Guayaquil',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Guayaquil',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Jersey',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Jersey',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Malta',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Malta',
+   'DATA'),
+  ('pytz/zoneinfo/GMT-0',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/GMT-0',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Dacca',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Dacca',
+   'DATA'),
+  ('pytz/zoneinfo/America/Lower_Princes',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Lower_Princes',
+   'DATA'),
+  ('pytz/zoneinfo/GMT0',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/GMT0',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Vienna',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Vienna',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Norfolk',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Norfolk',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Dar_es_Salaam',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Dar_es_Salaam',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Guadalcanal',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Guadalcanal',
+   'DATA'),
+  ('pytz/zoneinfo/Canada/Central',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Canada/Central',
+   'DATA'),
+  ('pytz/zoneinfo/Atlantic/Azores',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Atlantic/Azores',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Niamey',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Niamey',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Yekaterinburg',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Yekaterinburg',
+   'DATA'),
+  ('pytz/zoneinfo/America/Louisville',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Louisville',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Kampala',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Kampala',
+   'DATA'),
+  ('pytz/zoneinfo/Mexico/BajaNorte',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Mexico/BajaNorte',
+   'DATA'),
+  ('pytz/zoneinfo/America/Kentucky/Louisville',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Kentucky/Louisville',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Nicosia',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Nicosia',
+   'DATA'),
+  ('pytz/zoneinfo/America/Cancun',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Cancun',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Bangui',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Bangui',
+   'DATA'),
+  ('pytz/zoneinfo/Indian/Mayotte',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Indian/Mayotte',
+   'DATA'),
+  ('pytz/zoneinfo/America/Montreal',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Montreal',
+   'DATA'),
+  ('pytz/zoneinfo/Etc/GMT+0',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Etc/GMT+0',
+   'DATA'),
+  ('pytz/zoneinfo/Etc/GMT+8',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Etc/GMT+8',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Choibalsan',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Choibalsan',
+   'DATA'),
+  ('pytz/zoneinfo/Greenwich',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Greenwich',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Aqtobe',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Aqtobe',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Katmandu',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Katmandu',
+   'DATA'),
+  ('pytz/zoneinfo/America/Monterrey',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Monterrey',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Gaborone',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Gaborone',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Jayapura',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Jayapura',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Dakar',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Dakar',
+   'DATA'),
+  ('pytz/zoneinfo/Etc/GMT-13',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Etc/GMT-13',
+   'DATA'),
+  ('pytz/zoneinfo/America/Menominee',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Menominee',
+   'DATA'),
+  ('pytz/zoneinfo/Antarctica/Mawson',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Antarctica/Mawson',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Minsk',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Minsk',
+   'DATA'),
+  ('pytz/zoneinfo/Etc/GMT-8',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Etc/GMT-8',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Khandyga',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Khandyga',
+   'DATA'),
+  ('pytz/zoneinfo/America/Caracas',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Caracas',
+   'DATA'),
+  ('pytz/zoneinfo/Turkey',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Turkey',
+   'DATA'),
+  ('pytz/zoneinfo/America/Jujuy',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Jujuy',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Mbabane',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Mbabane',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Luanda',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Luanda',
+   'DATA'),
+  ('pytz/zoneinfo/Australia/South',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Australia/South',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Andorra',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Andorra',
+   'DATA'),
+  ('pytz/zoneinfo/US/Arizona',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/US/Arizona',
+   'DATA'),
+  ('pytz/zoneinfo/America/Indiana/Knox',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Indiana/Knox',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Busingen',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Busingen',
+   'DATA'),
+  ('pytz/zoneinfo/America/Martinique',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Martinique',
+   'DATA'),
+  ('pytz/zoneinfo/EST',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/EST',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Saipan',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Saipan',
+   'DATA'),
+  ('pytz/zoneinfo/iso3166.tab',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/iso3166.tab',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Kuwait',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Kuwait',
+   'DATA'),
+  ('pytz/zoneinfo/America/Guadeloupe',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Guadeloupe',
+   'DATA'),
+  ('pytz/zoneinfo/Etc/GMT0',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Etc/GMT0',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Kaliningrad',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Kaliningrad',
+   'DATA'),
+  ('pytz/zoneinfo/America/Resolute',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Resolute',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Timbuktu',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Timbuktu',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Novokuznetsk',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Novokuznetsk',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Fakaofo',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Fakaofo',
+   'DATA'),
+  ('pytz/zoneinfo/America/Argentina/San_Juan',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Argentina/San_Juan',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Novosibirsk',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Novosibirsk',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Kinshasa',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Kinshasa',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Barnaul',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Barnaul',
+   'DATA'),
+  ('pytz/zoneinfo/US/Pacific',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/US/Pacific',
+   'DATA'),
+  ('pytz/zoneinfo/Australia/Lord_Howe',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Australia/Lord_Howe',
+   'DATA'),
+  ('pytz/zoneinfo/America/El_Salvador',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/El_Salvador',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Makassar',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Makassar',
+   'DATA'),
+  ('pytz/zoneinfo/America/Chihuahua',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Chihuahua',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Kigali',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Kigali',
+   'DATA'),
+  ('pytz/zoneinfo/GMT+0',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/GMT+0',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Baku',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Baku',
+   'DATA'),
+  ('pytz/zoneinfo/America/Cambridge_Bay',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Cambridge_Bay',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Monaco',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Monaco',
+   'DATA'),
+  ('pytz/zoneinfo/zone.tab',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/zone.tab',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Tunis',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Tunis',
+   'DATA'),
+  ('pytz/zoneinfo/Arctic/Longyearbyen',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Arctic/Longyearbyen',
+   'DATA'),
+  ('pytz/zoneinfo/Indian/Antananarivo',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Indian/Antananarivo',
+   'DATA'),
+  ('pytz/zoneinfo/America/Mazatlan',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Mazatlan',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Nicosia',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Nicosia',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Luxembourg',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Luxembourg',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Hong_Kong',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Hong_Kong',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Ust-Nera',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Ust-Nera',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Dili',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Dili',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Irkutsk',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Irkutsk',
+   'DATA'),
+  ('pytz/zoneinfo/America/Manaus',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Manaus',
+   'DATA'),
+  ('pytz/zoneinfo/America/Goose_Bay',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Goose_Bay',
+   'DATA'),
+  ('pytz/zoneinfo/US/Samoa',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/US/Samoa',
+   'DATA'),
+  ('pytz/zoneinfo/America/Argentina/San_Luis',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Argentina/San_Luis',
+   'DATA'),
+  ('pytz/zoneinfo/Atlantic/Faeroe',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Atlantic/Faeroe',
+   'DATA'),
+  ('pytz/zoneinfo/Japan',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Japan',
+   'DATA'),
+  ('pytz/zoneinfo/Etc/GMT+11',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Etc/GMT+11',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Kanton',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Kanton',
+   'DATA'),
+  ('pytz/zoneinfo/America/Fort_Nelson',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Fort_Nelson',
+   'DATA'),
+  ('pytz/zoneinfo/America/Sao_Paulo',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Sao_Paulo',
+   'DATA'),
+  ('pytz/zoneinfo/Australia/Brisbane',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Australia/Brisbane',
+   'DATA'),
+  ('pytz/zoneinfo/America/St_Vincent',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/St_Vincent',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Bishkek',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Bishkek',
+   'DATA'),
+  ('pytz/zoneinfo/America/Argentina/Buenos_Aires',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Argentina/Buenos_Aires',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Accra',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Accra',
+   'DATA'),
+  ('pytz/zoneinfo/Indian/Chagos',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Indian/Chagos',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Chita',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Chita',
+   'DATA'),
+  ('pytz/zoneinfo/Brazil/DeNoronha',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Brazil/DeNoronha',
+   'DATA'),
+  ('pytz/zoneinfo/W-SU',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/W-SU',
+   'DATA'),
+  ('pytz/zoneinfo/Atlantic/St_Helena',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Atlantic/St_Helena',
+   'DATA'),
+  ('pytz/zoneinfo/Atlantic/Reykjavik',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Atlantic/Reykjavik',
+   'DATA'),
+  ('pytz/zoneinfo/Poland',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Poland',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Conakry',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Conakry',
+   'DATA'),
+  ('pytz/zoneinfo/Antarctica/Davis',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Antarctica/Davis',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Istanbul',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Istanbul',
+   'DATA'),
+  ('pytz/zoneinfo/US/Mountain',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/US/Mountain',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Hebron',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Hebron',
+   'DATA'),
+  ('pytz/zoneinfo/Zulu',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Zulu',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Johannesburg',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Johannesburg',
+   'DATA'),
+  ('pytz/zoneinfo/PST8PDT',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/PST8PDT',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Bangkok',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Bangkok',
+   'DATA'),
+  ('pytz/zoneinfo/America/Bogota',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Bogota',
+   'DATA'),
+  ('pytz/zoneinfo/America/Merida',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Merida',
+   'DATA'),
+  ('pytz/zoneinfo/ROK',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/ROK',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Kolkata',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Kolkata',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Kosrae',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Kosrae',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Ashgabat',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Ashgabat',
+   'DATA'),
+  ('pytz/zoneinfo/America/Yakutat',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Yakutat',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Chuuk',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Chuuk',
+   'DATA'),
+  ('pytz/zoneinfo/Etc/GMT+3',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Etc/GMT+3',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Aqtau',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Aqtau',
+   'DATA'),
+  ('pytz/zoneinfo/Factory',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Factory',
+   'DATA'),
+  ('pytz/zoneinfo/America/Catamarca',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Catamarca',
+   'DATA'),
+  ('pytz/zoneinfo/Antarctica/Macquarie',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Antarctica/Macquarie',
+   'DATA'),
+  ('pytz/zoneinfo/Etc/GMT+4',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Etc/GMT+4',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Midway',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Midway',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Saratov',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Saratov',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Almaty',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Almaty',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Yerevan',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Yerevan',
+   'DATA'),
+  ('pytz/zoneinfo/America/North_Dakota/New_Salem',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/North_Dakota/New_Salem',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Qostanay',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Qostanay',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Athens',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Athens',
+   'DATA'),
+  ('pytz/zoneinfo/US/Michigan',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/US/Michigan',
+   'DATA'),
+  ('pytz/zoneinfo/Etc/GMT-0',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Etc/GMT-0',
+   'DATA'),
+  ('pytz/zoneinfo/Singapore',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Singapore',
+   'DATA'),
+  ('pytz/zoneinfo/America/Toronto',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Toronto',
+   'DATA'),
+  ('pytz/zoneinfo/Etc/GMT-6',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Etc/GMT-6',
+   'DATA'),
+  ('pytz/zoneinfo/America/Tijuana',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Tijuana',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Skopje',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Skopje',
+   'DATA'),
+  ('pytz/zoneinfo/Indian/Mauritius',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Indian/Mauritius',
+   'DATA'),
+  ('pytz/zoneinfo/Australia/Currie',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Australia/Currie',
+   'DATA'),
+  ('pytz/zoneinfo/America/Jamaica',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Jamaica',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Sao_Tome',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Sao_Tome',
+   'DATA'),
+  ('pytz/zoneinfo/Indian/Kerguelen',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Indian/Kerguelen',
+   'DATA'),
+  ('pytz/zoneinfo/Australia/Lindeman',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Australia/Lindeman',
+   'DATA'),
+  ('pytz/zoneinfo/America/Porto_Acre',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Porto_Acre',
+   'DATA'),
+  ('pytz/zoneinfo/Australia/Canberra',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Australia/Canberra',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Chatham',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Chatham',
+   'DATA'),
+  ('pytz/zoneinfo/America/Santo_Domingo',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Santo_Domingo',
+   'DATA'),
+  ('pytz/zoneinfo/America/Kentucky/Monticello',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Kentucky/Monticello',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Lagos',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Lagos',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Juba',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Juba',
+   'DATA'),
+  ('pytz/zoneinfo/America/Hermosillo',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Hermosillo',
+   'DATA'),
+  ('pytz/zoneinfo/America/Costa_Rica',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Costa_Rica',
+   'DATA'),
+  ('pytz/zoneinfo/Etc/GMT-12',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Etc/GMT-12',
+   'DATA'),
+  ('pytz/zoneinfo/Australia/ACT',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Australia/ACT',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Majuro',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Majuro',
+   'DATA'),
+  ('pytz/zoneinfo/Etc/GMT',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Etc/GMT',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Beirut',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Beirut',
+   'DATA'),
+  ('pytz/zoneinfo/Indian/Reunion',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Indian/Reunion',
+   'DATA'),
+  ('pytz/zoneinfo/America/Argentina/Rio_Gallegos',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Argentina/Rio_Gallegos',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Calcutta',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Calcutta',
+   'DATA'),
+  ('pytz/zoneinfo/America/Thunder_Bay',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Thunder_Bay',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Niue',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Niue',
+   'DATA'),
+  ('pytz/zoneinfo/Australia/Darwin',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Australia/Darwin',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Karachi',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Karachi',
+   'DATA'),
+  ('pytz/zoneinfo/America/Nassau',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Nassau',
+   'DATA'),
+  ('pytz/zoneinfo/Asia/Kuala_Lumpur',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Asia/Kuala_Lumpur',
+   'DATA'),
+  ('pytz/zoneinfo/America/Rankin_Inlet',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/America/Rankin_Inlet',
+   'DATA'),
+  ('pytz/zoneinfo/MET',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/MET',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Asmara',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Asmara',
+   'DATA'),
+  ('pytz/zoneinfo/Pacific/Noumea',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Pacific/Noumea',
+   'DATA'),
+  ('pytz/zoneinfo/Africa/Maseru',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Africa/Maseru',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Lisbon',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Lisbon',
+   'DATA'),
+  ('pytz/zoneinfo/Europe/Simferopol',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/pytz/zoneinfo/Europe/Simferopol',
+   'DATA'),
+  ('docx/templates/default-docx-template/word/stylesWithEffects.xml',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/docx/templates/default-docx-template/word/stylesWithEffects.xml',
+   'DATA'),
+  ('docx/templates/default-docx-template/word/document.xml',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/docx/templates/default-docx-template/word/document.xml',
+   'DATA'),
+  ('docx/templates/default-docx-template/customXml/itemProps1.xml',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/docx/templates/default-docx-template/customXml/itemProps1.xml',
+   'DATA'),
+  ('docx/templates/default-docx-template/docProps/core.xml',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/docx/templates/default-docx-template/docProps/core.xml',
+   'DATA'),
+  ('docx/templates/default-footer.xml',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/docx/templates/default-footer.xml',
+   'DATA'),
+  ('docx/templates/default-docx-template/word/_rels/document.xml.rels',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/docx/templates/default-docx-template/word/_rels/document.xml.rels',
+   'DATA'),
+  ('docx/templates/default-docx-template/word/fontTable.xml',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/docx/templates/default-docx-template/word/fontTable.xml',
+   'DATA'),
+  ('docx/templates/default-styles.xml',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/docx/templates/default-styles.xml',
+   'DATA'),
+  ('docx/templates/default.docx',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/docx/templates/default.docx',
+   'DATA'),
+  ('docx/templates/default-docx-template/word/numbering.xml',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/docx/templates/default-docx-template/word/numbering.xml',
+   'DATA'),
+  ('docx/templates/default-docx-template/customXml/_rels/item1.xml.rels',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/docx/templates/default-docx-template/customXml/_rels/item1.xml.rels',
+   'DATA'),
+  ('docx/templates/default-settings.xml',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/docx/templates/default-settings.xml',
+   'DATA'),
+  ('docx/templates/default-docx-template/word/webSettings.xml',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/docx/templates/default-docx-template/word/webSettings.xml',
+   'DATA'),
+  ('docx/templates/default-docx-template/customXml/item1.xml',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/docx/templates/default-docx-template/customXml/item1.xml',
+   'DATA'),
+  ('docx/py.typed',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/docx/py.typed',
+   'DATA'),
+  ('docx/templates/default-docx-template/docProps/thumbnail.jpeg',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/docx/templates/default-docx-template/docProps/thumbnail.jpeg',
+   'DATA'),
+  ('docx/templates/default-docx-template/word/theme/theme1.xml',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/docx/templates/default-docx-template/word/theme/theme1.xml',
+   'DATA'),
+  ('docx/templates/default-docx-template/[Content_Types].xml',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/docx/templates/default-docx-template/[Content_Types].xml',
+   'DATA'),
+  ('docx/templates/default-docx-template/word/styles.xml',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/docx/templates/default-docx-template/word/styles.xml',
+   'DATA'),
+  ('docx/templates/default-docx-template/word/settings.xml',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/docx/templates/default-docx-template/word/settings.xml',
+   'DATA'),
+  ('docx/templates/default-comments.xml',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/docx/templates/default-comments.xml',
+   'DATA'),
+  ('docx/templates/default-header.xml',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/docx/templates/default-header.xml',
+   'DATA'),
+  ('docx/templates/default-docx-template/docProps/app.xml',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/docx/templates/default-docx-template/docProps/app.xml',
+   'DATA'),
+  ('docx/templates/default-docx-template/_rels/.rels',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/docx/templates/default-docx-template/_rels/.rels',
+   'DATA'),
+  ('docx2pdf-0.1.8.dist-info/REQUESTED',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/docx2pdf-0.1.8.dist-info/REQUESTED',
+   'DATA'),
+  ('docx2pdf-0.1.8.dist-info/INSTALLER',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/docx2pdf-0.1.8.dist-info/INSTALLER',
+   'DATA'),
+  ('docx2pdf-0.1.8.dist-info/entry_points.txt',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/docx2pdf-0.1.8.dist-info/entry_points.txt',
+   'DATA'),
+  ('docx2pdf-0.1.8.dist-info/WHEEL',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/docx2pdf-0.1.8.dist-info/WHEEL',
+   'DATA'),
+  ('docx2pdf-0.1.8.dist-info/RECORD',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/docx2pdf-0.1.8.dist-info/RECORD',
+   'DATA'),
+  ('docx2pdf-0.1.8.dist-info/METADATA',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/docx2pdf-0.1.8.dist-info/METADATA',
+   'DATA'),
+  ('docx2pdf-0.1.8.dist-info/LICENSE',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/docx2pdf-0.1.8.dist-info/LICENSE',
+   'DATA'),
+  ('docx2pdf/convert.jxa',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/docx2pdf/convert.jxa',
+   'DATA'),
+  ('setuptools/_vendor/importlib_metadata-8.0.0.dist-info/WHEEL',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/setuptools/_vendor/importlib_metadata-8.0.0.dist-info/WHEEL',
+   'DATA'),
+  ('setuptools/_vendor/importlib_metadata-8.0.0.dist-info/REQUESTED',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/setuptools/_vendor/importlib_metadata-8.0.0.dist-info/REQUESTED',
+   'DATA'),
+  ('setuptools/_vendor/importlib_metadata-8.0.0.dist-info/METADATA',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/setuptools/_vendor/importlib_metadata-8.0.0.dist-info/METADATA',
+   'DATA'),
+  ('setuptools/_vendor/importlib_metadata-8.0.0.dist-info/LICENSE',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/setuptools/_vendor/importlib_metadata-8.0.0.dist-info/LICENSE',
+   'DATA'),
+  ('setuptools/_vendor/importlib_metadata-8.0.0.dist-info/RECORD',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/setuptools/_vendor/importlib_metadata-8.0.0.dist-info/RECORD',
+   'DATA'),
+  ('setuptools/_vendor/importlib_metadata-8.0.0.dist-info/top_level.txt',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/setuptools/_vendor/importlib_metadata-8.0.0.dist-info/top_level.txt',
+   'DATA'),
+  ('setuptools/_vendor/importlib_metadata-8.0.0.dist-info/INSTALLER',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/setuptools/_vendor/importlib_metadata-8.0.0.dist-info/INSTALLER',
+   'DATA'),
+  ('setuptools/_vendor/jaraco/text/Lorem ipsum.txt',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/setuptools/_vendor/jaraco/text/Lorem '
+   'ipsum.txt',
+   'DATA'),
+  ('webview/js/api.js',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/webview/js/api.js',
+   'DATA'),
+  ('webview/js/lib/dom_json.js',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/webview/js/lib/dom_json.js',
+   'DATA'),
+  ('webview/js/lib/polyfill.js',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/webview/js/lib/polyfill.js',
+   'DATA'),
+  ('webview/js/customize.js',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/webview/js/customize.js',
+   'DATA'),
+  ('webview/js/state.js',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/webview/js/state.js',
+   'DATA'),
+  ('webview/js/finish.js',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/webview/js/finish.js',
+   'DATA'),
+  ('Python', 'Python.framework/Versions/3.13/Python', 'SYMLINK'),
+  ('werkzeug-3.1.3.dist-info/RECORD',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/werkzeug-3.1.3.dist-info/RECORD',
+   'DATA'),
+  ('click-8.2.1.dist-info/licenses/LICENSE.txt',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/click-8.2.1.dist-info/licenses/LICENSE.txt',
+   'DATA'),
+  ('click-8.2.1.dist-info/RECORD',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/click-8.2.1.dist-info/RECORD',
+   'DATA'),
+  ('MarkupSafe-3.0.2.dist-info/RECORD',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/MarkupSafe-3.0.2.dist-info/RECORD',
+   'DATA'),
+  ('MarkupSafe-3.0.2.dist-info/WHEEL',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/MarkupSafe-3.0.2.dist-info/WHEEL',
+   'DATA'),
+  ('itsdangerous-2.2.0.dist-info/INSTALLER',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/itsdangerous-2.2.0.dist-info/INSTALLER',
+   'DATA'),
+  ('werkzeug-3.1.3.dist-info/INSTALLER',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/werkzeug-3.1.3.dist-info/INSTALLER',
+   'DATA'),
+  ('werkzeug-3.1.3.dist-info/LICENSE.txt',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/werkzeug-3.1.3.dist-info/LICENSE.txt',
+   'DATA'),
+  ('flask-3.1.1.dist-info/licenses/LICENSE.txt',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/flask-3.1.1.dist-info/licenses/LICENSE.txt',
+   'DATA'),
+  ('flask-3.1.1.dist-info/RECORD',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/flask-3.1.1.dist-info/RECORD',
+   'DATA'),
+  ('MarkupSafe-3.0.2.dist-info/METADATA',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/MarkupSafe-3.0.2.dist-info/METADATA',
+   'DATA'),
+  ('flask-3.1.1.dist-info/WHEEL',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/flask-3.1.1.dist-info/WHEEL',
+   'DATA'),
+  ('numpy-2.3.2.dist-info/RECORD',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/numpy-2.3.2.dist-info/RECORD',
+   'DATA'),
+  ('click-8.2.1.dist-info/WHEEL',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/click-8.2.1.dist-info/WHEEL',
+   'DATA'),
+  ('flask-3.1.1.dist-info/METADATA',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/flask-3.1.1.dist-info/METADATA',
+   'DATA'),
+  ('MarkupSafe-3.0.2.dist-info/top_level.txt',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/MarkupSafe-3.0.2.dist-info/top_level.txt',
+   'DATA'),
+  ('MarkupSafe-3.0.2.dist-info/LICENSE.txt',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/MarkupSafe-3.0.2.dist-info/LICENSE.txt',
+   'DATA'),
+  ('flask-3.1.1.dist-info/INSTALLER',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/flask-3.1.1.dist-info/INSTALLER',
+   'DATA'),
+  ('numpy-2.3.2.dist-info/METADATA',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/numpy-2.3.2.dist-info/METADATA',
+   'DATA'),
+  ('itsdangerous-2.2.0.dist-info/RECORD',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/itsdangerous-2.2.0.dist-info/RECORD',
+   'DATA'),
+  ('click-8.2.1.dist-info/INSTALLER',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/click-8.2.1.dist-info/INSTALLER',
+   'DATA'),
+  ('numpy-2.3.2.dist-info/INSTALLER',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/numpy-2.3.2.dist-info/INSTALLER',
+   'DATA'),
+  ('click-8.2.1.dist-info/METADATA',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/click-8.2.1.dist-info/METADATA',
+   'DATA'),
+  ('itsdangerous-2.2.0.dist-info/METADATA',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/itsdangerous-2.2.0.dist-info/METADATA',
+   'DATA'),
+  ('itsdangerous-2.2.0.dist-info/LICENSE.txt',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/itsdangerous-2.2.0.dist-info/LICENSE.txt',
+   'DATA'),
+  ('numpy-2.3.2.dist-info/entry_points.txt',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/numpy-2.3.2.dist-info/entry_points.txt',
+   'DATA'),
+  ('MarkupSafe-3.0.2.dist-info/INSTALLER',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/MarkupSafe-3.0.2.dist-info/INSTALLER',
+   'DATA'),
+  ('werkzeug-3.1.3.dist-info/METADATA',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/werkzeug-3.1.3.dist-info/METADATA',
+   'DATA'),
+  ('numpy-2.3.2.dist-info/WHEEL',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/numpy-2.3.2.dist-info/WHEEL',
+   'DATA'),
+  ('numpy-2.3.2.dist-info/LICENSE.txt',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/numpy-2.3.2.dist-info/LICENSE.txt',
+   'DATA'),
+  ('flask-3.1.1.dist-info/entry_points.txt',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/flask-3.1.1.dist-info/entry_points.txt',
+   'DATA'),
+  ('flask-3.1.1.dist-info/REQUESTED',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/flask-3.1.1.dist-info/REQUESTED',
+   'DATA'),
+  ('itsdangerous-2.2.0.dist-info/WHEEL',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/itsdangerous-2.2.0.dist-info/WHEEL',
+   'DATA'),
+  ('werkzeug-3.1.3.dist-info/WHEEL',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/venv/lib/python3.13/site-packages/werkzeug-3.1.3.dist-info/WHEEL',
+   'DATA'),
+  ('base_library.zip',
+   '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual '
+   'Studio/PCS/build/PCS Proposals/base_library.zip',
+   'DATA'),
+  ('Python.framework/Python', 'Versions/Current/Python', 'SYMLINK'),
+  ('Python.framework/Resources', 'Versions/Current/Resources', 'SYMLINK'),
+  ('Python.framework/Versions/3.13/Resources/Info.plist',
+   '/Library/Frameworks/Python.framework/Versions/3.13/Resources/Info.plist',
+   'DATA'),
+  ('Python.framework/Versions/Current', '3.13', 'SYMLINK')],)
