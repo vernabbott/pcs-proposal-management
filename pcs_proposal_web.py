@@ -1,13 +1,12 @@
 # Recovery to 8/29 4:01
 
 # Directory constants (editable in one place)
-PROPOSALS_DIR = "/Users/vernabbott/OneDrive/Professional Coating Systems/Proposals"
-CONTRACTS_DIR = "/Users/vernabbott/OneDrive/Professional Coating Systems/Signed Contracts"
-COMPLETED_DIR = "/Users/vernabbott/OneDrive/Professional Coating Systems/Completed"
-TEMPLATE_DIR = "/Users/vernabbott/OneDrive/Professional Coating Systems/Job Jacket Template"
-OUTPUT_DIR = "/Users/vernabbott/OneDrive/Professional Coating Systems/Proposals"
+PROPOSALS_DIR = "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/Test Site/1. Open Proposals"
+CONTRACTS_DIR = "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/Test Site/2. Signed Contracts"
+COMPLETED_DIR = "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/Test Site/3. Finished Jobs"
+DEADFILE_DIR = "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/Test Site/4. Dead Proposals"
+TEMPLATE_DIR = "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/Test Site/Job Jacket Template"
 LIBREOFFICE_PATH = "/Applications/LibreOffice.app/Contents/MacOS/soffice"
-DEADFILE_DIR = "/Users/vernabbott/OneDrive/Professional Coating Systems/Dead"
 
 def create_proposal_from_fields(customer_name,
                                 street_address,
@@ -78,7 +77,7 @@ def create_proposal_from_fields(customer_name,
         folder_name = os.path.basename(proposal_folder)
     else:
         folder_name = f"{customer_name} - {street_address}"
-        proposal_folder = os.path.join(OUTPUT_DIR, folder_name)
+        proposal_folder = os.path.join(PROPOSALS_DIR, folder_name)
         os.makedirs(proposal_folder, exist_ok=True)
 
     # Map roof type to suffix
@@ -1300,7 +1299,7 @@ def update_proposal(folder_name):
 
     # If saving an existing proposal, delete old artifacts and regenerate in the same folder
     if action == 'save' and not allow_blank and folder_name:
-        proposal_folder = os.path.join(OUTPUT_DIR, folder_name)
+        proposal_folder = folder_path
         _delete_old_artifacts(proposal_folder)
         # Collect any additional mapped fields present on the form for initial write
         def _pf(name, default=None):
