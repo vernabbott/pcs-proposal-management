@@ -1,12 +1,15 @@
-# Recovery to 8/29 4:01
+import os
 
-# Directory constants (editable in one place)
-PROPOSALS_DIR = "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/Test Site/1. Open Proposals"
-CONTRACTS_DIR = "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/Test Site/2. Signed Contracts"
-COMPLETED_DIR = "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/Test Site/3. Finished Jobs"
-DEADFILE_DIR = "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/Test Site/4. Dead Proposals"
-TEMPLATE_DIR = "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/Test Site/Job Jacket Template"
-LIBREOFFICE_PATH = "/Applications/LibreOffice.app/Contents/MacOS/soffice"
+from dotenv import load_dotenv
+load_dotenv()
+
+# Directory constants (driven by environment variables; safe defaults for local dev)
+PROPOSALS_DIR  = os.environ.get("PROPOSALS_DIR", "./proposals")
+CONTRACTS_DIR  = os.environ.get("CONTRACTS_DIR", "./contracts")
+COMPLETED_DIR  = os.environ.get("COMPLETED_DIR", "./completed")
+DEADFILE_DIR   = os.environ.get("DEADFILE_DIR", "./dead")
+TEMPLATE_DIR   = os.environ.get("TEMPLATE_DIR", "./templates")
+LIBREOFFICE_PATH = os.environ.get("LIBREOFFICE_PATH", "/usr/bin/soffice")
 
 def create_proposal_from_fields(customer_name,
                                 street_address,
@@ -176,7 +179,7 @@ else:
 TEMPLATE_PATH = os.path.join(BASE_DIR, 'templates')
 STATIC_PATH = os.path.join(BASE_DIR, 'static')
 app = Flask(__name__, template_folder=TEMPLATE_PATH, static_folder=STATIC_PATH)
-app.secret_key = "1234567890qwertyuiopasdfghjklzxcvbnm"
+app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key")
 
 # ---- Jinja filters for number/currency blank if 0 ----
 @app.template_filter("num_blank0")
