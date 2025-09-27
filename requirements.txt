@@ -14,3 +14,4 @@ gunicorn==23.0.0
 pandas==2.2.3
 xlwings==0.31.10
 docx2pdf==0.1.8
+python-dotenv==1.0.1
