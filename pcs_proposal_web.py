@@ -11,6 +11,12 @@ DEADFILE_DIR   = os.environ.get("DEADFILE_DIR", "./dead")
 TEMPLATE_DIR   = os.environ.get("TEMPLATE_DIR", "./templates")
 LIBREOFFICE_PATH = os.environ.get("LIBREOFFICE_PATH", "/usr/bin/soffice")
 
+print("PROPOSALS_DIR =", PROPOSALS_DIR)
+print("CONTRACTS_DIR =", CONTRACTS_DIR)
+print("COMPLETED_DIR =", COMPLETED_DIR)
+print("DEADFILE_DIR =", DEADFILE_DIR)
+print("TEMPLATE_DIR =", TEMPLATE_DIR)
+
 def create_proposal_from_fields(customer_name,
                                 street_address,
                                 city,
