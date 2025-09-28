@@ -153,6 +153,39 @@ def create_proposal_from_fields(customer_name,
         if mapped_data:
             merged_map.update({k: v for k, v in mapped_data.items() if k in EXCEL_CELL_MAP and EXCEL_CELL_MAP[k]})
         write_fields_to_profit_summary(wb_profit, merged_map)
+        # ---- Run one of the workbook's VBA macros after writing cells ----
+        # Tries these button macros in order; stop at the first that succeeds.
+        macro_candidates = [
+            "Final_Mark_Sign",
+            "Final_Richard_Sign",
+            "Proposal_Mark_Sign",
+            "Proposal_Richard_Sign",
+        ]
+
+        # Allow override without code changes: EXCEL_MACROS="Macro1,Macro2"
+        env_macros = os.environ.get("EXCEL_MACROS", "").strip()
+        if env_macros:
+            macro_candidates = [m.strip() for m in env_macros.split(",") if m.strip()]
+
+        ran_any_macro = False
+        for name in macro_candidates:
+            try:
+                wb_profit.macro(name)()  # call VBA macro by name
+                print(f"Ran VBA macro: {name}")
+                ran_any_macro = True
+                break
+            except Exception as e:
+                print(f"Macro '{name}' not executed: {e}")
+
+        if not ran_any_macro:
+            # Fallback: trigger calculation if macros are not available
+            try:
+                wb_profit.app.calculate()
+                print("Excel recalculation triggered.")
+            except Exception as e:
+                print(f"Recalc not available: {e}")
+
+        # Save and close after updates/macros
         wb_profit.save()
         wb_profit.close()
     finally:
