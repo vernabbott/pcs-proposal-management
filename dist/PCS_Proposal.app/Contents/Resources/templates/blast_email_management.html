@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Blast Email Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <main class="container mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0">Blast Email Management</h1>
+            <a href="{{ url_for('landing_page') }}">Back to Home</a>
+        </div>
+        <form class="mx-auto" style="max-width: 560px;">
+            <div class="mb-4">
+                <label for="email_template" class="form-label fw-bold">Email Template</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="email_template" readonly>
+                    <input type="hidden" id="email_template_path" name="email_template_path">
+                    <button type="button" class="btn btn-outline-secondary" id="choose_email_template">Browse</button>
+                </div>
+                <div class="form-text text-danger d-none" id="email_template_error"></div>
+            </div>
+            <div class="mb-4">
+                <label for="distribution_list" class="form-label fw-bold">Distribution List</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="distribution_list" readonly>
+                    <input type="hidden" id="distribution_list_path" name="distribution_list_path">
+                    <button type="button" class="btn btn-outline-secondary" id="choose_distribution_list">Browse</button>
+                </div>
+                <div class="form-text text-danger d-none" id="distribution_list_error"></div>
+            </div>
+            <div class="mb-4">
+                <a href="#" id="generate_emails">Generate Emails</a>
+                <div class="form-text text-success d-none" id="generate_emails_status"></div>
+                <div class="form-text text-danger d-none" id="generate_emails_error"></div>
+            </div>
+        </form>
+    </main>
+    <script>
+        const chooseEmailTemplateButton = document.getElementById('choose_email_template');
+        const emailTemplateInput = document.getElementById('email_template');
+        const emailTemplatePathInput = document.getElementById('email_template_path');
+        const emailTemplateError = document.getElementById('email_template_error');
+        const chooseDistributionListButton = document.getElementById('choose_distribution_list');
+        const distributionListInput = document.getElementById('distribution_list');
+        const distributionListPathInput = document.getElementById('distribution_list_path');
+        const distributionListError = document.getElementById('distribution_list_error');
+        const generateEmailsLink = document.getElementById('generate_emails');
+        const generateEmailsStatus = document.getElementById('generate_emails_status');
+        const generateEmailsError = document.getElementById('generate_emails_error');
+
+        chooseEmailTemplateButton.addEventListener('click', async () => {
+            emailTemplateError.classList.add('d-none');
+            emailTemplateError.textContent = '';
+            chooseEmailTemplateButton.disabled = true;
+
+            try {
+                const response = await fetch("{{ url_for('choose_email_template') }}", {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json' }
+                });
+                const data = await response.json();
+
+                if (!response.ok || data.error) {
+                    emailTemplateError.textContent = data.error || 'Unable to choose email template.';
+                    emailTemplateError.classList.remove('d-none');
+                    return;
+                }
+
+                if (data.path) {
+                    emailTemplateInput.value = data.name || data.path.split('/').pop();
+                    emailTemplatePathInput.value = data.path;
+                }
+            } catch (error) {
+                emailTemplateError.textContent = 'Unable to choose email template.';
+                emailTemplateError.classList.remove('d-none');
+            } finally {
+                chooseEmailTemplateButton.disabled = false;
+            }
+        });
+
+        chooseDistributionListButton.addEventListener('click', async () => {
+            distributionListError.classList.add('d-none');
+            distributionListError.textContent = '';
+            chooseDistributionListButton.disabled = true;
+
+            try {
+                const response = await fetch("{{ url_for('choose_distribution_list') }}", {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json' }
+                });
+                const data = await response.json();
+
+                if (!response.ok || data.error) {
+                    distributionListError.textContent = data.error || 'Unable to choose distribution list.';
+                    distributionListError.classList.remove('d-none');
+                    return;
+                }
+
+                if (data.path) {
+                    distributionListInput.value = data.name || data.path.split('/').pop();
+                    distributionListPathInput.value = data.path;
+                }
+            } catch (error) {
+                distributionListError.textContent = 'Unable to choose distribution list.';
+                distributionListError.classList.remove('d-none');
+            } finally {
+                chooseDistributionListButton.disabled = false;
+            }
+        });
+
+        generateEmailsLink.addEventListener('click', async (event) => {
+            event.preventDefault();
+            generateEmailsStatus.classList.add('d-none');
+            generateEmailsError.classList.add('d-none');
+            generateEmailsStatus.textContent = '';
+            generateEmailsError.textContent = '';
+
+            if (!emailTemplatePathInput.value) {
+                generateEmailsError.textContent = 'Choose an email template first.';
+                generateEmailsError.classList.remove('d-none');
+                return;
+            }
+
+            if (!distributionListPathInput.value) {
+                generateEmailsError.textContent = 'Choose a distribution list first.';
+                generateEmailsError.classList.remove('d-none');
+                return;
+            }
+
+            generateEmailsLink.classList.add('disabled');
+            generateEmailsLink.setAttribute('aria-disabled', 'true');
+            generateEmailsStatus.textContent = 'Creating Outlook drafts...';
+            generateEmailsStatus.classList.remove('d-none');
+
+            try {
+                const response = await fetch("{{ url_for('generate_blast_emails') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email_template_path: emailTemplatePathInput.value,
+                        distribution_list_path: distributionListPathInput.value
+                    })
+                });
+                const data = await response.json();
+
+                if (!response.ok || data.error) {
+                    generateEmailsStatus.classList.add('d-none');
+                    generateEmailsError.textContent = data.error || 'Unable to generate Outlook drafts.';
+                    generateEmailsError.classList.remove('d-none');
+                    return;
+                }
+
+                generateEmailsStatus.textContent = data.message || 'Outlook drafts created.';
+            } catch (error) {
+                generateEmailsStatus.classList.add('d-none');
+                generateEmailsError.textContent = 'Unable to generate Outlook drafts.';
+                generateEmailsError.classList.remove('d-none');
+            } finally {
+                generateEmailsLink.classList.remove('disabled');
+                generateEmailsLink.removeAttribute('aria-disabled');
+            }
+        });
+    </script>
+</body>
+</html>
