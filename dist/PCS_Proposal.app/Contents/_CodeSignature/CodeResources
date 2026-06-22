@@ -38,7 +38,7 @@
 		</data>
 		<key>Resources/base_library.zip</key>
 		<data>
-		yeJp1mIo8+IROiCrPjibLRjjVyY=
+		QfwypNHWVBA6FChBUefAYw4Gom0=
 		</data>
 		<key>Resources/click-8.2.1.dist-info/INSTALLER</key>
 		<data>
@@ -174,7 +174,7 @@
 		</data>
 		<key>Resources/docx2pdf-0.1.8.dist-info/RECORD</key>
 		<data>
-		UVheILZMddjdJa9fm/67osXITM0=
+		xQ9XMe+j3upASsX2Eui/JcsetpY=
 		</data>
 		<key>Resources/docx2pdf-0.1.8.dist-info/REQUESTED</key>
 		<data>
@@ -202,7 +202,7 @@
 		</data>
 		<key>Resources/flask-3.1.1.dist-info/RECORD</key>
 		<data>
-		fW+8yJ0wrETsJ7hKfwUB9IZ//v0=
+		fpLM+hHWAiQAPtGdh6PXkxTys1E=
 		</data>
 		<key>Resources/flask-3.1.1.dist-info/REQUESTED</key>
 		<data>
@@ -397,19 +397,19 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			qCNVfZNDER8CBhAPVXoFSFO0U4w=
+			CCtIDDWaMdt7gGcqN+t+P2qGVHc=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"a823557d9343111f0206100f557a054853b4538c"</string>
+			<string>identifier "org.python.python" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/aem/ae.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			dEp7PudP8F2nweKHgXwmCFNRSxE=
+			9vjJx9ediwb74w8YDWM//tNbTLU=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"744a7b3ee74ff05da7c1e287817c260853514b11"</string>
+			<string>identifier "ae.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/base_library.zip</key>
 		<dict>
@@ -450,73 +450,73 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			j/MsGVKruLZ8AD7hptLuyMVeqW8=
+			QxKCOUm2ydISG+XgQKA/8z+gbAM=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"8ff32c1952abb8b67c003ee1a6d2eec8c55ea96f"</string>
+			<string>identifier "libcrypto.3" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/libncurses.6.dylib</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			pPLiiEKlE/6Q2SN8Up0bpbLNBY4=
+			Y9HRQkhUBrPQrjjOz/mKw7gqBlA=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"a4f2e28842a513fe90d9237c529d1ba5b2cd058e"</string>
+			<string>identifier "libncurses.6" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/libssl.3.dylib</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			sKNv+opiZKqLRwPoZjIxxzLXbOs=
+			+3qIMNz2x5O5GDyGbhikglG1BKc=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"b0a36ffa8a6264aa8b4703e8663231c732d76ceb"</string>
+			<string>identifier "libssl.3" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/lxml/_elementpath.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			LwMyEcGeHORDTSbUF2AVTuTrofY=
+			03ynKdjoDgBArVfTOOaRhyiJih4=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"2f033211c19e1ce4434d26d41760154ee4eba1f6"</string>
+			<string>identifier "_elementpath.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/lxml/builder.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			pjWSX4nHN1/Vhy03Pns5Jzc/kGY=
+			iLsGT80FM7x5IUj9HUJhFFxmS4c=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"a635925f89c7375fd5872d373e7b3927373f9066"</string>
+			<string>identifier "builder.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/lxml/etree.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			zhLqcjwKRdpM/tYqzlMcMIwBXhI=
+			ZZK6GbvkhOjRi86yge0T35f53xA=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"ce12ea723c0a45da4cfed62ace531c308c015e12"</string>
+			<string>identifier "etree.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/lxml/html/_difflib.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			tyVyy0doR1m285KGqO/vS0ixSTE=
+			QHSSAKO0oJudRss3GtO2NWb/5QI=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"b72572cb47684759b6f39286a8efef4b48b14931"</string>
+			<string>identifier "_difflib.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/lxml/html/diff.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			8GBLeSNbfM/jsYaALqzCSAq6NwA=
+			VvgxtDnWMm6Wt8OouB6tOb4lrbk=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"f0604b79235b7ccfe3b186802eacc2480aba3700"</string>
+			<string>identifier "diff.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/lxml/isoschematron</key>
 		<dict>
@@ -527,46 +527,46 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			6O1ddq13ZuygZPErVCelMx+0RqQ=
+			yx5fyZk+H//EJkDnzRMnNhFh1gI=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"e8ed5d76ad7766eca064f12b5427a5331fb446a4"</string>
+			<string>identifier "objectify.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/lxml/sax.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			t049Vf0W4eMhjMgK//perbu8OH8=
+			cpyBQY5oCbhtzxEGfbEn+yHQaYg=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"b74e3d55fd16e1e3218cc80afffa5eadbbbc387f"</string>
+			<string>identifier "sax.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/markupsafe/_speedups.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			tdhqmAWtXn/t47yqMu+NO/O8NjM=
+			2yAsG0JHPRAW4Qur32bcPN95OL0=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"b5d86a9805ad5e7fede3bcaa32ef8d3bf3bc3633"</string>
+			<string>identifier "_speedups.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/psutil/_psutil_osx.abi3.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			k8Ou++uICp9z2vzlv0MfQH8Lj2k=
+			C+wfr/oTZKWMmJ/0LBFPDOZ8Ftk=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"93c3aefbeb880a9f73dafce5bf431f407f0b8f69"</string>
+			<string>identifier "_psutil_osx.abi3" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/psutil/_psutil_posix.abi3.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			6SlodMYyWDXIvntuUUrLHQh5j+4=
+			o0zKKmxLN2Lh5j8tRWCec7Mx2fo=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"e9296874c6325835c8be7b6e514acb1d08798fee"</string>
+			<string>identifier "_psutil_posix.abi3" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3.13</key>
 		<dict>
@@ -577,478 +577,478 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			aH+cGpv2Ui7bxUUpBtIrC9fCNvY=
+			wKwoJw+UJxCo0bnpWlZ543zA3VA=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"687f9c1a9bf6522edbc5452906d22b0bd7c236f6"</string>
+			<string>identifier "_asyncio.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_bisect.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			ZMt1oEOBHUKDerrHpN+VQiCyBe4=
+			vkLsu+QMqhsZ033tD8bQBNXcqWw=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"64cb75a043811d42837abac7a4df954220b205ee"</string>
+			<string>identifier "_bisect.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_blake2.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			ETxt7cHGr47YIsWS+IvStmFugk4=
+			z22mxyJZcm5nca0CnlwKmEGIncQ=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"113c6dedc1c6af8ed822c592f88bd2b6616e824e"</string>
+			<string>identifier "_blake2.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_bz2.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			RPx/wh//6SlJ8QNB5J1J2ncwsDw=
+			upl9PWRPbxaSeMN7DW4tBJ3TEeQ=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"44fc7fc21fffe92949f10341e49d49da7730b03c"</string>
+			<string>identifier "_bz2.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_codecs_cn.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			22VW3prO6XrveZ0a7rqjAQV29zY=
+			FEEuG+DjiIn7v3A+y7UIiZdp8zQ=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"db6556de9acee97aef799d1aeebaa3010576f736"</string>
+			<string>identifier "_codecs_cn.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_codecs_hk.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			mytzL4vhOkEyWqcq2RGtsAqQ4Gg=
+			7jhpxnzTci3Ui2udl7uORaN6i7A=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"9b2b732f8be13a41325aa72ad911adb00a90e068"</string>
+			<string>identifier "_codecs_hk.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_codecs_iso2022.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			p4Tu8ctMtmaSiUg9d5yUx2N9Ka8=
+			kex0mJNdidONHNFqAc6vv+6OEBA=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"a784eef1cb4cb6669289483d779c94c7637d29af"</string>
+			<string>identifier "_codecs_iso2022.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_codecs_jp.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			DL3yP2DkspX+H6CfzUhwXgGZBb8=
+			z9tsNfizqNSaMVokK2p1SjG7AAo=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"0cbdf23f60e4b295fe1fa09fcd48705e019905bf"</string>
+			<string>identifier "_codecs_jp.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_codecs_kr.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			UYS/afdpet3NoHTRSyWpSVLYdkM=
+			CO30DZE8ZA7Cs1Q7EalT5c1orYY=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"5184bf69f7697addcda074d14b25a94952d87643"</string>
+			<string>identifier "_codecs_kr.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_codecs_tw.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			xV89Ag+hp9WPJhXaTHN87w2Npfc=
+			TGmM8WaZSaqIz1CdVnpZ04J7NNw=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"c55f3d020fa1a7d58f2615da4c737cef0d8da5f7"</string>
+			<string>identifier "_codecs_tw.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_contextvars.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			XHiFmekhTaiaw3qkEwcG7rw3P7U=
+			n1v/OU4b4DNxOySEbZE/wL136oA=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"5c788599e9214da89ac37aa4130706eebc373fb5"</string>
+			<string>identifier "_contextvars.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_csv.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			ODqabcC6hq/YkP2POKOrj2GBlA8=
+			mHho9Z/XELUIYCvZxjcLxuQF/JM=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"383a9a6dc0ba86afd890fd8f38a3ab8f6181940f"</string>
+			<string>identifier "_csv.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_ctypes.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			Tn3DTkNP++J6lOiSUZENJzYTWo4=
+			7G1myyHRx+8YqAZIfx1K4V6Erws=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"4e7dc34e434ffbe27a94e89251910d2736135a8e"</string>
+			<string>identifier "_ctypes.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_curses.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			W0kehTR+FLEwYLN7iV74qpGdwcU=
+			BLW7x3dOH1QlOO+Q3eyIRJQbmk0=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"5b491e85347e14b13060b37b895ef8aa919dc1c5"</string>
+			<string>identifier "_curses.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_datetime.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			0AMNqgnUXPFcimKRi7cDgmDAyKk=
+			fZzwQE1ZCqyrdWKN46PDPeJbcp4=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"d0030daa09d45cf15c8a62918bb7038260c0c8a9"</string>
+			<string>identifier "_datetime.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_decimal.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			G3wLmiVHcF8UabS18VoTM0ZAPvQ=
+			hWRBoDrr/sP3+BREZM3b+7yvg0Y=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"1b7c0b9a2547705f1469b4b5f15a133346403ef4"</string>
+			<string>identifier "_decimal.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_elementtree.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			7tA4Y4mXGUlYQQMQYMv+AwNgKQw=
+			Qe4KtFen9YddI62ceL9t5PIslbY=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"eed03863899719495841031060cbfe030360290c"</string>
+			<string>identifier "_elementtree.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_hashlib.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			hZkm75ShPhUOWoD0U1gxrJzHJBs=
+			pgBIy8fDRuew1GYvxAAEJ8ySJjI=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"859926ef94a13e150e5a80f4535831ac9cc7241b"</string>
+			<string>identifier "_hashlib.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_heapq.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			XcjCpxHHwsJU1ofN8cW5JLEfDJs=
+			T+WG2TiUPTXPYkEKpzwUhIguxUs=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"5dc8c2a711c7c2c254d687cdf1c5b924b11f0c9b"</string>
+			<string>identifier "_heapq.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_json.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			rfxC0f++j2wwGsgi14DtuKfnIGs=
+			a92qbs1e2+d3c1jpTv0zn3gxg4I=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"adfc42d1ffbe8f6c301ac822d780edb8a7e7206b"</string>
+			<string>identifier "_json.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_lzma.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			ue7tdRHPD7CyWAvb+TcKkB2Fbps=
+			SDBgxrG5CQ1p/a/7f8vy9QK2bmM=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"b9eeed7511cf0fb0b2580bdbf9370a901d856e9b"</string>
+			<string>identifier "_lzma.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_md5.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			W8EgxofzxRziuHfDbVp/09aquR4=
+			Uauf6IvKSs8LO7DzIo2Vl1zztXM=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"5bc120c687f3c51ce2b877c36d5a7fd3d6aab91e"</string>
+			<string>identifier "_md5.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_multibytecodec.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			uKAk2yjO8wVOxspcst7rLIUkXBc=
+			TZei4Km4CBSYXnPvWvgNsx3FVZI=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"b8a024db28cef3054ec6ca5cb2deeb2c85245c17"</string>
+			<string>identifier "_multibytecodec.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_multiprocessing.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			IGPUfuxa/hIUOlQX2ee9crPKnxw=
+			uW5fqZNNOQ1c/wsW5ZAruKpCSso=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"2063d47eec5afe12143a5417d9e7bd72b3ca9f1c"</string>
+			<string>identifier "_multiprocessing.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_opcode.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			fGDiu3K2l4sgDmr2KfyHQgaDBio=
+			zddlO1PiNcBhl/rdyi5tkyq7kPM=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"7c60e2bb72b6978b200e6af629fc87420683062a"</string>
+			<string>identifier "_opcode.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_pickle.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			6R7p2TtxCoH6IV1UOIxUfHlBUEo=
+			MBb8wQo0F2QXgnYtgm0byg9MnQ4=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"e91ee9d93b710a81fa215d54388c547c7941504a"</string>
+			<string>identifier "_pickle.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_posixshmem.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			iumwNRQyR5N3R5iLSpsBvU/wAXY=
+			lO2IGLQxu39/PJHPgyCd7/MqLCE=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"8ae9b035143247937747988b4a9b01bd4ff00176"</string>
+			<string>identifier "_posixshmem.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_posixsubprocess.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			misx/UFwRoztsinwNGjCDAeccR8=
+			5u7+sX0iv61qB3GHKNw797UAWnI=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"9a2b31fd4170468cedb229f03468c20c079c711f"</string>
+			<string>identifier "_posixsubprocess.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_queue.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			9+gR2SyGkFTtDLuc4GsLiW3a3hs=
+			4eR6v7LDqP9Y+bM9B4sWwTfRMQg=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"f7e811d92c869054ed0cbb9ce06b0b896ddade1b"</string>
+			<string>identifier "_queue.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_random.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			yUjQ4n8o1mARt7jbGxEYyRfutpY=
+			pcguaNZmaOx/+4SNBgdvxFH4/ks=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"c948d0e27f28d66011b7b8db1b1118c917eeb696"</string>
+			<string>identifier "_random.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_scproxy.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			SaC/xsTk9JIjwEP6CXcLTwxQQyo=
+			XDOYyDSnCShwamZKBVVfDi7eEqM=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"49a0bfc6c4e4f49223c043fa09770b4f0c50432a"</string>
+			<string>identifier "_scproxy.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_sha1.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			NEHbrWZKBYWcrwGap1Cpzed2o/g=
+			Zu9zN5Kenfmv5xSbtKkQH3dC5Ns=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"3441dbad664a05859caf019aa750a9cde776a3f8"</string>
+			<string>identifier "_sha1.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_sha2.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			DpFx/bkSZwQBWOAZJlJyQxnUnHE=
+			r6Ub39EDYB67O0uIgUr92yOMqLs=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"0e9171fdb91267040158e0192652724319d49c71"</string>
+			<string>identifier "_sha2.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_sha3.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			tH5tTjDYrIycxXHQ7F5+dG5IOa4=
+			QeZiMTe44xqj+EdKvbdZbmBQKxg=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"b47e6d4e30d8ac8c9cc571d0ec5e7e746e4839ae"</string>
+			<string>identifier "_sha3.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_socket.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			Wj8kqdpnN1ucwRrgba4q44zvBYk=
+			cRPA0GBr5nHoOkqOGS1IwOoDN3c=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"5a3f24a9da67375b9cc11ae06dae2ae38cef0589"</string>
+			<string>identifier "_socket.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_ssl.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			Kqj1RCKuhNUd/PLXQWvUCAxQncI=
+			vmzYZ2bXOiiJqle77G4gfTVXuic=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"2aa8f54422ae84d51dfcf2d7416bd4080c509dc2"</string>
+			<string>identifier "_ssl.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_statistics.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			mqHHLjx0/y2dt/TXy1vxWM1Hjbw=
+			O2Cj8FvTbISgOnZXbv7uYh9jbcg=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"9aa1c72e3c74ff2d9db7f4d7cb5bf158cd478dbc"</string>
+			<string>identifier "_statistics.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_struct.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			nv9u/1cWWqYqamjDyi3cCFuQvic=
+			YZqzPPivOeBjoQba5xZ8l/MMRpE=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"9eff6eff57165aa62a6a68c3ca2ddc085b90be27"</string>
+			<string>identifier "_struct.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/_uuid.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			yEoZJegNch6E/EyQ6P2XjOAcP7c=
+			D/7NrHpn7LRHGK3gJmA9CKtJW7A=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"c84a1925e80d721e84fc4c90e8fd978ce01c3fb7"</string>
+			<string>identifier "_uuid.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/array.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			FdveN9Hd7XFqnmInxqAYX04S0iQ=
+			fRG/xH4YzAZYm9P5l4Pkr4134iw=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"15dbde37d1dded716a9e6227c6a0185f4e12d224"</string>
+			<string>identifier "array.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/binascii.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			x5whjlTAfGA5OJUiafpBRmQ3CxY=
+			NGG9DGhA4FAt0JUdpZbXv6Pf5Uw=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"c79c218e54c07c603938952269fa414664370b16"</string>
+			<string>identifier "binascii.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/fcntl.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			AHdsCSL+LN9qaUifEy/M4lOAEY4=
+			PdcH9dAtkWlJXB7HcfhZIiyYHzM=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"00776c0922fe2cdf6a69489f132fcce25380118e"</string>
+			<string>identifier "fcntl.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/grp.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			3FndO5bwPZkpYr2D1Wuppz6UaYQ=
+			nBa5vB0WZI1MODNexGoMhbM+O1g=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"dc59dd3b96f03d992962bd83d56ba9a73e946984"</string>
+			<string>identifier "grp.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/math.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			pB6/tezbVhjVWpIRybAnzpeLpvw=
+			ZjapBLXR47mUbYJ72QraKtmDt5w=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"a41ebfb5ecdb5618d55a9211c9b027ce978ba6fc"</string>
+			<string>identifier "math.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/mmap.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			/d0U30pTCgyTpy/4Dv+Nt6jg00Q=
+			dMpGx51kFIxmmYPtFgXL3i/Hn5s=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"fddd14df4a530a0c93a72ff80eff8db7a8e0d344"</string>
+			<string>identifier "mmap.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/pyexpat.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			r8m+1omCmhPLhM67pwcvffaiwxs=
+			s5kPetBYO7shoug9O4dP9XarbdM=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"afc9bed689829a13cb84cebba7072f7df6a2c31b"</string>
+			<string>identifier "pyexpat.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/readline.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			GWfzq03KPrn7EF/FsdScKFBSMwY=
+			gBt+jvEdVcSjuyTzhlmpc/2tjek=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"1967f3ab4dca3eb9fb105fc5b1d49c2850523306"</string>
+			<string>identifier "readline.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/resource.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			+jEn1Yhf5IUJ6RqfyyiVUmlvoE8=
+			eEQGgFQR5IJ2dbGjO9knsKGw+a0=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"fa3127d5885fe48509e91a9fcb289552696fa04f"</string>
+			<string>identifier "resource.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/select.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			MAgnWNc7CfFwM4+b5zn4F26GlRA=
+			cXkv/oWAYINMBzsIJLdGlSEWRqg=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"30082758d73b09f170338f9be739f8176e869510"</string>
+			<string>identifier "select.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/syslog.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			fudeMgQrGUfu/Wp2242ULr3lUT0=
+			B5J46sCcfZFLNzf6qXbZ6FLUl+Y=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"7ee75e32042b1947eefd6a76db8d942ebde5513d"</string>
+			<string>identifier "syslog.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/termios.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			f9GdsZ++TJT8WaLb1N+Etg+bC88=
+			l0pv47aK091vJdaftvFcQAeyOzQ=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"7fd19db19fbe4c94fc59a2dbd4df84b60f9b0bcf"</string>
+			<string>identifier "termios.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/unicodedata.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			iLbl2TiWOWc3FS/1uhlg9SxxYpQ=
+			z6tfyYufDOZiAWbWRCBepT/lFSA=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"88b6e5d93896396737152ff5ba1960f52c716294"</string>
+			<string>identifier "unicodedata.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/python3__dot__13/lib-dynload/zlib.cpython-313-darwin.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			UzDfo6kSCGtzlXQbL1pdrx6vvbo=
+			FylnKP7B7Fya8GwNoSHD0wN0b/0=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"5330dfa3a912086b7395741b2f5a5daf1eafbdba"</string>
+			<string>identifier "zlib.cpython-313-darwin" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: vern.abbott@att.net (3SKXD554K7)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/resources</key>
 		<dict>
@@ -1074,15 +1074,6 @@
 		<dict>
 			<key>symlink</key>
 			<string>../Resources/werkzeug-3.1.3.dist-info</string>
-		</dict>
-		<key>Frameworks/xlwings/xlwingslib.cpython-313-darwin.so</key>
-		<dict>
-			<key>cdhash</key>
-			<data>
-			ZrnF3AfbOUD45nhlPWSkBWIfi+Q=
-			</data>
-			<key>requirement</key>
-			<string>cdhash H"66b9c5dc07db3940f8e678653d64a405621f8be4"</string>
 		</dict>
 		<key>Resources/MarkupSafe-3.0.2.dist-info/INSTALLER</key>
 		<dict>
@@ -1159,7 +1150,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			6WMjEF69FCjQxALAugsIJtHDMgQ672kNxXrXHPYP2Xs=
+			j2yIVJEZGusTi0mUis0yMrbi4hURdBgtigCFA0hUXvs=
 			</data>
 		</dict>
 		<key>Resources/click-8.2.1.dist-info/INSTALLER</key>
@@ -1397,7 +1388,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			QE0fqZDOeOyffFlNvET69rLXmDGh6yWYQtovCFBAKzc=
+			VXRVs2ZpMCsNJwgVATtc2CKhAFoGprsKf9VoUsKa/mU=
 			</data>
 		</dict>
 		<key>Resources/docx2pdf-0.1.8.dist-info/REQUESTED</key>
@@ -1446,7 +1437,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			oyZTfFIBxMpcz3pb6UsxlUl5iO++J/0pkh0belSQjsI=
+			3H7ROULPThbxdycB1FstarF+s0VM3cpAxP/rKTI1yCU=
 			</data>
 		</dict>
 		<key>Resources/flask-3.1.1.dist-info/REQUESTED</key>
@@ -1816,11 +1807,6 @@
 			<data>
 			CpUCUxeHQbRN5UGRQHYRJorO5Af+Qy/fHMctcQ8DSGI=
 			</data>
-		</dict>
-		<key>Resources/xlwings</key>
-		<dict>
-			<key>symlink</key>
-			<string>../Frameworks/xlwings</string>
 		</dict>
 	</dict>
 	<key>rules</key>

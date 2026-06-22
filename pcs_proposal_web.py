@@ -314,15 +314,18 @@ def _append_to_proposal_tracking_xlwings(tracker_path,
     app = None
     wb = None
     temp_path = None
+    xw_module = _get_xlwings()
+    if xw_module is None:
+        raise RuntimeError("xlwings is not available")
     try:
-        app = xw.App(visible=False, add_book=False)
+        app = xw_module.App(visible=False, add_book=False)
         # Open existing workbook; if missing, create a new one with a header row
         source_path = _proposal_tracker_source_path(tracker_path)
         if source_path:
-            wb = xw.Book(source_path)
+            wb = xw_module.Book(source_path)
             ws = wb.sheets[0]
         else:
-            wb = xw.Book()
+            wb = xw_module.Book()
             ws = wb.sheets[0]
             ws.name = "Tracking"
             # Minimal header row so row 1 is always header (adjust if your template has different headers)
@@ -419,6 +422,9 @@ def _append_to_proposal_tracking_openpyxl_simple(
         else:
             wb = Workbook()
             ws = wb.active
+        if ws is None:
+            raise RuntimeError("Proposal tracker workbook does not have an active worksheet")
+        if not source_path:
             ws.title = "Tracking"
             ws.append(["Proposal Folder Name", "", "", "Lead", "Submitted By", "", "", "Vern", "", ""])
 
@@ -552,6 +558,8 @@ def _append_to_proposal_tracking_unlocked(created_date,
         # Create the new workbook (fresh)
         new_wb = Workbook()
         new_ws = new_wb.active
+        if new_ws is None:
+            raise RuntimeError("Proposal tracker workbook does not have an active worksheet")
         new_ws.title = "Tracking"
         if prev_ws is None:
             new_ws.append([
@@ -580,7 +588,8 @@ def _append_to_proposal_tracking_unlocked(created_date,
         if prev_ws is not None:
             try:
                 # Merged cells
-                for mc in getattr(prev_ws, 'merged_cells', []).ranges:
+                merged_ranges = getattr(getattr(prev_ws, 'merged_cells', None), 'ranges', [])
+                for mc in merged_ranges:
                     try:
                         new_ws.merge_cells(str(mc))
                     except Exception:
@@ -601,12 +610,25 @@ def _append_to_proposal_tracking_unlocked(created_date,
 
                 # Named styles (fonts, fills, borders referenced by name)
                 try:
-                    if hasattr(prev_ws.parent, 'named_styles') and hasattr(new_ws.parent, 'named_styles'):
-                        existing = {ns.name for ns in new_ws.parent.named_styles}
-                        for ns in prev_ws.parent.named_styles:
+                    prev_parent = prev_ws.parent
+                    new_parent = new_ws.parent
+                    if (
+                        prev_parent is not None
+                        and new_parent is not None
+                        and hasattr(prev_parent, 'named_styles')
+                        and hasattr(new_parent, 'named_styles')
+                    ):
+                        existing = {
+                            ns if isinstance(ns, str) else getattr(ns, "name", None)
+                            for ns in new_parent.named_styles
+                        }
+                        for ns in prev_parent.named_styles:
                             try:
-                                if ns.name not in existing:
-                                    new_ws.parent.add_named_style(ns)
+                                if isinstance(ns, str):
+                                    continue
+                                style_name = ns if isinstance(ns, str) else getattr(ns, "name", None)
+                                if style_name not in existing:
+                                    new_parent.add_named_style(ns)
                             except Exception:
                                 pass
                 except Exception:
@@ -2135,7 +2157,8 @@ def _set_worksheet_value(ws, cell_addr, value):
         pass
 
     try:
-        for merged_range in ws.merged_cells.ranges:
+        merged_ranges = getattr(getattr(ws, "merged_cells", None), "ranges", [])
+        for merged_range in merged_ranges:
             if cell_addr in merged_range:
                 ws.cell(merged_range.min_row, merged_range.min_col).value = value
                 return
@@ -2181,7 +2204,7 @@ def ensure_profit_summary_validations(wb_profit):
     try:
         for dv in ws.data_validations.dataValidation:
             try:
-                for rng in dv.ranges:
+                for rng in getattr(dv, "ranges", []):
                     if target_cell in rng:
                         has_validation = True
                         break

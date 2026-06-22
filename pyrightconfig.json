@@ -1,4 +1,10 @@
 {
+  "include": [
+    "pcs_proposal_web.py",
+    "profit_summary_formulas.py",
+    "run_app.py",
+    "test_recalc_merge.py"
+  ],
   "exclude": [
     ".venv",
     "venv",
@@ -6,6 +12,8 @@
     "dist",
     "__pycache__"
   ],
+  "typeCheckingMode": "off",
+  "pythonVersion": "3.13",
   "venvPath": ".",
   "venv": ".venv"
 }

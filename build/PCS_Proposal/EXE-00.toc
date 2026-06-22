@@ -45,27 +45,27 @@
   ('pyiboot01_bootstrap',
    '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual Studio/PCS '
    'Proposal '
-   'Management/venv/lib/python3.13/site-packages/PyInstaller/loader/pyiboot01_bootstrap.py',
+   'Management/.venv/lib/python3.13/site-packages/PyInstaller/loader/pyiboot01_bootstrap.py',
    'PYSOURCE'),
   ('pyi_rth_inspect',
    '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual Studio/PCS '
    'Proposal '
-   'Management/venv/lib/python3.13/site-packages/PyInstaller/hooks/rthooks/pyi_rth_inspect.py',
+   'Management/.venv/lib/python3.13/site-packages/PyInstaller/hooks/rthooks/pyi_rth_inspect.py',
    'PYSOURCE'),
   ('pyi_rth_setuptools',
    '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual Studio/PCS '
    'Proposal '
-   'Management/venv/lib/python3.13/site-packages/PyInstaller/hooks/rthooks/pyi_rth_setuptools.py',
+   'Management/.venv/lib/python3.13/site-packages/PyInstaller/hooks/rthooks/pyi_rth_setuptools.py',
    'PYSOURCE'),
   ('pyi_rth_pkgutil',
    '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual Studio/PCS '
    'Proposal '
-   'Management/venv/lib/python3.13/site-packages/PyInstaller/hooks/rthooks/pyi_rth_pkgutil.py',
+   'Management/.venv/lib/python3.13/site-packages/PyInstaller/hooks/rthooks/pyi_rth_pkgutil.py',
    'PYSOURCE'),
   ('pyi_rth_multiprocessing',
    '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual Studio/PCS '
    'Proposal '
-   'Management/venv/lib/python3.13/site-packages/PyInstaller/hooks/rthooks/pyi_rth_multiprocessing.py',
+   'Management/.venv/lib/python3.13/site-packages/PyInstaller/hooks/rthooks/pyi_rth_multiprocessing.py',
    'PYSOURCE'),
   ('run_app',
    '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual Studio/PCS '
@@ -74,10 +74,10 @@
  [],
  False,
  False,
- 1782137100,
+ 1782139912,
  [('runw',
    '/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual Studio/PCS '
    'Proposal '
-   'Management/venv/lib/python3.13/site-packages/PyInstaller/bootloader/Darwin-64bit/runw',
+   'Management/.venv/lib/python3.13/site-packages/PyInstaller/bootloader/Darwin-64bit/runw',
    'EXECUTABLE')],
  '/Library/Frameworks/Python.framework/Versions/3.13/Python')
