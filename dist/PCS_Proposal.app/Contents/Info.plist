@@ -9,7 +9,7 @@
 	<key>CFBundleIconFile</key>
 	<string>PCS_Proposal.icns</string>
 	<key>CFBundleIdentifier</key>
-	<string>PCS_Proposal</string>
+	<string>com.procoatingsystems.pcsproposal</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>

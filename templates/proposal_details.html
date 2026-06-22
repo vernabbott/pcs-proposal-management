@@ -43,9 +43,14 @@
     }
     .project-panel {
       margin-bottom: 3px;
+      padding-top: 6px;
+      padding-bottom: 6px;
     }
     .pricing-inputs-panel {
       margin-bottom: 3px;
+      padding-top: 6px;
+      padding-bottom: 6px;
+      padding-left: 15px;
     }
     #below-profit-grid {
       margin-top: 0 !important;
@@ -70,10 +75,11 @@
     }
     .profit-summary-grid {
       display: grid;
-      grid-template-columns: 108px repeat(3, 86px);
+      grid-template-columns: 108px repeat(3, minmax(86px, 1fr));
       column-gap: 8px;
       row-gap: 4px;
       align-items: center;
+      width: 100%;
       margin-left: auto;
       margin-right: auto;
     }
@@ -84,7 +90,7 @@
       font-weight: 700;
     }
     .profit-summary-grid .term-header {
-      text-align: right;
+      text-align: center;
       font-size: 12px;
       font-weight: 700;
       color: #475467;
@@ -93,6 +99,7 @@
       font-size: 13px !important;
       font-weight: bold !important;
       white-space: nowrap;
+      text-align: left;
     }
     .profit-summary-grid .form-control-plaintext {
       width: 100%;
@@ -107,15 +114,6 @@
       margin-top: 6px;
       padding-left: 328px;
     }
-    #attachProposalFilesButton {
-      width: max-content;
-      padding: 0;
-      font-size: 12px;
-      font-weight: 700;
-      line-height: 1.2;
-      text-decoration: none;
-      white-space: nowrap;
-    }
     #selectedProposalFilesSummary {
       min-height: 16px;
       font-size: 11px;
@@ -123,11 +121,6 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-    }
-    .financial-summary-card {
-      display: inline-block;
-      margin: 0 auto;
-      text-align: left;
     }
     .form-label, label {
       font-size: 13px !important;
@@ -218,7 +211,7 @@
     }
 
     /* Aligned 4-column grid for cost rows */
-    .cost-grid { display: grid; grid-template-columns: 180px 90px 90px 120px; column-gap: 4px; row-gap: 4px; align-items: center; }
+    .cost-grid { display: grid; grid-template-columns: 180px minmax(90px, 1fr) minmax(90px, 1fr) minmax(120px, 1fr); column-gap: 4px; row-gap: 4px; align-items: center; padding-left: 15px; padding-right: 15px; }
     .cost-grid .hdr { font-weight: 800; font-size: 11px; color: #475467; text-transform: uppercase; letter-spacing: 0; }
     .cost-grid .label {
       white-space: nowrap;
@@ -234,11 +227,10 @@
     /* Upper card grid to match cost breakdown look */
     .header-grid { 
       display: grid; 
-      grid-template-columns: 100px 130px 100px 140px 120px 140px 100px 120px 90px 120px; 
+      grid-template-columns: 10fr 10fr 10fr 10fr 10fr 13fr 10fr 10fr 7fr 10fr;
       column-gap: 12px; 
       row-gap: 4px; 
       align-items: center; 
-      margin-left: 80px;
     }
     .header-grid .hdr-label {
       white-space: nowrap;
@@ -250,22 +242,19 @@
     .header-grid .readonly { background: #f8fafc; border: 1px solid transparent; }
     .header-grid .btn-group { display: inline-flex; gap: 4px; }
     .header-grid .left-reset {
-      position: relative;
-      left: -80px;
+      position: static;
     }
     .header-grid .second-col-label {
-      position: relative;
-      left: -35px;
+      position: static;
     }
     .header-grid .second-col-field {
-      position: relative;
-      left: -35px;
-      width: 140px;
-      justify-self: start;
+      position: static;
+      width: 100%;
+      justify-self: stretch;
     }
     .header-grid .second-col-field.segmented {
       display: flex;
-      width: 140px;
+      width: 100%;
     }
     .header-grid .second-col-field.segmented label {
       flex: 1 1 0;
@@ -293,7 +282,28 @@
     #proposal-note-section { grid-template-columns: 160px 450px; }
     #proposal-language-section { grid-template-columns: 160px 450px; }
     #lead-section { grid-template-columns: 160px 450px; }
-    #customer-name-row { grid-template-columns: 80px 160px 90px 105px 110px 220px 60px 130px 50px 55px 70px 95px; }
+    .adjusted-fields-stack {
+      display: grid;
+      row-gap: 4px;
+      align-content: start;
+    }
+    .adjusted-fields-stack .inline-input-row {
+      margin-bottom: 0 !important;
+    }
+    .adjusted-fields-stack label {
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
+      line-height: 1.2;
+    }
+    #customer-name-row {
+      grid-template-columns: 80px minmax(120px, 1fr) 90px minmax(90px, 0.8fr) 110px minmax(150px, 1.4fr) 60px minmax(90px, 0.8fr) 50px 55px 70px minmax(70px, 0.6fr);
+      width: 100%;
+    }
+    #customer-name-row input,
+    #customer-name-row select {
+      min-width: 0;
+      width: 100% !important;
+    }
 
     #below-profit-grid {
       margin-top: 0 !important;
@@ -306,25 +316,36 @@
       border: 1px solid var(--detail-border);
       border-radius: 8px;
       padding: 14px;
+      padding-top: 6px;
+      padding-bottom: 6px;
       box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
     }
 
-    .financial-summary-card {
-      border: 1px solid var(--detail-border);
-      background: #f8fafc !important;
-    }
     .financial-summary-section {
       margin-top: 3px;
-      text-align: center;
+      padding-top: 6px;
+      padding-bottom: 6px;
+      padding-left: 15px;
+      padding-right: 15px;
+      text-align: left;
+    }
+    .financial-summary-section .profit-summary-grid {
+      margin-left: 0;
+      margin-right: auto;
     }
 
-    #recalcButton,
-    #createButton,
-    .btn-outline-secondary {
-      height: 34px;
-      border-radius: 6px;
-      font-weight: 750;
-      font-size: 12px;
+	    #recalcButton,
+	    #attachProposalFilesButton,
+	    #createButton,
+	    #fullDetailButton,
+	    .btn-outline-secondary {
+	      height: 34px;
+	      border-radius: 6px;
+	      font-weight: 750;
+	      font-size: 12px;
+    }
+    .proposal-action-row {
+      margin-top: 28px;
     }
 
     @media (max-width: 1100px) {
@@ -673,6 +694,7 @@
               ('Silicone','silicone_units_10','silicone_price','silicone_total'),
               ('Gaco Patch','gaco_patch_units','gaco_patch_price','gaco_patch_total'),
               ('Bleed Trap','bleed_trap_units','bleed_trap_price','bleed_trap_total'),
+              ('Gaco E5320','gaco_e5320_units','gaco_e5320_price','gaco_e5320_total'),
               ('SW 1Flash','sw_1flash_units','sw_1flash_price','sw_1flash_total'),
               ('SW Bleed Block','sw_bleed_block_units','sw_bleed_block_price','sw_bleed_block_total'),
               ('Drainage Mat','drainage_mat_units','drainage_mat_price','drainage_mat_total'),
@@ -719,6 +741,11 @@
                         title="Calc: {{ data.calc_bleed_trap_units if data.calc_bleed_trap_units is not none else '' }} | Overridden: {{ 'Yes' if data.ov_bleed_trap_units else 'No' }}"
                         class="{% if ro %}readonly{% endif %}"
                         {% if ro %}readonly{% endif %}>
+                {% elif units == 'gaco_e5320_units' %}
+                  <input type="text" name="{{ units }}" style="text-align:left;"
+                        value="{{ uval|num_blank0 }}"
+                        class="{% if ro %}readonly{% endif %}"
+                        {% if ro %}readonly{% endif %}>
                 {% elif units == 'sw_1flash_units' %}
                   <input type="text" name="{{ units }}" style="text-align:left;"
                         value="{{ uval|num_blank0 }}"
@@ -757,7 +784,7 @@
               {% if price %}
                 {% set pval = data.get(price) %}
                 {% if price in [
-                    'silicone_price','gaco_patch_price','bleed_trap_price','sw_1flash_price',
+                    'silicone_price','gaco_patch_price','bleed_trap_price','gaco_e5320_price','sw_1flash_price',
                     'sw_bleed_block_price','drainage_mat_price','foam_price','rfc_labor_price','pcs_labor_price'] %}
                   {% if price == 'silicone_price' %}
                     <input type="text" name="{{ price }}" style="text-align:left;"
@@ -775,6 +802,11 @@
                     <input type="text" name="{{ price }}" style="text-align:left;"
                            value="{{ pval|currency_blank0 }}"
                            title="Calc: {{ data.calc_bleed_trap_price if data.calc_bleed_trap_price is not none else '' }} | Overridden: {{ 'Yes' if data.ov_bleed_trap_price else 'No' }}"
+                           class="{% if ro %}readonly{% endif %}"
+                           {% if ro %}readonly{% endif %}>
+                  {% elif price == 'gaco_e5320_price' %}
+                    <input type="text" name="{{ price }}" style="text-align:left;"
+                           value="{{ pval|currency_blank0 }}"
                            class="{% if ro %}readonly{% endif %}"
                            {% if ro %}readonly{% endif %}>
                   {% elif price == 'sw_1flash_price' %}
@@ -835,98 +867,71 @@
 
             {% endfor %}
           </div>
-          <div id="proposal-file-attachment-row">
-            <button type="button" class="btn btn-link" id="attachProposalFilesButton" {% if ro %}disabled{% endif %}>Attach Files</button>
-            <span id="selectedProposalFilesSummary"></span>
-          </div>
         </div>
       </div>
 
       <!-- Column B: Adjusted Coverage (top) + Profit fields (middle) + Buttons (bottom sticky) -->
-      <div class="col-lg-6 col-md-6 d-flex">
+      <div class="col-lg-6 col-md-6">
         <div class="w-100 d-flex flex-column">
 
-          <!-- Top: Adjusted Coverage inline -->
-          <div id="adjusted-coverage-section" class="inline-input-row mb-1">
-            <label for="adjusted_coverage" class="col-form-label mb-0" style="min-width: 180px;"><strong>Adj Spread Rate</strong></label>
-            <input type="number" step="0.05" min="-0.5" max="1.5" class="compact-input form-control"
-                   name="adjusted_coverage" id="adjusted_coverage" style="width: 100%; text-align: left;"
-                   value="{{ data.adjusted_coverage|default(0, true) }}" {% if ro %}readonly class="readonly"{% endif %}>
-          </div>
+          <div class="adjusted-fields-stack">
+            <!-- Top: Adjusted Coverage inline -->
+            <div id="adjusted-coverage-section" class="inline-input-row mb-0">
+              <label for="adjusted_coverage" class="col-form-label mb-0" style="min-width: 180px;"><strong>Adj Spread Rate</strong></label>
+              <input type="number" step="0.05" min="-0.5" max="1.5" class="compact-input form-control"
+                     name="adjusted_coverage" id="adjusted_coverage" style="width: 100%; text-align: left;"
+                     value="{{ data.adjusted_coverage|default(0, true) }}" {% if ro %}readonly class="readonly"{% endif %}>
+            </div>
 
-          <!-- Office Fee (below Adjust Coverage) -->
-          <div class="inline-input-row mb-1" id="office-fee-section">
-            <label for="office_fee_pct" class="form-label mb-0" style="min-width: 180px;">Office Fee</label>
-            <input type="text"
-                   class="compact-input form-control"
-                   style="width: 100%; text-align: left;"
-                   name="office_fee_pct"
-                   id="office_fee_pct"
-                   value="{{ ((data.office_fee_pct | default(0, true)) * 100) | round(2) }}%" {% if ro %}readonly class="readonly"{% endif %}>
-          </div>
+            <!-- Office Fee (below Adjust Coverage) -->
+            <div class="inline-input-row mb-0" id="office-fee-section">
+              <label for="office_fee_pct" class="form-label mb-0" style="min-width: 180px;">Office Fee</label>
+              <input type="text"
+                     class="compact-input form-control"
+                     style="width: 100%; text-align: left;"
+                     name="office_fee_pct"
+                     id="office_fee_pct"
+                     value="{{ ((data.office_fee_pct | default(0, true)) * 100) | round(2) }}%" {% if ro %}readonly class="readonly"{% endif %}>
+            </div>
 
-          <!-- Proposal Note (below Office Fee) -->
-          <div class="inline-input-row mb-1" id="proposal-note-section">
-            <label for="proposal_note" class="form-label mb-0" style="min-width: 180px;">Profit Summary Note</label>
-            <input type="text"
-                   class="form-control"
-                   style="width: 450px; text-align: left;"
-                   name="proposal_note"
-                   id="proposal_note"
-                   value="{{ '' if (data.proposal_note is none) or (data.proposal_note != data.proposal_note) or ((data.proposal_note|string).lower() == 'nan') else data.proposal_note }}" {% if ro %}readonly{% endif %}>
-          </div>
+            <!-- Proposal Note (below Office Fee) -->
+            <div class="inline-input-row mb-0" id="proposal-note-section">
+              <label for="proposal_note" class="form-label mb-0" style="min-width: 180px;">Profit Summary Note</label>
+              <input type="text"
+                     class="form-control"
+                     style="width: 450px; text-align: left;"
+                     name="proposal_note"
+                     id="proposal_note"
+                     value="{{ '' if (data.proposal_note is none) or (data.proposal_note != data.proposal_note) or ((data.proposal_note|string).lower() == 'nan') else data.proposal_note }}" {% if ro %}readonly{% endif %}>
+            </div>
 
-          <!-- Proposal Language (below Profit Summary Note) -->
-          <div class="inline-input-row mb-1" id="proposal-language-section">
-            <label for="proposal_language" class="form-label mb-0" style="min-width: 180px;">Proposal Language</label>
-            <input type="text"
-                   class="form-control"
-                   style="width: 450px; text-align: left;"
-                   name="proposal_language"
-                   id="proposal_language"
-                   value="{{ '' if (data.proposal_language is none) or (data.proposal_language != data.proposal_language) or ((data.proposal_language|string).lower() == 'nan') else data.proposal_language }}" {% if ro %}readonly{% endif %}>
-          </div>
+            <!-- Proposal Language (below Profit Summary Note) -->
+            <div class="inline-input-row mb-0" id="proposal-language-section">
+              <label for="proposal_language" class="form-label mb-0" style="min-width: 180px;">Proposal Language</label>
+              <input type="text"
+                     class="form-control"
+                     style="width: 450px; text-align: left;"
+                     name="proposal_language"
+                     id="proposal_language"
+                     value="{{ '' if (data.proposal_language is none) or (data.proposal_language != data.proposal_language) or ((data.proposal_language|string).lower() == 'nan') else data.proposal_language }}" {% if ro %}readonly{% endif %}>
+            </div>
 
-          <!-- Lead (below Proposal Language) -->
-          <div class="inline-input-row mb-1" id="lead-section">
-            <label for="lead" class="form-label mb-0" style="min-width: 180px;">Lead</label>
-            <input type="text"
-                   class="form-control"
-                   style="width: 450px; text-align: left;"
-                   name="lead"
-                   id="lead"
-                   value="{{ '' if (data.lead is none) or (data.lead != data.lead) or ((data.lead|string).lower() == 'nan') else data.lead }}" {% if ro %}readonly{% endif %}>
-          </div>
-
-          <!-- Bottom: Buttons aligned and same width -->
-          <div class="mt-auto">
-            <div class="row justify-content-center g-2">
-              <div class="col-4">
-                <button type="submit" class="btn btn-outline-primary w-100" id="recalcButton" name="action" value="recalc" {% if ro %}disabled{% endif %}>
-                  <i class="bi bi-arrow-repeat me-1"></i> Recalculate
-                </button>
-              </div>
-              <div class="col-4">
-                <button type="submit" class="btn btn-outline-success w-100" id="createButton" name="action" value="{% if is_blank %}create{% else %}save{% endif %}" {% if ro %}disabled{% endif %}>
-                  <i class="bi bi-check2-square me-1"></i> {% if is_blank %}Create Proposal{% else %}Save Changes{% endif %}
-                </button>
-              </div>
-              <div class="col-4">
-                <a href="{{ url_for('proposal_list') }}" class="btn btn-outline-secondary w-100" onclick="clearProposalForm(); return true;">
-                  <i class="bi bi-arrow-left me-1"></i> Back to List
-                </a>
-              </div>
+            <!-- Lead (below Proposal Language) -->
+            <div class="inline-input-row mb-0" id="lead-section">
+              <label for="lead" class="form-label mb-0" style="min-width: 180px;">Lead</label>
+              <input type="text"
+                     class="form-control"
+                     style="width: 450px; text-align: left;"
+                     name="lead"
+                     id="lead"
+                     value="{{ '' if (data.lead is none) or (data.lead != data.lead) or ((data.lead|string).lower() == 'nan') else data.lead }}" {% if ro %}readonly{% endif %}>
             </div>
           </div>
 
         </div>
-      </div>
 
-    </div>
-
-    <div class="detail-panel financial-summary-section">
-      <div class="p-3 rounded financial-summary-card">
-        <div id="profit-section" class="profit-summary-grid">
+        <div class="detail-panel financial-summary-section">
+          <div id="profit-section" class="profit-summary-grid">
           <div></div>
           <div class="profit-title">Financial Summary</div>
           <div></div>
@@ -973,8 +978,45 @@
           <input type="text" class="form-control-plaintext profit-value" name="office_fee_15_total" value="{{ val|currency_blank0 }}" readonly>
           {% set val = data.office_fee_20_total %}
           <input type="text" class="form-control-plaintext profit-value" name="office_fee_20_total" value="{{ val|currency_blank0 }}" readonly>
+          </div>
         </div>
-      </div>
+
+        <!-- Bottom: Buttons aligned and same width -->
+        <div class="proposal-action-row">
+          <button type="submit" class="d-none" id="recalcButton" name="action" value="recalc" {% if ro %}disabled{% endif %}></button>
+	          <div class="row justify-content-center g-2">
+	            <div class="col-4">
+	              <button type="button" class="btn btn-outline-primary w-100" id="attachProposalFilesButton" {% if ro %}disabled{% endif %}>
+	                <i class="bi bi-paperclip me-1"></i> Attach Files
+	              </button>
+            </div>
+            <div class="col-4">
+              <button type="submit" class="btn btn-outline-success w-100" id="createButton" name="action" value="{% if is_blank %}create{% else %}save{% endif %}" {% if ro %}disabled{% endif %}>
+                <i class="bi bi-check2-square me-1"></i> {% if is_blank %}Create Proposal{% else %}Save Changes{% endif %}
+              </button>
+            </div>
+            <div class="col-4">
+              <a href="{{ url_for('proposal_list') }}" class="btn btn-outline-secondary w-100" onclick="clearProposalForm(); return true;">
+	                <i class="bi bi-arrow-left me-1"></i> Back to List
+	              </a>
+	            </div>
+	          </div>
+	          <div class="row justify-content-center g-2 mt-2">
+	            <div class="col-4">
+	              {% if is_blank %}
+	                <button type="button" class="btn btn-outline-primary w-100" id="fullDetailButton" disabled>
+	                  <i class="bi bi-table me-1"></i> Full Detail
+	                </button>
+	              {% else %}
+	                <a href="{{ url_for('proposal_full_detail', folder_name=folder_name) }}" class="btn btn-outline-primary w-100" id="fullDetailButton">
+	                  <i class="bi bi-table me-1"></i> Full Detail
+	                </a>
+	              {% endif %}
+	            </div>
+	          </div>
+	        </div>
+	      </div>
+
     </div>
 
   <script>

@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Weekly Follow-Ups</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --pcs-bg: #f4f6f8;
+            --pcs-panel: #ffffff;
+            --pcs-border: #d9e0e8;
+            --pcs-text: #1f2933;
+            --pcs-muted: #667085;
+            --pcs-primary: #215a9c;
+            --pcs-primary-dark: #174677;
+        }
+
+        html,
+        body {
+            min-height: 100%;
+        }
+
+        body {
+            margin: 0;
+            background: var(--pcs-bg);
+            color: var(--pcs-text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-size: 14px;
+        }
+
+        .proposal-shell {
+            width: 100%;
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 18px 20px 24px;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 18px;
+            margin-bottom: 16px;
+        }
+
+        .screen-title {
+            margin: 0;
+            font-size: 22px;
+            line-height: 1.2;
+            font-weight: 750;
+            letter-spacing: 0;
+        }
+
+        .screen-subtitle {
+            margin: 3px 0 0;
+            color: var(--pcs-muted);
+            font-size: 13px;
+        }
+
+        .menu-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            height: 36px;
+            padding: 0 13px;
+            border: 1px solid var(--pcs-primary);
+            background: var(--pcs-primary);
+            color: #fff;
+            border-radius: 6px;
+            font-weight: 700;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .menu-btn:hover {
+            background: var(--pcs-primary-dark);
+            border-color: var(--pcs-primary-dark);
+            color: #fff;
+        }
+
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            height: 36px;
+            padding: 0 13px;
+            border: 1px solid var(--pcs-primary);
+            background: var(--pcs-primary);
+            color: #fff;
+            border-radius: 6px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .action-btn:hover,
+        .action-btn:focus {
+            background: var(--pcs-primary-dark);
+            border-color: var(--pcs-primary-dark);
+            color: #fff;
+        }
+
+        .action-btn:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+        .toolbar {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--pcs-panel);
+            border: 1px solid var(--pcs-border);
+            border-radius: 8px;
+            margin-bottom: 14px;
+        }
+
+        .date-wrap {
+            position: relative;
+            min-width: 180px;
+        }
+
+        .date-wrap i {
+            position: absolute;
+            left: 11px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--pcs-muted);
+            font-size: 14px;
+        }
+
+        .date-wrap input {
+            height: 34px;
+            padding-left: 32px;
+            border-radius: 6px;
+            border: 1px solid var(--pcs-border);
+            font-size: 13px;
+        }
+
+        .count-strip {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+            color: var(--pcs-muted);
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .count-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 9px;
+            border: 1px solid var(--pcs-border);
+            background: #f8fafc;
+            border-radius: 999px;
+            color: #344054;
+            font-weight: 700;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 16px 0 8px;
+        }
+
+        .section-header h2 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 0;
+        }
+
+        .section-header span {
+            color: var(--pcs-muted);
+            font-size: 12px;
+        }
+
+        .proposal-table {
+            background: var(--pcs-panel);
+            border: 1px solid var(--pcs-border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .proposal-row {
+            display: grid;
+            grid-template-columns: 86px minmax(260px, 1.4fr) minmax(160px, 0.8fr) minmax(230px, 1fr) 130px;
+            align-items: center;
+            min-height: 54px;
+            padding: 9px 12px;
+            border-bottom: 1px solid #edf1f5;
+            column-gap: 12px;
+        }
+
+        .proposal-row:last-child {
+            border-bottom: 0;
+        }
+
+        .proposal-row:hover {
+            background: #f8fbff;
+        }
+
+        .proposal-row.table-head {
+            min-height: 34px;
+            padding-top: 7px;
+            padding-bottom: 7px;
+            background: #eef3f8;
+            color: #475467;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0;
+        }
+
+        .select-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 0;
+        }
+
+        .followup-checkbox,
+        .default-select {
+            width: 16px;
+            height: 16px;
+            margin: 0;
+            cursor: pointer;
+            accent-color: var(--pcs-primary);
+        }
+
+        .followup-cell {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .customer-name {
+            font-size: 13px;
+            font-weight: 750;
+        }
+
+        .proposal-date {
+            color: var(--pcs-muted);
+            font-size: 12px;
+        }
+
+        .email-link {
+            color: var(--pcs-primary);
+            text-decoration: none;
+        }
+
+        .email-link:hover {
+            text-decoration: underline;
+        }
+
+        .empty-state {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 170px;
+            background: var(--pcs-panel);
+            border: 1px dashed #c7d2df;
+            border-radius: 8px;
+            color: var(--pcs-muted);
+            font-size: 14px;
+        }
+
+        .proposal-row.is-hidden {
+            display: none;
+        }
+
+        .section-header.is-hidden,
+        .proposal-table.is-hidden {
+            display: none;
+        }
+
+        @media (max-width: 900px) {
+            .proposal-shell {
+                padding: 14px 10px 20px;
+            }
+
+            .topbar,
+            .toolbar {
+                grid-template-columns: 1fr;
+                display: grid;
+                align-items: stretch;
+            }
+
+            .menu-btn {
+                justify-content: center;
+            }
+
+            .proposal-row {
+                grid-template-columns: 1fr;
+                align-items: start;
+                row-gap: 7px;
+            }
+
+            .proposal-row.table-head .followup-cell {
+                display: none;
+            }
+
+            .proposal-row.table-head {
+                grid-template-columns: 1fr;
+                min-height: 44px;
+            }
+
+            .select-cell {
+                justify-content: flex-start;
+            }
+
+            .count-strip {
+                justify-content: flex-start;
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="proposal-shell">
+        <div class="topbar">
+            <div>
+                <h1 class="screen-title">Weekly Follow-Ups</h1>
+                <p class="screen-subtitle">Proposal tracking rows with proposal dates on or before {{ cutoff_date_display }}.</p>
+            </div>
+            <a href="{{ url_for('landing_page') }}" class="menu-btn">
+                <i class="bi bi-house"></i> Main Menu
+            </a>
+        </div>
+
+        {% if tracker_error %}
+            <div class="alert alert-danger" role="alert">
+                Unable to read Proposal Tracking.xlsx: {{ tracker_error }}
+            </div>
+            {% endif %}
+
+        <div class="toolbar">
+            <form method="get" class="date-wrap" aria-label="Follow-up proposal date cutoff">
+                <i class="bi bi-calendar3"></i>
+                <input type="date"
+                       class="form-control"
+                       id="cutoffDate"
+                       name="cutoff_date"
+                       value="{{ cutoff_date_value }}"
+                       onchange="this.form.submit()">
+            </form>
+
+            <div class="count-strip">
+                <span class="count-pill"><i class="bi bi-calendar-check"></i> {{ follow_ups|length }} total</span>
+                <span class="count-pill"><i class="bi bi-calendar3"></i> Through {{ cutoff_date_display }}</span>
+                <button type="button" class="action-btn" id="createFollowupEmails">
+                    <i class="bi bi-envelope-plus"></i> Create Emails
+                </button>
+            </div>
+        </div>
+
+        <div class="alert alert-success d-none" id="followupEmailStatus" role="alert"></div>
+        <div class="alert alert-danger d-none" id="followupEmailError" role="alert"></div>
+
+        {% if follow_ups %}
+            {% for submitter, submitter_items in follow_ups|groupby('submitted_by') %}
+                {% set section_id = 'followup-section-' ~ loop.index %}
+                {% set submitter_name = submitter or 'Unassigned' %}
+                <div class="section-header" data-section="{{ section_id }}">
+                    <h2>{{ submitter_name }} Follow-Up List</h2>
+                    <span>{{ submitter_items|length }} total</span>
+                </div>
+                <section class="proposal-table" data-section-table="{{ section_id }}">
+                    <div class="proposal-row table-head">
+                        <div class="select-cell">
+                            <input type="checkbox"
+                                   class="default-select"
+                                   aria-label="Select or deselect {{ submitter_name }} follow-ups"
+                                   checked>
+                        </div>
+                        <div>Customer</div>
+                        <div>Contact</div>
+                        <div>Email Address</div>
+                        <div>Proposal Date</div>
+                    </div>
+                    {% for item in submitter_items %}
+                        <div class="proposal-row followup-item"
+                             data-search="{{ (item.customer ~ ' ' ~ item.contact ~ ' ' ~ item.email_address ~ ' ' ~ item.proposal_date_display ~ ' ' ~ item.submitted_by)|lower }}">
+                            <div class="select-cell">
+                                <input type="checkbox"
+                                       class="followup-checkbox"
+                                       name="selected_followups"
+                                       value="{{ item.row_number }}"
+                                       aria-label="Select {{ item.customer }}"
+                                       checked>
+                            </div>
+                            <div class="followup-cell customer-name" title="{{ item.customer }}">{{ item.customer }}</div>
+                            <div class="followup-cell" title="{{ item.contact }}">{{ item.contact }}</div>
+                            <div class="followup-cell" title="{{ item.email_address }}">
+                                {% if item.email_address %}
+                                    <a class="email-link" href="mailto:{{ item.email_address }}">{{ item.email_address }}</a>
+                                {% endif %}
+                            </div>
+                            <div class="followup-cell proposal-date">{{ item.proposal_date_display }}</div>
+                        </div>
+                    {% endfor %}
+                </section>
+            {% endfor %}
+        {% elif not tracker_error %}
+            <div class="empty-state">No follow-ups found.</div>
+        {% endif %}
+    </main>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var defaultSelects = document.querySelectorAll('.default-select');
+    var rowCheckboxes = document.querySelectorAll('.followup-checkbox');
+    var createEmailsButton = document.getElementById('createFollowupEmails');
+    var statusBox = document.getElementById('followupEmailStatus');
+    var errorBox = document.getElementById('followupEmailError');
+    var cutoffDateInput = document.getElementById('cutoffDate');
+
+    function visibleRows(scope) {
+      return Array.prototype.slice.call(scope.querySelectorAll('.followup-item:not(.is-hidden)'));
+    }
+
+    function syncDefaultSelect(defaultSelect) {
+      var table = defaultSelect.closest('.proposal-table');
+      if (!table) return;
+      var rows = visibleRows(table);
+      var boxes = rows.map(function(row) {
+        return row.querySelector('.followup-checkbox');
+      }).filter(Boolean);
+      var checkedCount = boxes.filter(function(box) {
+        return box.checked;
+      }).length;
+
+      defaultSelect.indeterminate = checkedCount > 0 && checkedCount < boxes.length;
+      defaultSelect.checked = boxes.length === 0 || checkedCount === boxes.length;
+    }
+
+    function syncAllDefaultSelects() {
+      defaultSelects.forEach(syncDefaultSelect);
+    }
+
+    defaultSelects.forEach(function(defaultSelect) {
+      defaultSelect.addEventListener('change', function() {
+        var table = defaultSelect.closest('.proposal-table');
+        if (!table) return;
+        visibleRows(table).forEach(function(row) {
+          var checkbox = row.querySelector('.followup-checkbox');
+          if (checkbox) {
+            checkbox.checked = defaultSelect.checked;
+          }
+        });
+        syncDefaultSelect(defaultSelect);
+      });
+    });
+
+    rowCheckboxes.forEach(function(checkbox) {
+      checkbox.addEventListener('change', function() {
+        var table = checkbox.closest('.proposal-table');
+        var defaultSelect = table ? table.querySelector('.default-select') : null;
+        if (defaultSelect) {
+          syncDefaultSelect(defaultSelect);
+        }
+      });
+    });
+
+    if (createEmailsButton) {
+      createEmailsButton.addEventListener('click', async function() {
+        var selectedRows = Array.prototype.slice.call(document.querySelectorAll('.followup-checkbox:checked')).map(function(checkbox) {
+          return checkbox.value;
+        });
+
+        statusBox.classList.add('d-none');
+        errorBox.classList.add('d-none');
+        statusBox.textContent = '';
+        errorBox.textContent = '';
+
+        if (selectedRows.length === 0) {
+          errorBox.textContent = 'Select at least one follow-up row.';
+          errorBox.classList.remove('d-none');
+          return;
+        }
+
+        createEmailsButton.disabled = true;
+        statusBox.textContent = 'Creating Outlook drafts...';
+        statusBox.classList.remove('d-none');
+
+        try {
+          var response = await fetch("{{ url_for('generate_weekly_follow_up_emails') }}", {
+            method: 'POST',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              cutoff_date: cutoffDateInput ? cutoffDateInput.value : '',
+              selected_rows: selectedRows
+            })
+          });
+          var data = await response.json();
+
+          if (!response.ok || data.error) {
+            statusBox.classList.add('d-none');
+            errorBox.textContent = data.error || 'Unable to create Outlook drafts.';
+            errorBox.classList.remove('d-none');
+            return;
+          }
+
+          var warningText = data.warnings && data.warnings.length ? ' ' + data.warnings.join(' ') : '';
+          statusBox.textContent = (data.message || 'Outlook drafts created.') + warningText;
+        } catch (error) {
+          statusBox.classList.add('d-none');
+          errorBox.textContent = 'Unable to create Outlook drafts.';
+          errorBox.classList.remove('d-none');
+        } finally {
+          createEmailsButton.disabled = false;
+        }
+      });
+    }
+
+    syncAllDefaultSelects();
+  });
+</script>
+</body>
+</html>

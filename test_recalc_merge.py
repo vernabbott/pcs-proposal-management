@@ -1,4 +1,5 @@
 import ast
+import datetime
 import math
 import os
 import pathlib
@@ -40,6 +41,7 @@ def load_copy_helpers():
     target_names = {
         "_is_pdf_ready_for_copy",
         "_is_generated_proposal_artifact",
+        "_dated_archive_folder",
         "_archive_existing_artifacts",
         "_sync_directory_contents",
         "_wait_for_generated_pdfs",
@@ -57,6 +59,7 @@ def load_copy_helpers():
         "os": os,
         "shutil": shutil,
         "time": time,
+        "datetime": datetime,
         "_safe_debug": lambda message: None,
         "get_copy_destination_for_submitter": lambda submitted_by: None,
     }
@@ -221,15 +224,24 @@ class SubmitterDestinationCopyTests(unittest.TestCase):
 
             archive_existing_artifacts(proposal_dir)
 
-            archive_dir = pathlib.Path(proposal_dir, "Archive")
-            self.assertTrue((archive_dir / managed_docx.name).exists())
-            self.assertTrue((archive_dir / managed_xlsx.name).exists())
-            self.assertTrue((archive_dir / managed_pdf.name).exists())
-            self.assertFalse((archive_dir / unrelated_docx.name).exists())
-            self.assertFalse((archive_dir / unrelated_xlsx.name).exists())
-            self.assertFalse((archive_dir / unrelated_pdf.name).exists())
-            self.assertFalse((archive_dir / unsupported_doc.name).exists())
-            self.assertFalse((archive_dir / unsupported_txt.name).exists())
+            archive_root = pathlib.Path(proposal_dir, "Archive")
+            archive_dirs = [path for path in archive_root.iterdir() if path.is_dir()]
+            self.assertEqual(len(archive_dirs), 1)
+            archive_dir = archive_dirs[0]
+            for path in (
+                managed_docx,
+                managed_xlsx,
+                managed_pdf,
+                unrelated_docx,
+                unrelated_xlsx,
+                unrelated_pdf,
+                unsupported_doc,
+                unsupported_txt,
+            ):
+                self.assertTrue((archive_dir / path.name).exists())
+            self.assertFalse(managed_docx.exists())
+            self.assertFalse(managed_xlsx.exists())
+            self.assertFalse(managed_pdf.exists())
             self.assertTrue(unrelated_docx.exists())
             self.assertTrue(unrelated_xlsx.exists())
             self.assertTrue(unrelated_pdf.exists())

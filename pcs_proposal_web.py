@@ -10,6 +10,7 @@ import html
 from openpyxl import load_workbook
 from openpyxl import Workbook
 from openpyxl.styles import Font
+from openpyxl.utils.datetime import from_excel
 from openpyxl.worksheet.datavalidation import DataValidation
 from copy import copy as _copy_style
 from decimal import Decimal, ROUND_HALF_UP
@@ -23,12 +24,6 @@ import re
 import tempfile
 import uuid
 
-# Excel-native writer availability (xlwings)
-try:
-    import xlwings as xw
-    HAS_XLWINGS = True
-except Exception:
-    HAS_XLWINGS = False
 import subprocess
 import threading
 import shlex
@@ -38,6 +33,8 @@ from urllib.parse import quote, urlsplit, urlunsplit
 
 APP_FOLDER = os.path.dirname(os.path.abspath(__file__))
 APP_ERROR_LOG = os.path.join(APP_FOLDER, "pcs_app_error.log")
+HAS_XLWINGS = None
+xw = None
 
 def _safe_debug(message: str):
     try:
@@ -69,6 +66,22 @@ def _notify_user(message: str, category: str = "warning"):
     except Exception:
         pass
     _safe_debug(f"[{category.upper()}] {message}")
+
+def _get_xlwings():
+    global HAS_XLWINGS, xw
+    if HAS_XLWINGS is False:
+        return None
+    if xw is not None:
+        return xw
+    try:
+        import xlwings as _xw
+        xw = _xw
+        HAS_XLWINGS = True
+        return xw
+    except Exception as exc:
+        HAS_XLWINGS = False
+        _safe_debug(f"[WARNING] xlwings unavailable: {exc}")
+        return None
 
 def _run_background_task(task_name: str, func):
     def _worker():
@@ -126,18 +139,19 @@ from profit_summary_formulas import (
     PS_F_C11,  # silicone_units_10
     PS_F_C12,  # gaco_patch_units
     PS_F_C13,  # bleed_trap_units
-    PS_F_C14,  # sw_1flash_units
-    PS_F_C15,  # sw_bleed_block_units
-    PS_F_C16,  # drainage_mat_units
-    PS_F_C17,  # foam_units
+    PS_F_C15,  # sw_1flash_units
+    PS_F_C16,  # sw_bleed_block_units
+    PS_F_C17,  # drainage_mat_units
+    PS_F_C18,  # foam_units
     PS_F_H11, PS_F_K11, PS_F_N11, PS_F_P11,  # silicone units/totals by term
-    PS_F_E11, PS_F_E12, PS_F_E13, PS_F_E14, PS_F_E15, PS_F_E16, PS_F_E17,  # line totals
-    PS_F_E18, PS_F_E20,  # labor totals
-    PS_F_E23,            # warranty total
+    PS_F_E11, PS_F_E12, PS_F_E13, PS_F_E15, PS_F_E16, PS_F_E17, PS_F_E18,  # line totals
+    PS_F_E19, PS_F_E21,  # labor totals
+    PS_F_E24,            # warranty total
     PS_F_P3, PS_F_P5, PS_F_P7,  # total prices by term
-    PS_F_E24, PS_F_K24, PS_F_P24, PS_F_U24, PS_F_E26, PS_F_K26, PS_F_P26, PS_F_U26,
-    PS_F_E28, PS_F_E29, PS_F_E30, PS_F_E31,
-    PS_F_E32, PS_F_K32, PS_F_P32,  # fees/profit/commission
+    PS_F_E25, PS_F_K25, PS_F_P25, PS_F_U25, PS_F_E27, PS_F_K27, PS_F_P27, PS_F_U27,
+    PS_F_E29, PS_F_K29, PS_F_P29, PS_F_E30, PS_F_K30, PS_F_P30,
+    PS_F_E31, PS_F_K31, PS_F_P31, PS_F_E32, PS_F_K32, PS_F_P32,
+    PS_F_E33, PS_F_K33, PS_F_P33, PS_F_U33,  # fees/profit/commission
 )
 
 # Optional centralized formula for labor_days (E7). Falls back to inline if not present.
@@ -270,15 +284,16 @@ TRAVEL_ROOMS_PER_NIGHT = 6
 TRAVEL_FOOD_PER_DAY = 700
 TRAVEL_MISC_500 = 500
 TRAVEL_MISC_250 = 250
-GACO_S42_BASE_PRICE = 188
+GACO_S42_BASE_PRICE = 195
 GACO_PATCH_BASE_PRICE = 125
+GACO_E5320_Price = 185
 BLEED_TRAP_BASE_PRICE = 168
-DRAINAGE_MAT_BASE_PRICE = 150
+DRAINAGE_MAT_BASE_PRICE = 164
 UNIFLEX_BASE_PRICE = 185
 SW_1FLASH_BASE_PRICE = 110
 SW_BLEED_BLOCK_BASE_PRICE = 100
 GACO_FOAM_BASE_PRICE = 2600
-UNIFLEX_FOAM_BASE_PRICE = 2500
+UNIFLEX_FOAM_BASE_PRICE = 2400
 RFC_LABOR_RATE = 250
 BASE_OFFICE_FEE_PCT = 0.05
 SALES_STAFF_OFFICE_FEE_PCT = 0.05
@@ -502,7 +517,7 @@ def _append_to_proposal_tracking_unlocked(created_date,
             pass
 
     # Prefer Excel-native insert (xlwings) to fully preserve all formatting. Fallback to openpyxl rebuild if unavailable.
-    if 'HAS_XLWINGS' in globals() and HAS_XLWINGS:
+    if _get_xlwings() is not None:
         try:
             _append_to_proposal_tracking_xlwings(
                 PROPOSAL_TRACKER,
@@ -1018,6 +1033,8 @@ def create_proposal_from_fields(customer_name,
             sw_1flash_price=_get_num("sw_1flash_price", 0.0),
             bleed_trap_units=_get_num("bleed_trap_units", 0.0),
             bleed_trap_price=_get_num("bleed_trap_price", 0.0),
+            gaco_e5320_units=_get_num("gaco_e5320_units", 0.0),
+            gaco_e5320_price=_get_num("gaco_e5320_price", GACO_E5320_Price),
             sw_bleed_block_units=_get_num("sw_bleed_block_units", 0.0),
             sw_bleed_block_price=_get_num("sw_bleed_block_price", 0.0),
             drainage_mat_units=_get_num("drainage_mat_units", 0.0),
@@ -1228,6 +1245,9 @@ def create_proposal_from_fields(customer_name,
         else:
             merged_map["bleed_trap_units"] = _user_bleed_units
 
+        _user_gaco_e5320_units = _to_int_ceil_clean(merged_map.get("gaco_e5320_units"), 0)
+        merged_map["gaco_e5320_units"] = _user_gaco_e5320_units or 0
+
         # sw_1flash_units: use centralized formula constant unless user-overridden
         if _prodF == "Uniflex":
             _div = 20 if _roofF in ["TPO/EPDM", "Mod Bit", "Rock/Foam/Coat"] else 10
@@ -1236,7 +1256,7 @@ def create_proposal_from_fields(customer_name,
             _base_sw1_units = 0
         _user_sw1_units = _to_int_ceil_clean(merged_map.get("sw_1flash_units"), None)
         if (_user_sw1_units is None) or (_user_sw1_units == _base_sw1_units):
-            merged_map["sw_1flash_units"] = PS_F_C14.replace("\n", "")
+            merged_map["sw_1flash_units"] = PS_F_C15.replace("\n", "")
         else:
             merged_map["sw_1flash_units"] = _user_sw1_units
 
@@ -1244,7 +1264,7 @@ def create_proposal_from_fields(customer_name,
         _base_swbb_units = math.ceil((_sqF or 0.0) / 5.0) if (_prodF == "Uniflex" and _roofF == "Mod Bit") else 0
         _user_swbb_units = _to_int_ceil_clean(merged_map.get("sw_bleed_block_units"), None)
         if (_user_swbb_units is None) or (_user_swbb_units == _base_swbb_units):
-            merged_map["sw_bleed_block_units"] = PS_F_C15.replace("\n", "")
+            merged_map["sw_bleed_block_units"] = PS_F_C16.replace("\n", "")
         else:
             merged_map["sw_bleed_block_units"] = _user_swbb_units
 
@@ -1252,7 +1272,7 @@ def create_proposal_from_fields(customer_name,
         _base_drain_units = math.ceil((_sqF or 0.0) / 18.0) if _roofF in ["Ballasted 60 mil", "Ballasted 45 mil"] else 0
         _user_drain_units = _to_int_ceil_clean(merged_map.get("drainage_mat_units"), None)
         if (_user_drain_units is None) or (_user_drain_units == _base_drain_units):
-            merged_map["drainage_mat_units"] = PS_F_C16.replace("\n", "")
+            merged_map["drainage_mat_units"] = PS_F_C17.replace("\n", "")
         else:
             merged_map["drainage_mat_units"] = _user_drain_units
 
@@ -1260,7 +1280,7 @@ def create_proposal_from_fields(customer_name,
         _base_foam_units = math.ceil((_sqF or 0.0) / 25.0) if _roofF == "Rock/Foam/Coat" else 0
         _user_foam_units = _to_int_ceil_clean(merged_map.get("foam_units"), None)
         if (_user_foam_units is None) or (_user_foam_units == _base_foam_units):
-            merged_map["foam_units"] = PS_F_C17.replace("\n", "")
+            merged_map["foam_units"] = PS_F_C18.replace("\n", "")
         else:
             merged_map["foam_units"] = _user_foam_units
 
@@ -1289,6 +1309,12 @@ def create_proposal_from_fields(customer_name,
             _base_bt_price,
             f'=IF(AND(H3="Gaco",E5="Mod Bit"),{BLEED_TRAP_BASE_PRICE},0)'
         )
+
+        _user_gaco_e5320_price = _to_float_clean(merged_map.get("gaco_e5320_price"), None)
+        if (_user_gaco_e5320_units or 0) <= 0:
+            merged_map["gaco_e5320_price"] = 0
+        else:
+            merged_map["gaco_e5320_price"] = GACO_E5320_Price if _user_gaco_e5320_price in (None, 0) else _user_gaco_e5320_price
 
         _base_sw1_price = SW_1FLASH_BASE_PRICE if _prodF == "Uniflex" else 0
         _user_sw1_price = _to_float_clean(merged_map.get("sw_1flash_price"), None)
@@ -1338,23 +1364,24 @@ def create_proposal_from_fields(customer_name,
         merged_map["price_per_sq_15"] = PS_F_M5.replace("\n", "")
         merged_map["price_per_sq_20"] = PS_F_M7.replace("\n", "")
 
-        # Warranty total (E23)
-        merged_map['warranty_10_total'] = PS_F_E23.replace("\n", "")
+        # Warranty total (E24)
+        merged_map['warranty_10_total'] = PS_F_E24.replace("\n", "")
 
-        # Line-item totals (E11–E17)
+        # Line-item totals (E11–E18)
         merged_map['silicone_total'] = PS_F_E11.replace("\n", "")
         merged_map['silicone_15_total'] = PS_F_K11.replace("\n", "")
         merged_map['silicone_20_total'] = PS_F_P11.replace("\n", "")
         merged_map['gaco_patch_total']      = PS_F_E12.replace("\n", "")
         merged_map['bleed_trap_total']      = PS_F_E13.replace("\n", "")
-        merged_map['sw_1flash_total']       = PS_F_E14.replace("\n", "")
-        merged_map['sw_bleed_block_total']  = PS_F_E15.replace("\n", "")
-        merged_map['drainage_mat_total']    = PS_F_E16.replace("\n", "")
-        merged_map['foam_total']            = PS_F_E17.replace("\n", "")
+        merged_map['gaco_e5320_total']      = '=IF(C14<>"",C14*D14,0)'
+        merged_map['sw_1flash_total']       = PS_F_E15.replace("\n", "")
+        merged_map['sw_bleed_block_total']  = PS_F_E16.replace("\n", "")
+        merged_map['drainage_mat_total']    = PS_F_E17.replace("\n", "")
+        merged_map['foam_total']            = PS_F_E18.replace("\n", "")
 
-        # Labor totals (E18, E20)
-        merged_map['rfc_labor_total'] = PS_F_E18.replace("\n", "")
-        merged_map['pcs_labor_total'] = PS_F_E20.replace("\n", "")
+        # Labor totals (E19, E21)
+        merged_map['rfc_labor_total'] = PS_F_E19.replace("\n", "")
+        merged_map['pcs_labor_total'] = PS_F_E21.replace("\n", "")
 
         # Totals by term (P3, P5, P7)
         merged_map['total_price_10'] = PS_F_P3.replace("\n", "")
@@ -1362,25 +1389,33 @@ def create_proposal_from_fields(customer_name,
         merged_map['total_price_20'] = PS_F_P7.replace("\n", "")
 
         # Fees / commission / totals / profit calcs
-        merged_map['office_fee_total'] = PS_F_E24.replace("\n", "")
-        merged_map['commission_amt']   = PS_F_E32.replace("\n", "")
-        merged_map['total_cost']       = PS_F_E26.replace("\n", "")
-        merged_map['profit_share']     = PS_F_E31.replace("\n", "")
-        merged_map['pcs_profit']       = PS_F_E28.replace("\n", "")
-        merged_map['profit_pct']       = PS_F_E29.replace("\n", "")
-        merged_map['daily_profit']     = PS_F_E30.replace("\n", "")
+        merged_map['commission_amt']   = PS_F_E25.replace("\n", "")
+        merged_map['office_fee_total'] = PS_F_E33.replace("\n", "")
+        merged_map['total_cost']       = PS_F_E27.replace("\n", "")
+        merged_map['profit_share']     = PS_F_E32.replace("\n", "")
+        merged_map['profit_share_15']  = PS_F_K32.replace("\n", "")
+        merged_map['profit_share_20']  = PS_F_P32.replace("\n", "")
+        merged_map['pcs_profit']       = PS_F_E29.replace("\n", "")
+        merged_map['pcs_profit_15']    = PS_F_K29.replace("\n", "")
+        merged_map['pcs_profit_20']    = PS_F_P29.replace("\n", "")
+        merged_map['profit_pct']       = PS_F_E30.replace("\n", "")
+        merged_map['profit_pct_15']    = PS_F_K30.replace("\n", "")
+        merged_map['profit_pct_20']    = PS_F_P30.replace("\n", "")
+        merged_map['daily_profit']     = PS_F_E31.replace("\n", "")
+        merged_map['daily_profit_15']  = PS_F_K31.replace("\n", "")
+        merged_map['daily_profit_20']  = PS_F_P31.replace("\n", "")
 
         # Build ghost values (evaluated numbers) for UI display
         ghost_fields = [
             "labor_days",
-            "silicone_units_10","silicone_units_15","silicone_units_20","gaco_patch_units","bleed_trap_units",
+            "silicone_units_10","silicone_units_15","silicone_units_20","gaco_patch_units","bleed_trap_units","gaco_e5320_units",
             "sw_1flash_units","sw_bleed_block_units","drainage_mat_units","foam_units",
-            "silicone_price","gaco_patch_price","bleed_trap_price",
+            "silicone_price","gaco_patch_price","bleed_trap_price","gaco_e5320_price",
             "sw_1flash_price","sw_bleed_block_price","drainage_mat_price",
             "foam_price","rfc_labor_price","pcs_labor_price",
             "price_per_sq_10","price_per_sq_15","price_per_sq_20",
             "total_price_10","total_price_15","total_price_20",
-            "silicone_total","silicone_15_total","silicone_20_total","gaco_patch_total","bleed_trap_total","sw_1flash_total",
+            "silicone_total","silicone_15_total","silicone_20_total","gaco_patch_total","bleed_trap_total","gaco_e5320_total","sw_1flash_total",
             "sw_bleed_block_total","drainage_mat_total","foam_total",
             "rfc_labor_total","pcs_labor_total",
             "warranty_10_total","warranty_15_total","warranty_20_total",
@@ -1773,62 +1808,115 @@ EXCEL_CELL_MAP = {
     "silicone_units_20": "N11",
     "gaco_patch_units": "C12",
     "bleed_trap_units": "C13",
-    "sw_1flash_units": "C14",
-    "sw_bleed_block_units": "C15",
-    "drainage_mat_units": "C16",
-    "foam_units": "C17",
+    "gaco_e5320_units": "C14",
+    "sw_1flash_units": "C15",
+    "sw_bleed_block_units": "C16",
+    "drainage_mat_units": "C17",
+    "foam_units": "C18",
     "silicone_price": "D11",
     "gaco_patch_price": "D12",
     "bleed_trap_price": "D13",
-    "sw_1flash_price": "D14",
-    "sw_bleed_block_price": "D15",
-    "drainage_mat_price": "D16",
-    "foam_price": "D17",
-    "rfc_labor_price": "D18",
-    "pcs_labor_price": "D20",
-    "scarifying_total": "E19",
-    "travel_total": "E21",
-    "repair_costs_total": "E22",
+    "gaco_e5320_price": "D14",
+    "sw_1flash_price": "D15",
+    "sw_bleed_block_price": "D16",
+    "drainage_mat_price": "D17",
+    "foam_price": "D18",
+    "rfc_labor_price": "D19",
+    "pcs_labor_price": "D21",
+    "scarifying_total": "E20",
+    "travel_total": "E22",
+    "repair_costs_total": "E23",
     "adjusted_coverage": None, 
     "office_fee_pct": None,     
-    "lead": "C37",
-    "proposal_note": "C40",     
-    "proposal_language": "C41",
+    "lead": "C35",
+    "proposal_note": "C36",     
+    "proposal_language": "C37",
     # Calculated output cells (explicitly written so Excel file holds values, not formulas)
     "silicone_total": "E11",
     "silicone_15_total": "K11",
     "silicone_20_total": "P11",
     "gaco_patch_total": "E12",
     "bleed_trap_total": "E13",
-    "sw_1flash_total": "E14",
-    "sw_bleed_block_total": "E15",
-    "drainage_mat_total": "E16",
-    "foam_total": "E17",
-    "rfc_labor_total": "E18",
-    "pcs_labor_total": "E20",
-    "warranty_10_total": "E23",
+    "gaco_e5320_total": "E14",
+    "sw_1flash_total": "E15",
+    "sw_bleed_block_total": "E16",
+    "drainage_mat_total": "E17",
+    "foam_total": "E18",
+    "rfc_labor_total": "E19",
+    "pcs_labor_total": "E21",
+    "warranty_10_total": "E24",
+    "office_fee_total": "E33",
+    "office_fee_15_total": "K33",
+    "office_fee_20_total": "P33",
+    "total_cost": "E27",
+    "total_cost_15": "K27",
+    "total_cost_20": "P27",
+    "pcs_profit": "E29",
+    "pcs_profit_15": "K29",
+    "pcs_profit_20": "P29",
+    "profit_pct": "E30",
+    "profit_pct_15": "K30",
+    "profit_pct_20": "P30",
+    "daily_profit": "E31",
+    "daily_profit_15": "K31",
+    "daily_profit_20": "P31",
+    "profit_share": "E32",
+    "profit_share_15": "K32",
+    "profit_share_20": "P32",
+    "commission_amt": "E25",
+    "commission_amt_15": "K25",
+    "commission_amt_20": "P25",
+}
+
+PROFIT_SUMMARY_V2_ROW14_MARKER = "Gaco E5320"
+
+def _shift_cell_row(cell_addr: str, row_delta: int, min_row: int) -> str:
+    if not cell_addr:
+        return cell_addr
+    match = re.match(r"^([A-Z]+)(\d+)$", str(cell_addr).strip().upper())
+    if not match:
+        return cell_addr
+    col, row_text = match.groups()
+    row = int(row_text)
+    if row < min_row:
+        return cell_addr
+    return f"{col}{row + row_delta}"
+
+def _legacy_profit_summary_cell_map() -> dict:
+    """Map fields for Profit Summary files created before the row-14 material insert."""
+    return {
+        field: _shift_cell_row(cell, -1, 15) if cell else cell
+        for field, cell in EXCEL_CELL_MAP.items()
+    }
+
+EXCEL_CELL_MAP_LEGACY = _legacy_profit_summary_cell_map()
+EXCEL_CELL_MAP_LEGACY.update({
     "office_fee_total": "E24",
     "office_fee_15_total": "K24",
     "office_fee_20_total": "P24",
-    "total_cost": "E26",
-    "total_cost_15": "K26",
-    "total_cost_20": "P26",
-    "pcs_profit": "E28",
-    "pcs_profit_15": "K28",
-    "pcs_profit_20": "P28",
-    "profit_pct": "E29",
-    "profit_pct_15": "K29",
-    "profit_pct_20": "P29",
-    "daily_profit": "E30",
-    "daily_profit_15": "K30",
-    "daily_profit_20": "P30",
-    "profit_share": "E31",
-    "profit_share_15": "K31",
-    "profit_share_20": "P31",
     "commission_amt": "E32",
     "commission_amt_15": "K32",
     "commission_amt_20": "P32",
-}
+    "lead": "C37",
+    "proposal_note": "C40",
+    "proposal_language": "C41",
+})
+for _legacy_new_field in ("gaco_e5320_units", "gaco_e5320_price", "gaco_e5320_total"):
+    EXCEL_CELL_MAP_LEGACY[_legacy_new_field] = None
+
+def detect_profit_summary_cell_map(ws) -> dict:
+    """Choose the correct import/read map using the row-14 Gaco E5320 marker."""
+    marker = re.sub(r"\s+", " ", PROFIT_SUMMARY_V2_ROW14_MARKER).strip().casefold()
+    try:
+        max_col = min(ws.max_column or 1, 40)
+        row_values = [ws.cell(row=14, column=col).value for col in range(1, max_col + 1)]
+    except Exception:
+        row_values = []
+    for value in row_values:
+        normalized = re.sub(r"\s+", " ", str(value or "")).strip().casefold()
+        if marker in normalized:
+            return EXCEL_CELL_MAP
+    return EXCEL_CELL_MAP_LEGACY
 
 HIDDEN_SHEET_NAME = "Hidden Sheet"
 HIDDEN_SHEET_CELL_MAP = {
@@ -1851,7 +1939,7 @@ CALC_ONLY_FIELDS = {
 }
 
 def include_travel_from_travel_total(value) -> str:
-    """Use the actual E21 travel value as the persisted travel indicator."""
+    """Use the actual E22 travel value as the persisted travel indicator."""
     if value is None:
         return "No"
     if isinstance(value, str):
@@ -2024,7 +2112,7 @@ import re as _re_for_ghost
 _GHOST_COL_MAP = {"C": "AA", "D": "AB", "E": "AC", "H": "AH", "K": "AK", "M": "AM", "N": "AN", "P": "AP"}
 
 def _ghost_addr(cell_addr: str) -> str | None:
-    """Translate 'C14' -> 'AA14', 'D14' -> 'AB14', etc."""
+    """Translate 'C16' -> 'AA16', 'D16' -> 'AB16', etc."""
     if not cell_addr:
         return None
     m = _re_for_ghost.match(r"^([A-Z]+)(\d+)$", str(cell_addr))
@@ -2144,14 +2232,33 @@ def write_fields_to_profit_summary(wb_profit, data: dict):
             pass
         _set_worksheet_value(ws, cell, value)
     try:
-        _set_worksheet_value(ws, "K24", PS_F_K24.replace("\n", ""))
-        _set_worksheet_value(ws, "P24", PS_F_P24.replace("\n", ""))
-        _set_worksheet_value(ws, "U24", PS_F_U24.replace("\n", ""))
-        _set_worksheet_value(ws, "K26", PS_F_K26.replace("\n", ""))
-        _set_worksheet_value(ws, "P26", PS_F_P26.replace("\n", ""))
-        _set_worksheet_value(ws, "U26", PS_F_U26.replace("\n", ""))
+        try:
+            _gaco_e5320_price = float((data or {}).get("gaco_e5320_price") or 0)
+        except Exception:
+            _gaco_e5320_price = 0
+        _set_worksheet_value(ws, "I14", _gaco_e5320_price)
+        _set_worksheet_value(ws, "O14", _gaco_e5320_price)
+        _set_worksheet_value(ws, "T14", _gaco_e5320_price)
+        _set_worksheet_value(ws, "K14", '=IF(H14<>"",H14*I14,0)')
+        _set_worksheet_value(ws, "P14", '=IF(N14<>"",N14*O14,0)')
+        _set_worksheet_value(ws, "U14", '=IF(S14<>"",S14*T14,0)')
+        _set_worksheet_value(ws, "K25", PS_F_K25.replace("\n", ""))
+        _set_worksheet_value(ws, "P25", PS_F_P25.replace("\n", ""))
+        _set_worksheet_value(ws, "U25", PS_F_U25.replace("\n", ""))
+        _set_worksheet_value(ws, "K27", PS_F_K27.replace("\n", ""))
+        _set_worksheet_value(ws, "P27", PS_F_P27.replace("\n", ""))
+        _set_worksheet_value(ws, "U27", PS_F_U27.replace("\n", ""))
+        _set_worksheet_value(ws, "K29", PS_F_K29.replace("\n", ""))
+        _set_worksheet_value(ws, "P29", PS_F_P29.replace("\n", ""))
+        _set_worksheet_value(ws, "K30", PS_F_K30.replace("\n", ""))
+        _set_worksheet_value(ws, "P30", PS_F_P30.replace("\n", ""))
+        _set_worksheet_value(ws, "K31", PS_F_K31.replace("\n", ""))
+        _set_worksheet_value(ws, "P31", PS_F_P31.replace("\n", ""))
         _set_worksheet_value(ws, "K32", PS_F_K32.replace("\n", ""))
         _set_worksheet_value(ws, "P32", PS_F_P32.replace("\n", ""))
+        _set_worksheet_value(ws, "K33", PS_F_K33.replace("\n", ""))
+        _set_worksheet_value(ws, "P33", PS_F_P33.replace("\n", ""))
+        _set_worksheet_value(ws, "U33", PS_F_U33.replace("\n", ""))
     except Exception:
         pass
     write_hidden_sheet_values(wb_profit, data)
@@ -2180,6 +2287,7 @@ def sync_cost_rollups_from_display_components(data: dict) -> dict:
     shared_component_fields = (
         "gaco_patch_total",
         "bleed_trap_total",
+        "gaco_e5320_total",
         "sw_1flash_total",
         "sw_bleed_block_total",
         "drainage_mat_total",
@@ -2208,7 +2316,7 @@ def sync_cost_rollups_from_display_components(data: dict) -> dict:
         data[cost_field] = total_cost
 
         total_price = _num(data.get(price_field), 0.0)
-        profit_share_amt = excel_round(0.10 * (total_price - total_cost), 0)
+        profit_share_amt = excel_round(PROFIT_SHARE_PCT * (total_price - total_cost), 0)
         pcs_profit = total_price - total_cost - profit_share_amt
         data[share_field] = profit_share_amt
         data[pcs_field] = pcs_profit
@@ -2235,9 +2343,10 @@ def read_profit_summary_for_display(folder_path: str) -> dict | None:
         return None
     ws_vals = wb_vals.worksheets[0]
     ws_raw  = wb_raw.worksheets[0]
+    cell_map = detect_profit_summary_cell_map(ws_vals)
 
     def _get_ghost_val(field, default=None):
-        cell = EXCEL_CELL_MAP.get(field)
+        cell = cell_map.get(field)
         if not cell:
             return default
         gcell = _ghost_addr(cell)
@@ -2250,7 +2359,7 @@ def read_profit_summary_for_display(folder_path: str) -> dict | None:
             return default
 
     def _get_cell_val(field, default=None):
-        cell = EXCEL_CELL_MAP.get(field)
+        cell = cell_map.get(field)
         if not cell:
             return default
         try:
@@ -2319,6 +2428,8 @@ def read_profit_summary_for_display(folder_path: str) -> dict | None:
     gaco_patch_price  = _num(_get_calc_input_val('gaco_patch_price', None), None)
     bleed_trap_units  = _num(_get_calc_input_val('bleed_trap_units', None), None)
     bleed_trap_price  = _num(_get_calc_input_val('bleed_trap_price', None), None)
+    gaco_e5320_units  = _num(_get_calc_input_val('gaco_e5320_units', 0.0), 0.0)
+    gaco_e5320_price  = _num(_get_calc_input_val('gaco_e5320_price', GACO_E5320_Price), GACO_E5320_Price)
     sw_1flash_units   = _num(_get_calc_input_val('sw_1flash_units', None), None)
     sw_1flash_price   = _num(_get_calc_input_val('sw_1flash_price', None), None)
     sw_bleed_block_units = _num(_get_calc_input_val('sw_bleed_block_units', None), None)
@@ -2354,6 +2465,8 @@ def read_profit_summary_for_display(folder_path: str) -> dict | None:
         sw_1flash_price=sw_1flash_price,
         bleed_trap_units=bleed_trap_units,
         bleed_trap_price=bleed_trap_price,
+        gaco_e5320_units=gaco_e5320_units,
+        gaco_e5320_price=gaco_e5320_price,
         sw_bleed_block_units=sw_bleed_block_units,
         sw_bleed_block_price=sw_bleed_block_price,
         drainage_mat_units=drainage_mat_units,
@@ -2379,7 +2492,7 @@ def read_profit_summary_for_display(folder_path: str) -> dict | None:
 
     # Build base data dict from cached values in the sheet
     data = {}
-    for field, cell in EXCEL_CELL_MAP.items():
+    for field, cell in cell_map.items():
         if not cell:
             continue
         try:
@@ -2397,11 +2510,11 @@ def read_profit_summary_for_display(folder_path: str) -> dict | None:
     _fallback_fields = [
         # Inputs that may be stored as formulas (or blank when N/A) but must show a number on screen
         "labor_days",
-        "silicone_units_10","silicone_units_15","silicone_units_20","gaco_patch_units","bleed_trap_units",
+        "silicone_units_10","silicone_units_15","silicone_units_20","gaco_patch_units","bleed_trap_units","gaco_e5320_units",
         "sw_1flash_units","sw_bleed_block_units","drainage_mat_units","foam_units",
 
         # Unit prices that may be formulas or overridden numbers
-        "silicone_price","gaco_patch_price","bleed_trap_price",
+        "silicone_price","gaco_patch_price","bleed_trap_price","gaco_e5320_price",
         "sw_1flash_price","sw_bleed_block_price","drainage_mat_price",
         "foam_price","rfc_labor_price","pcs_labor_price",
 
@@ -2411,7 +2524,7 @@ def read_profit_summary_for_display(folder_path: str) -> dict | None:
 
         # Cost/fee totals and downstream profit metrics
         "total_cost","total_cost_15","total_cost_20","warranty_10_total","office_fee_total","office_fee_15_total","office_fee_20_total",
-        "silicone_total","silicone_15_total","silicone_20_total","gaco_patch_total","bleed_trap_total",
+        "silicone_total","silicone_15_total","silicone_20_total","gaco_patch_total","bleed_trap_total","gaco_e5320_total",
         "sw_1flash_total","sw_bleed_block_total","drainage_mat_total",
         "foam_total","rfc_labor_total","pcs_labor_total",
         "commission_amt","commission_amt_15","commission_amt_20",
@@ -2439,7 +2552,7 @@ def read_profit_summary_for_display(folder_path: str) -> dict | None:
             return False
 
     for f in _fallback_fields:
-        cell = EXCEL_CELL_MAP.get(f)
+        cell = cell_map.get(f)
         if not cell:
             continue
         raw_cell = ws_raw[cell]
@@ -2465,7 +2578,7 @@ def read_profit_summary_for_display(folder_path: str) -> dict | None:
         "total_price_10","total_price_15","total_price_20",
         "warranty_10_total","office_fee_total","office_fee_15_total","office_fee_20_total",
         "total_cost","total_cost_15","total_cost_20",
-        "silicone_total","silicone_15_total","silicone_20_total","gaco_patch_total","bleed_trap_total",
+        "silicone_total","silicone_15_total","silicone_20_total","gaco_patch_total","bleed_trap_total","gaco_e5320_total",
         "sw_1flash_total","sw_bleed_block_total","drainage_mat_total",
         "foam_total","rfc_labor_total","pcs_labor_total",
         "commission_amt","commission_amt_15","commission_amt_20",
@@ -2503,7 +2616,7 @@ def merge_display_fallbacks(
                     "total_price_10", "total_price_15", "total_price_20",
                     "warranty_10_total", "office_fee_total", "office_fee_15_total", "office_fee_20_total",
                     "total_cost", "total_cost_15", "total_cost_20",
-                    "silicone_total", "silicone_15_total", "silicone_20_total", "gaco_patch_total", "bleed_trap_total",
+                    "silicone_total", "silicone_15_total", "silicone_20_total", "gaco_patch_total", "bleed_trap_total", "gaco_e5320_total",
                     "sw_1flash_total", "sw_bleed_block_total", "drainage_mat_total",
                     "foam_total", "rfc_labor_total", "pcs_labor_total",
                     "commission_amt", "commission_amt_15", "commission_amt_20",
@@ -2522,16 +2635,16 @@ def merge_display_fallbacks(
                 # Never overwrite user-edited driver/header fields during POST recalcs.
                 fallback_fields = {
                     "labor_days",
-                    "silicone_units_10", "silicone_units_15", "silicone_units_20", "gaco_patch_units", "bleed_trap_units",
+                    "silicone_units_10", "silicone_units_15", "silicone_units_20", "gaco_patch_units", "bleed_trap_units", "gaco_e5320_units",
                     "sw_1flash_units", "sw_bleed_block_units", "drainage_mat_units", "foam_units",
-                    "silicone_price", "gaco_patch_price", "bleed_trap_price",
+                    "silicone_price", "gaco_patch_price", "bleed_trap_price", "gaco_e5320_price",
                     "sw_1flash_price", "sw_bleed_block_price", "drainage_mat_price",
                     "foam_price", "rfc_labor_price", "pcs_labor_price",
                     "price_per_sq_10", "price_per_sq_15", "price_per_sq_20",
                     "total_price_10", "total_price_15", "total_price_20",
                     "total_cost", "total_cost_15", "total_cost_20",
                     "warranty_10_total", "office_fee_total", "office_fee_15_total", "office_fee_20_total",
-                    "silicone_total", "silicone_15_total", "silicone_20_total", "gaco_patch_total", "bleed_trap_total",
+                    "silicone_total", "silicone_15_total", "silicone_20_total", "gaco_patch_total", "bleed_trap_total", "gaco_e5320_total",
                     "sw_1flash_total", "sw_bleed_block_total", "drainage_mat_total",
                     "foam_total", "rfc_labor_total", "pcs_labor_total",
                     "commission_amt", "commission_amt_15", "commission_amt_20",
@@ -2592,6 +2705,9 @@ def make_blank_data():
         "gaco_patch_price": 0,
         "bleed_trap_units": 0,
         "bleed_trap_price": 0,
+        "gaco_e5320_units": 0,
+        "gaco_e5320_price": 0,
+        "gaco_e5320_total": 0,
         "sw_1flash_units": 0,
         "sw_1flash_price": 0,
         "sw_bleed_block_units": 0,
@@ -2696,6 +2812,8 @@ def calculation_routine(
     previous_pcs_or_roofer_ind=None,
     previous_include_travel="No",
     previous_calc_travel_total=None,
+    gaco_e5320_units=0.0,
+    gaco_e5320_price=None,
 ):
     # === Select correct pricing arrays based on PCS/Roofer indicator ===
     _safe_debug(f"[TRACE] Entering pricing selector: incoming pcs_or_roofer_ind={pcs_or_roofer_ind!r}")
@@ -2978,6 +3096,16 @@ def calculation_routine(
         if bleed_trap_price is None or (isinstance(bleed_trap_price, float) and math.isnan(bleed_trap_price)):
             bleed_trap_price = base_bleed_price
 
+    # Gaco E5320 logic. Units are user-entered; price defaults to baseline when units are present.
+    try:
+        gaco_e5320_units = 0.0 if gaco_e5320_units is None else float(gaco_e5320_units)
+    except Exception:
+        gaco_e5320_units = 0.0
+    try:
+        gaco_e5320_price = 0.0 if gaco_e5320_price is None else float(gaco_e5320_price)
+    except Exception:
+        gaco_e5320_price = 0.0
+
     # SW 1-Flash logic (units & price)
     if product == "Uniflex":
         base_sw_1flash_price = SW_1FLASH_BASE_PRICE
@@ -3128,6 +3256,7 @@ def calculation_routine(
     silicone_units_10, silicone_price = _normalize_unit_price(silicone_units_10, silicone_price, base_silicone_price)
     gaco_patch_units, gaco_patch_price = _normalize_unit_price(gaco_patch_units, gaco_patch_price, base_gaco_patch_price)
     bleed_trap_units, bleed_trap_price = _normalize_unit_price(bleed_trap_units, bleed_trap_price, base_bleed_price)
+    gaco_e5320_units, gaco_e5320_price = _normalize_unit_price(gaco_e5320_units, gaco_e5320_price, GACO_E5320_Price)
     sw_1flash_units, sw_1flash_price = _normalize_unit_price(sw_1flash_units, sw_1flash_price, base_sw_1flash_price)
     sw_bleed_block_units, sw_bleed_block_price = _normalize_unit_price(sw_bleed_block_units, sw_bleed_block_price, base_sw_bleed_block_price)
     drainage_mat_units, drainage_mat_price = _normalize_unit_price(drainage_mat_units, drainage_mat_price, base_drainage_price)
@@ -3139,6 +3268,7 @@ def calculation_routine(
     silicone_20_total    = excel_round(silicone_units_20, 0)        * excel_round(silicone_price, 0)
     gaco_patch_total     = excel_round(gaco_patch_units, 0)         * excel_round(gaco_patch_price, 0)
     bleed_trap_total     = excel_round(bleed_trap_units, 0)         * excel_round(bleed_trap_price, 0)
+    gaco_e5320_total     = excel_round(gaco_e5320_units, 0)         * excel_round(gaco_e5320_price, 0)
     sw_bleed_block_total = excel_round(sw_bleed_block_units, 0)     * excel_round(sw_bleed_block_price, 0)
     sw_1flash_total      = excel_round(sw_1flash_units, 0)          * excel_round(sw_1flash_price, 0)
     drainage_mat_total   = excel_round(drainage_mat_units, 0)       * excel_round(drainage_mat_price, 0)
@@ -3251,6 +3381,7 @@ def calculation_routine(
         silicone_total,
         gaco_patch_total,
         bleed_trap_total,
+        gaco_e5320_total,
         sw_1flash_total,
         sw_bleed_block_total,
         drainage_mat_total,
@@ -3267,6 +3398,7 @@ def calculation_routine(
         silicone_15_total,
         gaco_patch_total,
         bleed_trap_total,
+        gaco_e5320_total,
         sw_1flash_total,
         sw_bleed_block_total,
         drainage_mat_total,
@@ -3283,6 +3415,7 @@ def calculation_routine(
         silicone_20_total,
         gaco_patch_total,
         bleed_trap_total,
+        gaco_e5320_total,
         sw_1flash_total,
         sw_bleed_block_total,
         drainage_mat_total,
@@ -3296,16 +3429,16 @@ def calculation_routine(
         commission_amt_20
     ])
 
-    # Profit share calculation: use flat 10% regardless of submitted_by
-    profit_share_amt = excel_round(0.10 * (total_price_10 - total_cost), 0)
+    # Profit share calculation: use the configured percentage regardless of submitted_by.
+    profit_share_amt = excel_round(PROFIT_SHARE_PCT * (total_price_10 - total_cost), 0)
     pcs_profit = total_price_10 - total_cost - profit_share_amt
     profit_pct = excel_round(pcs_profit / total_price_10, 2) if total_price_10 else 0
     daily_profit = excel_round(pcs_profit / labor_days, 0) if labor_days else 0
-    profit_share_15 = excel_round(0.10 * (total_price_15 - total_cost_15), 0)
+    profit_share_15 = excel_round(PROFIT_SHARE_PCT * (total_price_15 - total_cost_15), 0)
     pcs_profit_15 = total_price_15 - total_cost_15 - profit_share_15
     profit_pct_15 = excel_round(pcs_profit_15 / total_price_15, 2) if total_price_15 else 0
     daily_profit_15 = excel_round(pcs_profit_15 / labor_days, 0) if labor_days else 0
-    profit_share_20 = excel_round(0.10 * (total_price_20 - total_cost_20), 0)
+    profit_share_20 = excel_round(PROFIT_SHARE_PCT * (total_price_20 - total_cost_20), 0)
     pcs_profit_20 = total_price_20 - total_cost_20 - profit_share_20
     profit_pct_20 = excel_round(pcs_profit_20 / total_price_20, 2) if total_price_20 else 0
     daily_profit_20 = excel_round(pcs_profit_20 / labor_days, 0) if labor_days else 0
@@ -3334,6 +3467,9 @@ def calculation_routine(
         "bleed_trap_units": bleed_trap_units,
         "bleed_trap_price": bleed_trap_price,
         "bleed_trap_total": bleed_trap_total,
+        "gaco_e5320_units": gaco_e5320_units,
+        "gaco_e5320_price": gaco_e5320_price,
+        "gaco_e5320_total": gaco_e5320_total,
         "sw_1flash_units": sw_1flash_units,
         "sw_1flash_price": sw_1flash_price,
         "sw_1flash_total": sw_1flash_total,
@@ -3429,6 +3565,709 @@ def proposal_list():
 @app.route('/blast-emails')
 def blast_email_management():
     return render_template('blast_email_management.html')
+
+
+@app.route('/proposal-tracker')
+def proposal_tracker():
+    entries, tracker_error = load_proposal_tracker_missing_entries()
+    saved_count = request.args.get("saved_count", "").strip()
+    save_error = request.args.get("save_error", "").strip()
+    return render_template(
+        'proposal_tracker.html',
+        entries=entries,
+        tracker_error=tracker_error,
+        saved_count=saved_count,
+        save_error=save_error,
+    )
+
+
+@app.route('/proposal-tracker/save', methods=['POST'])
+def save_proposal_tracker():
+    entries = []
+    for row_number in request.form.getlist("row_number"):
+        row_key = str(row_number or "").strip()
+        if row_key.startswith("new_"):
+            customer = request.form.get(f"customer_{row_key}", "")
+            if not any([
+                str(customer or "").strip(),
+                request.form.get(f"contact_{row_key}", ""),
+                request.form.get(f"email_address_{row_key}", ""),
+                request.form.get(f"submitted_by_{row_key}", ""),
+                request.form.get(f"estimated_by_{row_key}", ""),
+                request.form.get(f"proposal_date_{row_key}", ""),
+                request.form.get(f"follow_up_date_{row_key}", ""),
+            ]):
+                continue
+            entries.append({
+                "is_new": True,
+                "row_number": row_key,
+                "customer": customer,
+                "contact": request.form.get(f"contact_{row_key}", ""),
+                "email_address": request.form.get(f"email_address_{row_key}", ""),
+                "submitted_by": request.form.get(f"submitted_by_{row_key}", ""),
+                "estimated_by": request.form.get(f"estimated_by_{row_key}", ""),
+                "proposal_date": request.form.get(f"proposal_date_{row_key}", ""),
+                "follow_up_date": request.form.get(f"follow_up_date_{row_key}", ""),
+            })
+            continue
+        if not row_key.isdigit():
+            continue
+        entries.append({
+            "is_new": False,
+            "row_number": int(row_key),
+            "contact": request.form.get(f"contact_{row_key}", ""),
+            "email_address": request.form.get(f"email_address_{row_key}", ""),
+            "submitted_by": request.form.get(f"submitted_by_{row_key}", ""),
+            "estimated_by": request.form.get(f"estimated_by_{row_key}", ""),
+            "proposal_date": request.form.get(f"proposal_date_{row_key}", ""),
+            "follow_up_date": request.form.get(f"follow_up_date_{row_key}", ""),
+        })
+
+    try:
+        saved_count = update_proposal_tracker_missing_entries(entries)
+    except Exception as exc:
+        _safe_debug(f"[ERROR] Proposal tracker save failed: {exc}")
+        return redirect(url_for("proposal_tracker", save_error=str(exc)))
+
+    return redirect(url_for("proposal_tracker", saved_count=saved_count))
+
+
+def _coerce_tracker_date(value):
+    if value is None:
+        return None
+    if isinstance(value, datetime.datetime):
+        return value.date()
+    if isinstance(value, datetime.date):
+        return value
+    if isinstance(value, (int, float)):
+        try:
+            converted = from_excel(value)
+            if isinstance(converted, datetime.datetime):
+                return converted.date()
+            if isinstance(converted, datetime.date):
+                return converted
+        except Exception:
+            return None
+    if isinstance(value, str):
+        cleaned = value.strip()
+        if not cleaned or cleaned in {"-", "N/A", "n/a"}:
+            return None
+        for fmt in ("%m/%d/%Y", "%m/%d/%y", "%Y-%m-%d"):
+            try:
+                return datetime.datetime.strptime(cleaned, fmt).date()
+            except ValueError:
+                pass
+    return None
+
+
+def _format_tracker_date(value):
+    parsed = _coerce_tracker_date(value)
+    if parsed is None:
+        return ""
+    return f"{parsed.month}/{parsed.day}/{parsed.year}"
+
+
+def _format_tracker_date_input(value):
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value.strip()
+    parsed = _coerce_tracker_date(value)
+    return "" if parsed is None else f"{parsed.month}/{parsed.day}/{parsed.year}"
+
+
+def _default_follow_up_cutoff_date():
+    return datetime.date.today() - datetime.timedelta(days=14)
+
+
+def _parse_iso_date(value, fallback_date):
+    try:
+        return datetime.datetime.strptime(str(value or "").strip(), "%Y-%m-%d").date()
+    except Exception:
+        return fallback_date
+
+
+def _parse_optional_iso_date(value):
+    cleaned = str(value or "").strip()
+    if not cleaned:
+        return None
+    return _parse_iso_date(cleaned, None)
+
+
+def _tracker_cell_is_blank(value):
+    return str(value or "").strip() == ""
+
+
+def _copy_tracker_row_style(ws, source_row, target_row):
+    if source_row < 1 or target_row < 1 or source_row == target_row:
+        return
+    max_column = max(ws.max_column, 7)
+    for col_idx in range(1, max_column + 1):
+        source_cell = ws.cell(row=source_row, column=col_idx)
+        target_cell = ws.cell(row=target_row, column=col_idx)
+        if source_cell.has_style:
+            target_cell._style = _copy_style(source_cell._style)
+        if source_cell.number_format:
+            target_cell.number_format = source_cell.number_format
+        if source_cell.font:
+            target_cell.font = _copy_style(source_cell.font)
+        if source_cell.fill:
+            target_cell.fill = _copy_style(source_cell.fill)
+        if source_cell.border:
+            target_cell.border = _copy_style(source_cell.border)
+        if source_cell.alignment:
+            target_cell.alignment = _copy_style(source_cell.alignment)
+        if source_cell.protection:
+            target_cell.protection = _copy_style(source_cell.protection)
+
+
+def _find_tracker_insert_row(ws, customer_name):
+    new_key = str(customer_name or "").strip().casefold()
+    first_data_row = 2
+    last_row = max(ws.max_row, first_data_row - 1)
+    for row_number in range(first_data_row, last_row + 1):
+        existing_key = str(ws.cell(row=row_number, column=1).value or "").strip().casefold()
+        if existing_key and existing_key > new_key:
+            return row_number
+    return last_row + 1
+
+
+def _write_tracker_entry_to_row(ws, row_number, entry):
+    ws.cell(row=row_number, column=1).value = str(entry.get("customer") or "").strip()
+    ws.cell(row=row_number, column=2).value = str(entry.get("contact") or "").strip()
+    ws.cell(row=row_number, column=3).value = str(entry.get("email_address") or "").strip()
+    ws.cell(row=row_number, column=5).value = str(entry.get("submitted_by") or "").strip()
+    ws.cell(row=row_number, column=6).number_format = "General"
+    ws.cell(row=row_number, column=6).value = str(entry.get("proposal_date") or "").strip()
+    ws.cell(row=row_number, column=7).number_format = "General"
+    ws.cell(row=row_number, column=7).value = str(entry.get("follow_up_date") or "").strip()
+    ws.cell(row=row_number, column=8).value = str(entry.get("estimated_by") or "").strip()
+
+
+def load_proposal_tracker_missing_entries(tracker_path=PROPOSAL_TRACKER):
+    entries = []
+
+    try:
+        with TRACKER_IO_LOCK:
+            source_path = _proposal_tracker_source_path(tracker_path)
+            if not source_path:
+                raise RuntimeError(f"Proposal Tracking.xlsx not found: {tracker_path}")
+            wb = load_workbook(source_path, data_only=True, read_only=True)
+            ws = wb.active
+            try:
+                for row_idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                    customer = row[0] if len(row) > 0 else ""
+                    contact = row[1] if len(row) > 1 else ""
+                    email_address = row[2] if len(row) > 2 else ""
+                    lead = row[3] if len(row) > 3 else ""
+                    submitted_by = row[4] if len(row) > 4 else ""
+                    proposal_dt_raw = row[5] if len(row) > 5 else None
+                    follow_up_raw = row[6] if len(row) > 6 else None
+                    estimated_by = row[7] if len(row) > 7 else ""
+
+                    if not any([customer, contact, email_address, lead, submitted_by, proposal_dt_raw, follow_up_raw]):
+                        continue
+                    if not any([
+                        _tracker_cell_is_blank(contact),
+                        _tracker_cell_is_blank(email_address),
+                        _tracker_cell_is_blank(proposal_dt_raw),
+                    ]):
+                        continue
+
+                    entries.append({
+                        "row_number": row_idx,
+                        "customer": str(customer or "").strip(),
+                        "contact": str(contact or "").strip(),
+                        "email_address": str(email_address or "").strip(),
+                        "submitted_by": str(submitted_by or "").strip(),
+                        "estimated_by": str(estimated_by or "").strip(),
+                        "proposal_date_input": _format_tracker_date_input(proposal_dt_raw),
+                        "follow_up_date_input": _format_tracker_date_input(follow_up_raw),
+                    })
+            finally:
+                wb.close()
+    except Exception as exc:
+        _safe_debug(f"[ERROR] Proposal tracker read failed: {exc}")
+        return [], str(exc)
+
+    entries.sort(key=lambda item: item["customer"].casefold())
+    return entries, None
+
+
+def update_proposal_tracker_missing_entries(entries, tracker_path=PROPOSAL_TRACKER):
+    if not entries:
+        return 0
+
+    source_path = _proposal_tracker_source_path(tracker_path)
+    if not source_path:
+        raise RuntimeError(f"Proposal Tracking.xlsx not found: {tracker_path}")
+
+    wb = None
+    temp_path = None
+    try:
+        with TRACKER_IO_LOCK:
+            wb = load_workbook(source_path)
+            ws = wb.active
+            updated_count = 0
+            existing_entries = [entry for entry in entries if not entry.get("is_new")]
+            new_entries = [
+                entry for entry in entries
+                if entry.get("is_new") and str(entry.get("customer") or "").strip()
+            ]
+
+            for entry in existing_entries:
+                row_number = int(entry.get("row_number") or 0)
+                if row_number < 2 or row_number > ws.max_row:
+                    continue
+
+                ws.cell(row=row_number, column=2).value = str(entry.get("contact") or "").strip()
+                ws.cell(row=row_number, column=3).value = str(entry.get("email_address") or "").strip()
+                ws.cell(row=row_number, column=5).value = str(entry.get("submitted_by") or "").strip()
+                ws.cell(row=row_number, column=6).number_format = "General"
+                ws.cell(row=row_number, column=6).value = str(entry.get("proposal_date") or "").strip()
+                ws.cell(row=row_number, column=7).number_format = "General"
+                ws.cell(row=row_number, column=7).value = str(entry.get("follow_up_date") or "").strip()
+                ws.cell(row=row_number, column=8).value = str(entry.get("estimated_by") or "").strip()
+                updated_count += 1
+
+            for entry in sorted(new_entries, key=lambda item: str(item.get("customer") or "").casefold()):
+                insert_row = _find_tracker_insert_row(ws, entry.get("customer"))
+                if insert_row <= ws.max_row:
+                    ws.insert_rows(insert_row)
+                    style_source_row = insert_row + 1 if insert_row + 1 <= ws.max_row else insert_row - 1
+                    _copy_tracker_row_style(ws, style_source_row, insert_row)
+                elif ws.max_row >= 2:
+                    _copy_tracker_row_style(ws, ws.max_row, insert_row)
+                _write_tracker_entry_to_row(ws, insert_row, entry)
+                updated_count += 1
+
+            temp_path = _proposal_tracker_temp_path(tracker_path)
+            wb.save(temp_path)
+            wb.close()
+            wb = None
+            _replace_proposal_tracker_file(temp_path, tracker_path)
+            temp_path = None
+            return updated_count
+    finally:
+        try:
+            if wb is not None:
+                wb.close()
+        except Exception:
+            pass
+        if temp_path and os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+            except Exception:
+                pass
+
+
+def load_weekly_follow_up_entries(tracker_path=PROPOSAL_TRACKER, cutoff_date=None):
+    cutoff_date = cutoff_date or _default_follow_up_cutoff_date()
+    entries = []
+
+    try:
+        with TRACKER_IO_LOCK:
+            wb = load_workbook(tracker_path, data_only=True, read_only=True)
+            ws = wb.active
+            try:
+                for row_idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                    customer = row[0] if len(row) > 0 else ""
+                    contact = row[1] if len(row) > 1 else ""
+                    email_address = row[2] if len(row) > 2 else ""
+                    submitted_by = row[4] if len(row) > 4 else ""
+                    proposal_dt_raw = row[5] if len(row) > 5 else None
+                    follow_up_raw = row[6] if len(row) > 6 else None
+                    proposal_dt = _coerce_tracker_date(proposal_dt_raw)
+
+                    if not any([customer, contact, email_address, submitted_by, proposal_dt_raw]):
+                        continue
+                    if str(follow_up_raw or "").strip():
+                        continue
+                    if proposal_dt is None or proposal_dt > cutoff_date:
+                        continue
+
+                    entries.append({
+                        "row_number": row_idx,
+                        "customer": str(customer or "").strip(),
+                        "contact": str(contact or "").strip(),
+                        "email_address": str(email_address or "").strip(),
+                        "proposal_date": proposal_dt,
+                        "proposal_date_display": _format_tracker_date(proposal_dt),
+                        "submitted_by": str(submitted_by or "").strip(),
+                    })
+            finally:
+                wb.close()
+    except Exception as exc:
+        _safe_debug(f"[ERROR] Weekly follow-up tracker read failed: {exc}")
+        return [], cutoff_date, str(exc)
+
+    entries.sort(key=lambda item: (
+        item["submitted_by"].casefold(),
+        item["proposal_date"],
+        item["customer"].casefold(),
+    ))
+    return entries, cutoff_date, None
+
+
+def update_weekly_follow_up_dates(row_numbers, follow_up_date=None, tracker_path=PROPOSAL_TRACKER):
+    row_numbers = {
+        int(row_number)
+        for row_number in (row_numbers or [])
+        if str(row_number).strip().isdigit() and int(row_number) >= 2
+    }
+    if not row_numbers:
+        return 0
+
+    follow_up_date = follow_up_date or datetime.date.today()
+    source_path = _proposal_tracker_source_path(tracker_path)
+    if not source_path:
+        raise RuntimeError(f"Proposal Tracking.xlsx not found: {tracker_path}")
+
+    wb = None
+    temp_path = None
+    try:
+        with TRACKER_IO_LOCK:
+            wb = load_workbook(source_path)
+            ws = wb.active
+            updated_count = 0
+            for row_number in sorted(row_numbers):
+                if row_number > ws.max_row:
+                    continue
+                cell = ws.cell(row=row_number, column=7)
+                cell.value = follow_up_date
+                cell.number_format = "m/d/yyyy"
+                updated_count += 1
+
+            temp_path = _proposal_tracker_temp_path(tracker_path)
+            wb.save(temp_path)
+            wb.close()
+            wb = None
+            _replace_proposal_tracker_file(temp_path, tracker_path)
+            temp_path = None
+            return updated_count
+    finally:
+        try:
+            if wb is not None:
+                wb.close()
+        except Exception:
+            pass
+        if temp_path and os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+            except Exception:
+                pass
+
+
+def _build_weekly_follow_up_email_bodies(submitter, follow_ups, cutoff_date):
+    submitter_name = str(submitter or "Unassigned").strip() or "Unassigned"
+    cutoff_display = _format_tracker_date(cutoff_date)
+    subject_text = f"{submitter_name} Follow-Up List - {cutoff_display}"
+
+    plain_lines = [
+        f"{submitter_name} Follow-Up List",
+        f"Proposal dates on or before {cutoff_display}",
+        "",
+    ]
+    for item in follow_ups:
+        plain_lines.extend([
+            str(item.get("customer") or ""),
+            f"Contact: {item.get('contact') or ''}",
+            f"Email: {item.get('email_address') or ''}",
+            f"Proposal Date: {item.get('proposal_date_display') or ''}",
+            "",
+        ])
+    plain_body = "\n".join(plain_lines).rstrip()
+
+    row_html = []
+    for item in follow_ups:
+        email_address = str(item.get("email_address") or "").strip()
+        email_cell = ""
+        if email_address:
+            email_cell = (
+                f'<a href="mailto:{html.escape(email_address, quote=True)}">'
+                f"{html.escape(email_address)}</a>"
+            )
+        row_html.append(
+            "<tr>"
+            f"<td>{html.escape(str(item.get('customer') or ''))}</td>"
+            f"<td>{html.escape(str(item.get('contact') or ''))}</td>"
+            f"<td>{email_cell}</td>"
+            f"<td>{html.escape(str(item.get('proposal_date_display') or ''))}</td>"
+            "</tr>"
+        )
+
+    html_body = (
+        '<html><body style="font-family: Aptos, Arial, Helvetica, sans-serif; font-size: 12pt; color: #212121;">'
+        f"<p>{html.escape(submitter_name)} Follow-Up List</p>"
+        f"<p>Proposal dates on or before {html.escape(cutoff_display)}.</p>"
+        '<table border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse; font-size: 11pt;">'
+        '<thead><tr style="background: #eef3f8;">'
+        "<th align=\"left\">Customer</th>"
+        "<th align=\"left\">Contact</th>"
+        "<th align=\"left\">Email Address</th>"
+        "<th align=\"left\">Proposal Date</th>"
+        "</tr></thead>"
+        f"<tbody>{''.join(row_html)}</tbody>"
+        "</table>"
+        "</body></html>"
+    )
+    return subject_text, plain_body, html_body
+
+
+def get_weekly_follow_up_recipients_for_submitter(submitted_by):
+    submitter = str(submitted_by or "").strip()
+    recipients_by_submitter = {
+        "David": ["david@procoatingsystems.com"],
+        "Mark": ["mark@procoatingsystems.com"],
+        "Lydia": ["lydia@procoatingsystems.com"],
+        "Randy": ["randy@procoatingsystems.com"],
+    }
+    return recipients_by_submitter.get(submitter, get_email_recipients_for_submitter(submitter))
+
+
+def _open_outlook_html_draft_for_submitter(subject_text, plain_text_body, html_body, submitted_by, recipients=None):
+    if sys.platform != "darwin":
+        return None
+
+    recipients = recipients or get_email_recipients_for_submitter(submitted_by)
+    sender_email = get_sender_email_for_submitter(submitted_by)
+    submitter_label = str(submitted_by or "").strip()
+
+    if _is_running_new_outlook():
+        status = _open_new_outlook_template_draft(
+            subject_text,
+            plain_text_body,
+            html_body,
+            recipients,
+        )
+        return _build_outlook_draft_warning(status, sender_email)
+
+    recipient_blob = "||".join(recipients)
+    account_match_enabled = "1"
+    script_lines = [
+        "on run argv",
+        "set subjectText to item 1 of argv",
+        "set htmlBody to item 2 of argv",
+        "set senderEmail to item 3 of argv",
+        "set recipientBlob to item 4 of argv",
+        "set senderLabel to item 5 of argv",
+        "set accountMatchFlag to item 6 of argv",
+        'set AppleScript\'s text item delimiters to "||"',
+        "set recipientList to text items of recipientBlob",
+        "set availableAccounts to {}",
+        "set matchStatus to \"fallback:account-match-disabled\"",
+        'tell application "Microsoft Outlook"',
+        "activate",
+        "set targetAccount to missing value",
+        "set accountList to {}",
+        'if accountMatchFlag is equal to "1" then',
+        "try",
+        "set accountList to accountList & (exchange accounts)",
+        "end try",
+        "try",
+        "set accountList to accountList & (imap accounts)",
+        "end try",
+        "try",
+        "set accountList to accountList & (pop accounts)",
+        "end try",
+        "end if",
+        "repeat with acct in accountList",
+        "try",
+        "set acctEmail to email address of acct as string",
+        "on error",
+        "set acctEmail to \"\"",
+        "end try",
+        "try",
+        "set acctName to name of acct as string",
+        "on error",
+        "set acctName to \"\"",
+        "end try",
+        "if acctName is not \"\" then",
+        "set end of availableAccounts to acctName",
+        "else if acctEmail is not \"\" then",
+        "set end of availableAccounts to acctEmail",
+        "end if",
+        "if targetAccount is missing value then",
+        "if acctEmail is not \"\" then",
+        "ignoring case",
+        "if acctEmail is equal to senderEmail then set targetAccount to acct",
+        "end ignoring",
+        "end if",
+        "end if",
+        "if targetAccount is missing value then",
+        "if senderLabel is not \"\" then",
+        "if acctName is not \"\" then",
+        "ignoring case",
+        "if acctName is equal to senderLabel then set targetAccount to acct",
+        "end ignoring",
+        "end if",
+        "end if",
+        "end if",
+        "if targetAccount is missing value then",
+        "if senderLabel is not \"\" then",
+        "if acctName is not \"\" then",
+        "ignoring case",
+        "if acctName contains senderLabel then set targetAccount to acct",
+        "end ignoring",
+        "end if",
+        "end if",
+        "end if",
+        "end repeat",
+        "set newMessage to make new outgoing message with properties {subject:subjectText, content:htmlBody}",
+        "if targetAccount is not missing value then",
+        "try",
+        "set account of newMessage to targetAccount",
+        "set matchStatus to \"matched\"",
+        "try",
+        "set sender of newMessage to {address:senderEmail}",
+        "end try",
+        "on error",
+        "set matchStatus to \"fallback:account-set-failed\"",
+        "end try",
+        "else",
+        'if accountMatchFlag is equal to "1" then',
+        "if (count of accountList) is 0 then",
+        "set matchStatus to \"fallback:no-scriptable-accounts\"",
+        "else",
+        'set AppleScript\'s text item delimiters to ", "',
+        "set availableAccountText to availableAccounts as string",
+        'set AppleScript\'s text item delimiters to "||"',
+        "set matchStatus to \"fallback:account-not-found:\" & availableAccountText",
+        "end if",
+        "else",
+        "set matchStatus to \"fallback:account-match-disabled\"",
+        "end if",
+        "end if",
+        "repeat with recipientAddress in recipientList",
+        "set cleanAddress to (recipientAddress as string)",
+        'if cleanAddress is not "" then',
+        "make new to recipient at end of to recipients of newMessage with properties {email address:{address:cleanAddress}}",
+        "end if",
+        "end repeat",
+        "open newMessage",
+        "return matchStatus",
+        "end tell",
+        "end run",
+    ]
+    cmd = [
+        "osascript",
+        *sum((["-e", line] for line in script_lines), []),
+        str(subject_text or "").strip(),
+        str(html_body or ""),
+        sender_email,
+        recipient_blob,
+        submitter_label,
+        account_match_enabled,
+    ]
+    try:
+        result = subprocess.run(
+            cmd,
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        stderr_text = (exc.stderr or "").strip()
+        details = stderr_text or str(exc)
+        raise RuntimeError(f"Outlook draft creation failed: {details}") from exc
+    return _build_outlook_draft_warning(result.stdout, sender_email)
+
+
+@app.route('/weekly-follow-ups')
+def weekly_follow_ups():
+    cutoff_date = _parse_iso_date(
+        request.args.get("cutoff_date"),
+        _default_follow_up_cutoff_date(),
+    )
+    follow_ups, cutoff_date, tracker_error = load_weekly_follow_up_entries(cutoff_date=cutoff_date)
+    return render_template(
+        'weekly_follow_ups.html',
+        follow_ups=follow_ups,
+        cutoff_date_display=_format_tracker_date(cutoff_date),
+        cutoff_date_value=cutoff_date.isoformat(),
+        tracker_error=tracker_error,
+    )
+
+
+@app.route('/generate-weekly-follow-up-emails', methods=['POST'])
+def generate_weekly_follow_up_emails():
+    data = request.get_json(silent=True) or {}
+    cutoff_date = _parse_iso_date(
+        data.get("cutoff_date"),
+        _default_follow_up_cutoff_date(),
+    )
+    selected_rows = {
+        int(row_number)
+        for row_number in (data.get("selected_rows") or [])
+        if str(row_number).strip().isdigit()
+    }
+    if not selected_rows:
+        return jsonify({"error": "Select at least one follow-up row."}), 400
+
+    follow_ups, cutoff_date, tracker_error = load_weekly_follow_up_entries(cutoff_date=cutoff_date)
+    if tracker_error:
+        return jsonify({"error": f"Unable to read Proposal Tracking.xlsx: {tracker_error}"}), 500
+
+    selected_follow_ups = [
+        item
+        for item in follow_ups
+        if int(item.get("row_number") or 0) in selected_rows
+    ]
+    if not selected_follow_ups:
+        return jsonify({"error": "No selected follow-up rows are available for the current date filter."}), 400
+
+    grouped = {}
+    for item in selected_follow_ups:
+        submitter = str(item.get("submitted_by") or "Unassigned").strip() or "Unassigned"
+        grouped.setdefault(submitter, []).append(item)
+
+    warnings = []
+    try:
+        for submitter in sorted(grouped, key=lambda value: value.casefold()):
+            items = grouped[submitter]
+            subject_text, plain_body, html_body = _build_weekly_follow_up_email_bodies(
+                submitter,
+                items,
+                cutoff_date,
+            )
+            warning = _open_outlook_html_draft_for_submitter(
+                subject_text,
+                plain_body,
+                html_body,
+                submitter,
+                get_weekly_follow_up_recipients_for_submitter(submitter),
+            )
+            if warning:
+                warnings.append(warning)
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+    draft_count = len(grouped)
+    row_count = len(selected_follow_ups)
+    try:
+        updated_count = update_weekly_follow_up_dates(
+            [item["row_number"] for item in selected_follow_ups],
+            datetime.date.today(),
+        )
+    except Exception as exc:
+        return jsonify({
+            "error": (
+                "Outlook draft email(s) were created, but Proposal Tracking.xlsx "
+                f"could not be updated: {exc}"
+            )
+        }), 500
+
+    return jsonify({
+        "message": (
+            f"Created {draft_count} Outlook draft email(s) for {row_count} follow-up row(s). "
+            f"Updated {updated_count} tracker row(s)."
+        ),
+        "draft_count": draft_count,
+        "row_count": row_count,
+        "updated_count": updated_count,
+        "warnings": warnings,
+    })
 
 
 def _escape_applescript_string(value):
@@ -4782,6 +5621,8 @@ def update_proposal(folder_name):
             "silicone_units_10": _pf("silicone_units_10"),
             "gaco_patch_units": _pf("gaco_patch_units"),
             "bleed_trap_units": _pf("bleed_trap_units"),
+            "gaco_e5320_units": _pf("gaco_e5320_units", 0.0),
+            "gaco_e5320_price": _pf("gaco_e5320_price"),
             "sw_1flash_units": _pf("sw_1flash_units"),
             "sw_bleed_block_units": _pf("sw_bleed_block_units"),
             "drainage_mat_units": _pf("drainage_mat_units"),
@@ -4898,6 +5739,10 @@ def update_proposal(folder_name):
     bleed_trap_units = None if raw_bleed_trap_units is None or str(raw_bleed_trap_units).strip() == '' else parse_float(raw_bleed_trap_units)
     raw_bleed_trap_price = request.form.get('bleed_trap_price') or request.form.get('sw_bleed_trap_price')
     bleed_trap_price = None if raw_bleed_trap_price is None or str(raw_bleed_trap_price).strip() == '' else parse_float(raw_bleed_trap_price)
+    raw_gaco_e5320_units = request.form.get('gaco_e5320_units')
+    gaco_e5320_units = 0.0 if raw_gaco_e5320_units is None or str(raw_gaco_e5320_units).strip() == '' else parse_float(raw_gaco_e5320_units)
+    raw_gaco_e5320_price = request.form.get('gaco_e5320_price')
+    gaco_e5320_price = None if raw_gaco_e5320_price is None or str(raw_gaco_e5320_price).strip() == '' else parse_float(raw_gaco_e5320_price)
     raw_sw_1flash_units = request.form.get('sw_1flash_units')
     sw_1flash_units = None if raw_sw_1flash_units is None or str(raw_sw_1flash_units).strip() == '' else parse_float(raw_sw_1flash_units)
     raw_sw_1flash_price = request.form.get('sw_1flash_price')
@@ -4983,6 +5828,8 @@ def update_proposal(folder_name):
         'sw_1flash_price': sw_1flash_price,
         'bleed_trap_units': bleed_trap_units,
         'bleed_trap_price': bleed_trap_price,
+        'gaco_e5320_units': gaco_e5320_units,
+        'gaco_e5320_price': gaco_e5320_price,
         'sw_bleed_block_units': sw_bleed_block_units,
         'sw_bleed_block_price': sw_bleed_block_price,
         'drainage_mat_units': drainage_mat_units,
@@ -5044,6 +5891,8 @@ def update_proposal(folder_name):
             "silicone_units_10": _pf("silicone_units_10"),
             "gaco_patch_units": _pf("gaco_patch_units"),
             "bleed_trap_units": _pf("bleed_trap_units"),
+            "gaco_e5320_units": _pf("gaco_e5320_units", 0.0),
+            "gaco_e5320_price": _pf("gaco_e5320_price"),
             "sw_1flash_units": _pf("sw_1flash_units"),
             "sw_bleed_block_units": _pf("sw_bleed_block_units"),
             "drainage_mat_units": _pf("drainage_mat_units"),
@@ -5163,6 +6012,8 @@ def update_proposal(folder_name):
         sw_1flash_price=sw_1flash_price,
         bleed_trap_units=bleed_trap_units,
         bleed_trap_price=bleed_trap_price,
+        gaco_e5320_units=gaco_e5320_units,
+        gaco_e5320_price=gaco_e5320_price,
         sw_bleed_block_units=sw_bleed_block_units,
         sw_bleed_block_price=sw_bleed_block_price,
         drainage_mat_units=drainage_mat_units,
@@ -5234,6 +6085,8 @@ def update_proposal(folder_name):
             sw_1flash_price=float(data.get("sw_1flash_price") or 0.0),
             bleed_trap_units=float(data.get("bleed_trap_units") or 0.0),
             bleed_trap_price=float(data.get("bleed_trap_price") or 0.0),
+            gaco_e5320_units=float(data.get("gaco_e5320_units") or 0.0),
+            gaco_e5320_price=float(data.get("gaco_e5320_price") or GACO_E5320_Price),
             sw_bleed_block_units=float(data.get("sw_bleed_block_units") or 0.0),
             sw_bleed_block_price=float(data.get("sw_bleed_block_price") or 0.0),
             drainage_mat_units=float(data.get("drainage_mat_units") or 0.0),
@@ -5261,11 +6114,11 @@ def update_proposal(folder_name):
         _fallback_fields = [
             # Inputs that may be stored as formulas (or blank when N/A) but must show a number on screen
             "labor_days",
-            "silicone_units_10","silicone_units_15","silicone_units_20","gaco_patch_units","bleed_trap_units",
+            "silicone_units_10","silicone_units_15","silicone_units_20","gaco_patch_units","bleed_trap_units","gaco_e5320_units",
             "sw_1flash_units","sw_bleed_block_units","drainage_mat_units","foam_units",
 
             # Unit prices that may be formulas or overridden numbers
-            "silicone_price","gaco_patch_price","bleed_trap_price",
+            "silicone_price","gaco_patch_price","bleed_trap_price","gaco_e5320_price",
             "sw_1flash_price","sw_bleed_block_price","drainage_mat_price",
             "foam_price","rfc_labor_price","pcs_labor_price",
 
@@ -5276,7 +6129,7 @@ def update_proposal(folder_name):
             # Cost/fee totals and downstream profit metrics
             "total_cost","total_cost_15","total_cost_20",
             "warranty_10_total","office_fee_total","office_fee_15_total","office_fee_20_total",
-            "silicone_total","silicone_15_total","silicone_20_total","gaco_patch_total","bleed_trap_total",
+            "silicone_total","silicone_15_total","silicone_20_total","gaco_patch_total","bleed_trap_total","gaco_e5320_total",
             "sw_1flash_total","sw_bleed_block_total","drainage_mat_total",
             "foam_total","rfc_labor_total","pcs_labor_total",
             "commission_amt","commission_amt_15","commission_amt_20",
@@ -5336,7 +6189,7 @@ def update_proposal(folder_name):
         "warranty_10_total", "office_fee_total", "office_fee_15_total", "office_fee_20_total",
         "total_cost", "total_cost_15", "total_cost_20",
         "silicone_total", "silicone_15_total", "silicone_20_total",
-        "gaco_patch_total", "bleed_trap_total", "sw_1flash_total",
+        "gaco_patch_total", "bleed_trap_total", "gaco_e5320_total", "sw_1flash_total",
         "sw_bleed_block_total", "drainage_mat_total",
         "foam_total", "rfc_labor_total", "pcs_labor_total",
         "commission_amt", "commission_amt_15", "commission_amt_20",
@@ -5395,6 +6248,40 @@ def proposal_details_query():
     if not folder_name:
         return redirect(url_for('proposal_list'))
     return proposal_details(folder_name)
+
+def _resolve_existing_proposal_folder(folder_name: str) -> str | None:
+    safe_folder = os.path.basename(str(folder_name or "").strip())
+    if not safe_folder:
+        return None
+    proposals_path = resolve_open_proposal_folder(safe_folder)
+    contracts_path = os.path.join(CONTRACTS_DIR, safe_folder)
+    completed_path = os.path.join(COMPLETED_DIR, safe_folder)
+    deadfile_path = os.path.join(DEADFILE_DIR, safe_folder)
+    for candidate in (proposals_path, contracts_path, completed_path, deadfile_path):
+        if candidate and os.path.isdir(candidate):
+            return candidate
+    return None
+
+@app.route('/proposal_full_detail/<folder_name>')
+def proposal_full_detail(folder_name):
+    if folder_name in ("__blank__", "NEW"):
+        return redirect(url_for("proposal_details_new"))
+
+    safe_folder = os.path.basename(str(folder_name or "").strip())
+    folder_path = _resolve_existing_proposal_folder(safe_folder)
+    if not folder_path:
+        return f"Folder not found: {safe_folder}", 404
+
+    data = read_profit_summary_for_display(folder_path)
+    if not data:
+        return f"No Profit Summary file found in folder: {safe_folder}", 404
+
+    data = merge_display_fallbacks(data, folder_path, safe_folder)
+    return render_template(
+        "proposal_full_detail.html",
+        data=data,
+        folder_name=safe_folder,
+    )
 
 @app.route('/proposal_details/<folder_name>')
 def proposal_details(folder_name):
@@ -5498,6 +6385,7 @@ def proposal_details(folder_name):
         ws = wb_import.worksheets[0]
     except Exception as _e:
         return f"Unable to read Profit Summary with openpyxl: {_e}", 500
+    cell_map = detect_profit_summary_cell_map(ws)
 
     def _cell(addr, default=None):
         try:
@@ -5506,18 +6394,24 @@ def proposal_details(folder_name):
         except Exception:
             return default
 
+    def _field(field, default=None):
+        cell = cell_map.get(field)
+        if not cell:
+            return default
+        return _cell(cell, default)
+
     hidden_values = read_hidden_sheet_values(wb_import, default=0)
 
     # Read Proposal Note and Language
-    _proposal_note_import = _cell("C40", "")
-    _proposal_language_import = _cell("C41", "")
-    _repair_costs_import = _cell("E22", 0)
-    _travel_total_import = _cell("E21", 0)
+    _proposal_note_import = _field("proposal_note", "")
+    _proposal_language_import = _field("proposal_language", "")
+    _repair_costs_import = _field("repair_costs_total", 0)
+    _travel_total_import = _field("travel_total", 0)
     _include_travel_import = include_travel_from_travel_total(_travel_total_import)
     _adjusted_coverage_import = infer_adjusted_spread_rate(
         wb_import,
-        str(_cell("H3", "") or ""),
-        str(_cell("E5", "") or ""),
+        str(_field("product", "") or ""),
+        str(_field("current_roof", "") or ""),
     )
     try:
         _repair_costs_import_num = float(str(_repair_costs_import or 0).replace("$", "").replace(",", "").strip() or 0)
@@ -5530,84 +6424,88 @@ def proposal_details(folder_name):
         "flat_roof_squares": hidden_values.get("flat_roof_squares", 0),
         "wall_squares": hidden_values.get("wall_squares", 0),
         "adjusted_coverage": _adjusted_coverage_import,
-        "squares": _cell("E3", 0),
-        "product": _cell("H3", ""),
-        "price_per_sq_10": _cell("M3", 0),
-        "total_price_10": _cell("P3", 0),
-        "current_roof": _cell("E5", ""),
-        "warranty_incl": _cell("H5", "No"),
+        "squares": _field("squares", 0),
+        "product": _field("product", ""),
+        "price_per_sq_10": _field("price_per_sq_10", 0),
+        "total_price_10": _field("total_price_10", 0),
+        "current_roof": _field("current_roof", ""),
+        "warranty_incl": _field("warranty_incl", "No"),
         "include_travel": _include_travel_import,
-        "price_per_sq_15": _cell("M5", 0),
-        "total_price_15": _cell("P5", 0),
-        "labor_days": _cell("E7", None),
-        "price_per_sq_20": _cell("M7", 0),
-        "total_price_20": _cell("P7", 0),
+        "price_per_sq_15": _field("price_per_sq_15", 0),
+        "total_price_15": _field("total_price_15", 0),
+        "labor_days": _field("labor_days", None),
+        "price_per_sq_20": _field("price_per_sq_20", 0),
+        "total_price_20": _field("total_price_20", 0),
         "includes_text": _proposal_language_import,
         "proposal_language": _proposal_language_import,
-        "submitted_by": _cell("H7", ""),
-        "previous_submitted_by": _cell("H7", ""),
-        "silicone_units_10": _cell("C11", 0),
-        "silicone_units_15": _cell("H11", 0),
-        "silicone_units_20": _cell("N11", 0),
-        "silicone_price": _cell("D11", 0),
-        "silicone_total": _cell("E11", 0),
-        "silicone_15_total": _cell("K11", 0),
-        "silicone_20_total": _cell("P11", 0),
-        "gaco_patch_units": _cell("C12", None),
-        "gaco_patch_price": _cell("D12", 0),
-        "gaco_patch_total": _cell("E12", 0),
-        "bleed_trap_units": _cell("C13", 0),
-        "bleed_trap_price": _cell("D13", 0),
-        "bleed_trap_total": _cell("E13", 0),
-        "sw_1flash_units": _cell("C14", 0),
-        "sw_1flash_price": _cell("D14", 0),
-        "sw_1flash_total": _cell("E14", 0),
-        "sw_bleed_block_units": _cell("C15", 0),
-        "sw_bleed_block_price": _cell("D15", 0),
-        "sw_bleed_block_total": _cell("E15", 0),
-        "drainage_mat_units": _cell("C16", 0),
-        "drainage_mat_price": _cell("D16", 0),
-        "drainage_mat_total": _cell("E16", 0),
-        "foam_units": _cell("C17", None),
-        "foam_price": _cell("D17", 0),
-        "foam_total": _cell("E17", 0),
-        "rfc_labor_price": _cell("D18", 0),
-        "rfc_labor_total": _cell("E18", 0),
-        "scarifying_total": _cell("E19", 0),
-        "pcs_labor_price": _cell("D20", 0),
-        "pcs_labor_total": _cell("E20", 0),
+        "submitted_by": _field("submitted_by", ""),
+        "previous_submitted_by": _field("submitted_by", ""),
+        "silicone_units_10": _field("silicone_units_10", 0),
+        "silicone_units_15": _field("silicone_units_15", 0),
+        "silicone_units_20": _field("silicone_units_20", 0),
+        "silicone_price": _field("silicone_price", 0),
+        "silicone_total": _field("silicone_total", 0),
+        "silicone_15_total": _field("silicone_15_total", 0),
+        "silicone_20_total": _field("silicone_20_total", 0),
+        "gaco_patch_units": _field("gaco_patch_units", None),
+        "gaco_patch_price": _field("gaco_patch_price", 0),
+        "gaco_patch_total": _field("gaco_patch_total", 0),
+        "bleed_trap_units": _field("bleed_trap_units", 0),
+        "bleed_trap_price": _field("bleed_trap_price", 0),
+        "bleed_trap_total": _field("bleed_trap_total", 0),
+        "gaco_e5320_units": _field("gaco_e5320_units", 0),
+        "gaco_e5320_price": _field("gaco_e5320_price", 0),
+        "gaco_e5320_total": _field("gaco_e5320_total", 0),
+        "sw_1flash_units": _field("sw_1flash_units", 0),
+        "sw_1flash_price": _field("sw_1flash_price", 0),
+        "sw_1flash_total": _field("sw_1flash_total", 0),
+        "sw_bleed_block_units": _field("sw_bleed_block_units", 0),
+        "sw_bleed_block_price": _field("sw_bleed_block_price", 0),
+        "sw_bleed_block_total": _field("sw_bleed_block_total", 0),
+        "drainage_mat_units": _field("drainage_mat_units", 0),
+        "drainage_mat_price": _field("drainage_mat_price", 0),
+        "drainage_mat_total": _field("drainage_mat_total", 0),
+        "foam_units": _field("foam_units", None),
+        "foam_price": _field("foam_price", 0),
+        "foam_total": _field("foam_total", 0),
+        "rfc_labor_price": _field("rfc_labor_price", 0),
+        "rfc_labor_total": _field("rfc_labor_total", 0),
+        "scarifying_total": _field("scarifying_total", 0),
+        "pcs_labor_price": _field("pcs_labor_price", 0),
+        "pcs_labor_total": _field("pcs_labor_total", 0),
         "travel_total": _travel_total_import,
         "repair_costs_total": _repair_costs_import,
-        "warranty_10_total": _cell("E23", 0),
-        "warranty_15_total": _cell("K23", 0),
-        "warranty_20_total": _cell("P23", 0),
-        "office_fee_total": _cell("E24", 0),
-        "office_fee_15_total": _cell("K24", 0),
-        "office_fee_20_total": _cell("P24", 0),
-        "total_cost": _cell("E26", 0),
-        "total_cost_15": _cell("K26", 0),
-        "total_cost_20": _cell("P26", 0),
-        "pcs_profit": _cell("E28", 0),
-        "pcs_profit_15": _cell("K28", 0),
-        "pcs_profit_20": _cell("P28", 0),
-        "profit_pct": _cell("E29", 0),
-        "profit_pct_15": _cell("K29", 0),
-        "profit_pct_20": _cell("P29", 0),
-        "daily_profit": _cell("E30", 0),
-        "daily_profit_15": _cell("K30", 0),
-        "daily_profit_20": _cell("P30", 0),
-        "profit_share": _cell("E31", 0),
-        "profit_share_15": _cell("K31", 0),
-        "profit_share_20": _cell("P31", 0),
-        "commission_amt": _cell("E32", 0),
-        "commission_amt_15": _cell("K32", 0),
-        "commission_amt_20": _cell("P32", 0),
-        "customer_name": _cell("C1", ""),
-        "pcs_or_roofer_ind": _cell("H1", ""),    
-        "street_address": _cell("L1", ""),
-        "city": _cell("R1", ""),
-        "state": _cell("T1", ""),
-        "zip_code": _cell("V1", ""),
+        "warranty_10_total": _field("warranty_10_total", 0),
+        "warranty_15_total": _field("warranty_15_total", 0),
+        "warranty_20_total": _field("warranty_20_total", 0),
+        "office_fee_total": _field("office_fee_total", 0),
+        "office_fee_15_total": _field("office_fee_15_total", 0),
+        "office_fee_20_total": _field("office_fee_20_total", 0),
+        "total_cost": _field("total_cost", 0),
+        "total_cost_15": _field("total_cost_15", 0),
+        "total_cost_20": _field("total_cost_20", 0),
+        "pcs_profit": _field("pcs_profit", 0),
+        "pcs_profit_15": _field("pcs_profit_15", 0),
+        "pcs_profit_20": _field("pcs_profit_20", 0),
+        "profit_pct": _field("profit_pct", 0),
+        "profit_pct_15": _field("profit_pct_15", 0),
+        "profit_pct_20": _field("profit_pct_20", 0),
+        "daily_profit": _field("daily_profit", 0),
+        "daily_profit_15": _field("daily_profit_15", 0),
+        "daily_profit_20": _field("daily_profit_20", 0),
+        "profit_share": _field("profit_share", 0),
+        "profit_share_15": _field("profit_share_15", 0),
+        "profit_share_20": _field("profit_share_20", 0),
+        "commission_amt": _field("commission_amt", 0),
+        "commission_amt_15": _field("commission_amt_15", 0),
+        "commission_amt_20": _field("commission_amt_20", 0),
+        "customer_name": _field("customer_name", ""),
+        "pcs_or_roofer_ind": _field("pcs_or_roofer_ind", ""),    
+        "street_address": _field("street_address", ""),
+        "city": _field("city", ""),
+        "state": _field("state", ""),
+        "zip_code": _field("zip_code", ""),
+        "lead": _field("lead", ""),
         "proposal_note": _proposal_note_import,
     }
 
@@ -5649,6 +6547,8 @@ def proposal_details(folder_name):
             silicone_price=_to_float(data.get("silicone_price"), 0.0),
             gaco_patch_units=_to_float(data.get("gaco_patch_units"), 0.0),
             gaco_patch_price=_to_float(data.get("gaco_patch_price"), 0.0),
+            gaco_e5320_units=_to_float(data.get("gaco_e5320_units"), 0.0),
+            gaco_e5320_price=_to_float(data.get("gaco_e5320_price"), GACO_E5320_Price),
             sw_1flash_units=_to_float(data.get("sw_1flash_units"), 0.0),
             sw_1flash_price=_to_float(data.get("sw_1flash_price"), 0.0),
             bleed_trap_units=_to_float(data.get("bleed_trap_units"), 0.0),
@@ -5683,6 +6583,7 @@ def proposal_details(folder_name):
             "silicone_units_10", "silicone_units_15", "silicone_units_20", "silicone_price", "silicone_total", "silicone_15_total", "silicone_20_total",
             "gaco_patch_units", "gaco_patch_price", "gaco_patch_total",
             "bleed_trap_units", "bleed_trap_price", "bleed_trap_total",
+            "gaco_e5320_units", "gaco_e5320_price", "gaco_e5320_total",
             "sw_1flash_units", "sw_1flash_price", "sw_1flash_total",
             "sw_bleed_block_units", "sw_bleed_block_price", "sw_bleed_block_total",
             "drainage_mat_units", "drainage_mat_price", "drainage_mat_total",
@@ -5775,7 +6676,7 @@ def proposal_details(folder_name):
 
     data["commission_pct"] = commission_pct_for_submitter(submitted_by_import)
 
-    # Recompute Office Fee total from the pre-office-fee subtotal so it aligns with P3 = subtotal + E24.
+    # Recompute Office Fee total from the pre-office-fee subtotal so it aligns with P3 = subtotal + E25.
     office_fee_subtotal_10 = (
         (_to_float(data.get("squares"), 0.0) * _to_float(data.get("price_per_sq_10"), 0.0))
         + _to_float(data.get("warranty_10_total"), 0.0)
@@ -5816,6 +6717,8 @@ def proposal_details(folder_name):
             silicone_price=float(data.get("silicone_price") or 0.0),
             gaco_patch_units=float(data.get("gaco_patch_units") or 0.0),
             gaco_patch_price=float(data.get("gaco_patch_price") or 0.0),
+            gaco_e5320_units=float(data.get("gaco_e5320_units") or 0.0),
+            gaco_e5320_price=float(data.get("gaco_e5320_price") or GACO_E5320_Price),
             sw_1flash_units=float(data.get("sw_1flash_units") or 0.0),
             sw_1flash_price=float(data.get("sw_1flash_price") or 0.0),
             bleed_trap_units=float(data.get("bleed_trap_units") or 0.0),
@@ -5847,11 +6750,11 @@ def proposal_details(folder_name):
         _fallback_fields = [
             # Inputs that may be stored as formulas (or blank when N/A) but must show a number on screen
             "labor_days",
-            "silicone_units_10","silicone_units_15","silicone_units_20","gaco_patch_units","bleed_trap_units",
+            "silicone_units_10","silicone_units_15","silicone_units_20","gaco_patch_units","bleed_trap_units","gaco_e5320_units",
             "sw_1flash_units","sw_bleed_block_units","drainage_mat_units","foam_units",
 
             # Unit prices that may be stored as formulas (must display a number)
-            "silicone_price","gaco_patch_price","bleed_trap_price",
+            "silicone_price","gaco_patch_price","bleed_trap_price","gaco_e5320_price",
             "sw_1flash_price","sw_bleed_block_price","drainage_mat_price",
             "foam_price","rfc_labor_price","pcs_labor_price",
 
@@ -5860,7 +6763,7 @@ def proposal_details(folder_name):
             "total_price_10","total_price_15","total_price_20",
             "total_cost","total_cost_15","total_cost_20",
             "warranty_10_total","office_fee_total","office_fee_15_total","office_fee_20_total",
-            "silicone_total","silicone_15_total","silicone_20_total","gaco_patch_total","bleed_trap_total",
+            "silicone_total","silicone_15_total","silicone_20_total","gaco_patch_total","bleed_trap_total","gaco_e5320_total",
             "sw_1flash_total","sw_bleed_block_total","drainage_mat_total",
             "foam_total","rfc_labor_total","pcs_labor_total",
             "commission_amt","commission_amt_15","commission_amt_20",

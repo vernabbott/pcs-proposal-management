@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="full-detail-page">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <style>
+    body {
+      background: #f4f6f8;
+      color: #1f2933;
+    }
+    body > .container {
+      max-width: none;
+      padding-left: 0;
+      padding-right: 0;
+    }
+    .full-detail-page {
+      max-width: 1480px;
+      margin: 0 auto;
+      padding: 16px 18px 24px;
+    }
+    .full-detail-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .full-detail-title {
+      font-size: 18px;
+      font-weight: 800;
+      margin: 0;
+    }
+    .sheet {
+      background: #fff;
+      border: 1px solid #cfd7e2;
+      border-radius: 6px;
+      padding: 12px;
+      box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+    }
+    .numeric {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+    .detail-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 11px;
+    }
+    .detail-table th,
+    .detail-table td {
+      border: 1px solid #d9e0e8;
+      padding: 3px 5px;
+      height: 24px;
+      vertical-align: middle;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .detail-table th {
+      background: #eef2f6;
+      color: #344054;
+      font-weight: 800;
+      text-align: center;
+    }
+    .detail-table .row-label {
+      background: #f8fafc;
+      font-weight: 700;
+      text-align: left;
+      width: 150px;
+    }
+    .detail-table .subhead {
+      background: #f3f6fa;
+      font-weight: 800;
+      text-align: left;
+    }
+    .detail-table .term-total {
+      background: #f8fafc;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .detail-table .term-start {
+      border-left: 3px solid #98a2b3;
+    }
+    .detail-table .term-end {
+      border-right: 3px solid #98a2b3;
+    }
+    .detail-table .profit-highlight td {
+      color: #b42318;
+      font-weight: 800;
+    }
+    @media print {
+      body {
+        background: #fff;
+      }
+      .full-detail-page {
+        max-width: none;
+        padding: 0;
+      }
+      .full-detail-toolbar {
+        display: none;
+      }
+      .sheet {
+        border: 0;
+        box-shadow: none;
+        padding: 0;
+      }
+    }
+  </style>
+
+  {% macro currency(value) -%}
+    {{ value|currency_blank0 }}
+  {%- endmacro %}
+  {% macro number(value) -%}
+    {{ value|num_blank0 }}
+  {%- endmacro %}
+  {% macro percent(value) -%}
+    {{ '' if value is none or (value|float) == 0 else '{:.0%}'.format(value|float) }}
+  {%- endmacro %}
+
+  <div class="full-detail-toolbar">
+    <h1 class="full-detail-title">Full Detail - {{ data.customer_name or folder_name }}</h1>
+    <a href="{{ url_for('proposal_details', folder_name=folder_name) }}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-1"></i> Back to Detail
+    </a>
+  </div>
+
+  <div class="sheet">
+    <table class="detail-table">
+      <colgroup>
+        <col style="width: 150px;">
+        <col span="3">
+        <col span="3">
+        <col span="3">
+      </colgroup>
+      <thead>
+        <tr>
+          <th rowspan="3">Description</th>
+          <th colspan="3" class="term-start term-end">10 Year</th>
+          <th colspan="3" class="term-start term-end">15 Year</th>
+          <th colspan="3" class="term-start term-end">20 Year</th>
+        </tr>
+        <tr>
+          <th colspan="3" class="numeric term-total term-start term-end">{{ currency(data.total_price_10) }}</th>
+          <th colspan="3" class="numeric term-total term-start term-end">{{ currency(data.total_price_15) }}</th>
+          <th colspan="3" class="numeric term-total term-start term-end">{{ currency(data.total_price_20) }}</th>
+        </tr>
+        <tr>
+          <th class="term-start">Units</th><th>Cost/Unit</th><th class="term-end">Total</th>
+          <th class="term-start">Units</th><th>Cost/Unit</th><th class="term-end">Total</th>
+          <th class="term-start">Units</th><th>Cost/Unit</th><th class="term-end">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="row-label">Price / Sq</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ currency(data.price_per_sq_10) }}</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ currency(data.price_per_sq_15) }}</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ currency(data.price_per_sq_20) }}</td>
+        </tr>
+        {% set rows = [
+          ('Silicone', data.silicone_units_10, data.silicone_price, data.silicone_total, data.silicone_units_15, data.silicone_price, data.silicone_15_total, data.silicone_units_20, data.silicone_price, data.silicone_20_total),
+          ('Gaco Patch', data.gaco_patch_units, data.gaco_patch_price, data.gaco_patch_total, data.gaco_patch_units, data.gaco_patch_price, data.gaco_patch_total, data.gaco_patch_units, data.gaco_patch_price, data.gaco_patch_total),
+          ('Bleed Trap', data.bleed_trap_units, data.bleed_trap_price, data.bleed_trap_total, data.bleed_trap_units, data.bleed_trap_price, data.bleed_trap_total, data.bleed_trap_units, data.bleed_trap_price, data.bleed_trap_total),
+          ('Gaco E5320', data.gaco_e5320_units, data.gaco_e5320_price, data.gaco_e5320_total, data.gaco_e5320_units, data.gaco_e5320_price, data.gaco_e5320_total, data.gaco_e5320_units, data.gaco_e5320_price, data.gaco_e5320_total),
+          ('SW 1Flash', data.sw_1flash_units, data.sw_1flash_price, data.sw_1flash_total, data.sw_1flash_units, data.sw_1flash_price, data.sw_1flash_total, data.sw_1flash_units, data.sw_1flash_price, data.sw_1flash_total),
+          ('SW Bleed Block', data.sw_bleed_block_units, data.sw_bleed_block_price, data.sw_bleed_block_total, data.sw_bleed_block_units, data.sw_bleed_block_price, data.sw_bleed_block_total, data.sw_bleed_block_units, data.sw_bleed_block_price, data.sw_bleed_block_total),
+          ('Drainage Mat', data.drainage_mat_units, data.drainage_mat_price, data.drainage_mat_total, data.drainage_mat_units, data.drainage_mat_price, data.drainage_mat_total, data.drainage_mat_units, data.drainage_mat_price, data.drainage_mat_total),
+          ('Foam', data.foam_units, data.foam_price, data.foam_total, data.foam_units, data.foam_price, data.foam_total, data.foam_units, data.foam_price, data.foam_total),
+          ('RFC Labor', data.squares, data.rfc_labor_price, data.rfc_labor_total, data.squares, data.rfc_labor_price, data.rfc_labor_total, data.squares, data.rfc_labor_price, data.rfc_labor_total),
+          ('PCS Labor', data.labor_days, data.pcs_labor_price, data.pcs_labor_total, data.labor_days, data.pcs_labor_price, data.pcs_labor_total, data.labor_days, data.pcs_labor_price, data.pcs_labor_total)
+        ] %}
+        {% for label, u10, p10, t10, u15, p15, t15, u20, p20, t20 in rows %}
+        <tr>
+          <td class="row-label">{{ label }}</td>
+          <td class="numeric term-start">{{ number(u10) }}</td><td class="numeric">{{ currency(p10) }}</td><td class="numeric term-end">{{ currency(t10) }}</td>
+          <td class="numeric term-start">{{ number(u15) }}</td><td class="numeric">{{ currency(p15) }}</td><td class="numeric term-end">{{ currency(t15) }}</td>
+          <td class="numeric term-start">{{ number(u20) }}</td><td class="numeric">{{ currency(p20) }}</td><td class="numeric term-end">{{ currency(t20) }}</td>
+        </tr>
+        {% endfor %}
+        <tr>
+          <td class="row-label">Scarifying</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ currency(data.scarifying_total) }}</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ currency(data.scarifying_total) }}</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ currency(data.scarifying_total) }}</td>
+        </tr>
+        <tr>
+          <td class="row-label">Travel</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ currency(data.travel_total) }}</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ currency(data.travel_total) }}</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ currency(data.travel_total) }}</td>
+        </tr>
+        <tr>
+          <td class="row-label">Repairs</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ currency(data.repair_costs_total) }}</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ currency(data.repair_costs_total) }}</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ currency(data.repair_costs_total) }}</td>
+        </tr>
+        <tr>
+          <td class="row-label">Warranty</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ currency(data.warranty_10_total) }}</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ currency(data.warranty_15_total) }}</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ currency(data.warranty_20_total) }}</td>
+        </tr>
+        <tr>
+          <td class="row-label">Commission</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ currency(data.commission_amt) }}</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ currency(data.commission_amt_15) }}</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ currency(data.commission_amt_20) }}</td>
+        </tr>
+        <tr>
+          <td class="row-label">Total Cost</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ currency(data.total_cost) }}</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ currency(data.total_cost_15) }}</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ currency(data.total_cost_20) }}</td>
+        </tr>
+        <tr class="profit-highlight">
+          <td class="row-label">PCS Profit</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ currency(data.pcs_profit) }}</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ currency(data.pcs_profit_15) }}</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ currency(data.pcs_profit_20) }}</td>
+        </tr>
+        <tr>
+          <td class="row-label">Percent Profit</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ percent(data.profit_pct) }}</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ percent(data.profit_pct_15) }}</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ percent(data.profit_pct_20) }}</td>
+        </tr>
+        <tr class="profit-highlight">
+          <td class="row-label">Daily PCS Profit</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ currency(data.daily_profit) }}</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ currency(data.daily_profit_15) }}</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ currency(data.daily_profit_20) }}</td>
+        </tr>
+        <tr>
+          <td class="row-label">Mark's Profit Share</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ currency(data.profit_share) }}</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ currency(data.profit_share_15) }}</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ currency(data.profit_share_20) }}</td>
+        </tr>
+        <tr>
+          <td class="row-label">Office</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ currency(data.office_fee_total) }}</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ currency(data.office_fee_15_total) }}</td>
+          <td class="term-start"></td><td></td><td class="numeric term-end">{{ currency(data.office_fee_20_total) }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

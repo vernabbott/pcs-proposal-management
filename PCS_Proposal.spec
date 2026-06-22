@@ -45,7 +45,7 @@ exe = EXE(
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
-    codesign_identity=None,
+    codesign_identity='Apple Development: vern.abbott@att.net (3SKXD554K7)',
     entitlements_file=None,
 )
 coll = COLLECT(
@@ -61,5 +61,5 @@ app = BUNDLE(
     coll,
     name='PCS_Proposal.app',
     icon='build_assets/PCS_Proposal.icns',
-    bundle_identifier=None,
+    bundle_identifier='com.procoatingsystems.pcsproposal',
 )
