@@ -11,6 +11,61 @@ import unittest
 from urllib.parse import quote, urlsplit, urlunsplit
 
 
+class CommissionCalculationTests(unittest.TestCase):
+    def test_commission_excludes_office_fee_for_all_terms(self):
+        import pcs_proposal_web as app
+
+        result = app.calculation_routine(
+            squares=100,
+            product="Gaco",
+            roof_type="TPO/EPDM",
+            labor_days=0,
+            warranty_incl="No",
+            include_travel="No",
+            price_per_sq_10=0,
+            commission_pct=0,
+            submitted_by="Vern",
+            previous_submitted_by="Vern",
+            office_fee_pct=0.05,
+            adjusted_coverage=0,
+            silicone_units_10=0,
+            silicone_price=0,
+            gaco_patch_units=0,
+            gaco_patch_price=0,
+            sw_1flash_units=0,
+            sw_1flash_price=0,
+            bleed_trap_units=0,
+            bleed_trap_price=0,
+            sw_bleed_block_units=0,
+            sw_bleed_block_price=0,
+            drainage_mat_units=0,
+            drainage_mat_price=0,
+            foam_units=0,
+            foam_price=0,
+            rfc_labor_price=0,
+            pcs_labor_price=0,
+            scarifying_total=0,
+            travel_total=0,
+            repair_costs_total=0,
+            previous_squares=100,
+            previous_roof_type="TPO/EPDM",
+            previous_product="Gaco",
+            previous_adjusted_coverage=0,
+            previous_silicone_units_10=0,
+            proposal_note="",
+            pcs_or_roofer_ind="PCS Direct",
+            previous_pcs_or_roofer_ind="PCS Direct",
+            previous_include_travel="No",
+            previous_calc_travel_total=0,
+        )
+
+        self.assertEqual(result["office_fee_total"], 1750)
+        self.assertEqual(result["total_price_10"], 36750)
+        self.assertEqual(result["commission_amt"], 3500)
+        self.assertEqual(result["commission_amt_15"], 3900)
+        self.assertEqual(result["commission_amt_20"], 4300)
+
+
 def load_merge_display_fallbacks(read_profit_summary_for_display):
     source_path = pathlib.Path(__file__).with_name("pcs_proposal_web.py")
     source = source_path.read_text(encoding="utf-8")

@@ -3494,9 +3494,9 @@ def calculation_routine(
 
     # --- Commission percent & amount ---
     commission_pct = commission_pct_for_submitter(submitted_by)
-    commission_amt = excel_round(commission_pct * (total_price_10 - foam_total - rfc_labor_total - scarifying_total - travel_total - repair_costs_total), 0)
-    commission_amt_15 = excel_round(commission_pct * (total_price_15 - foam_total - rfc_labor_total - scarifying_total - travel_total - repair_costs_total), 0)
-    commission_amt_20 = excel_round(commission_pct * (total_price_20 - foam_total - rfc_labor_total - scarifying_total - travel_total - repair_costs_total), 0)
+    commission_amt = excel_round(commission_pct * (total_price_10 - foam_total - rfc_labor_total - scarifying_total - travel_total - repair_costs_total - office_fee_total), 0)
+    commission_amt_15 = excel_round(commission_pct * (total_price_15 - foam_total - rfc_labor_total - scarifying_total - travel_total - repair_costs_total - office_fee_15_total), 0)
+    commission_amt_20 = excel_round(commission_pct * (total_price_20 - foam_total - rfc_labor_total - scarifying_total - travel_total - repair_costs_total - office_fee_20_total), 0)
 
     total_cost = sum([
         silicone_total,

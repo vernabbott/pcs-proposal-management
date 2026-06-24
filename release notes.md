@@ -4,6 +4,17 @@ Generated: June 5, 2026
 
 This document summarizes the proposal calculation rules currently implemented in `pcs_proposal_web.py` and mirrored into the Profit Summary workbook formulas in `profit_summary_formulas.py`.
 
+## June 24, 2026 Updates
+
+- Standardized the Gaco E5320 constant name to `GACO_E5320_PRICE` throughout the program.
+- Updated new proposal unit price handling so default material prices come from program constants and workbook formulas instead of stale or hard-coded posted values.
+- Preserved the Profit Summary workbook price-per-unit formulas for silicone, Gaco patch, Bleed Trap, Gaco E5320, SW 1-Flash, SW Bleed Block, Drainage Mat, foam, RFC labor, and PCS labor when the value has not been manually overridden.
+- Synced Profit Summary `Data` sheet constants before saving, including `Data!K8 = GACO_S42_BASE_PRICE = 195`.
+- Hardened display logic so formula-backed unit prices use recalculated program values instead of stale cached workbook values.
+- Added explicit manual unit-price override tracking for blank/new proposal creation so a stale displayed price is not saved as an override unless the user actually edits the price field.
+- Updated 10/15/20 commission calculations to exclude office fee, matching the revised Profit Summary workbook formulas.
+- Rebuilt and deployed the packaged macOS application to `/Applications/PCS_Proposal.app`.
+
 ## Core Inputs
 
 - Total squares are calculated as `flat_roof_squares + wall_squares`.
@@ -96,15 +107,16 @@ Base unit prices:
 
 | Item | Base Price |
 | --- | ---: |
-| Gaco S42 silicone | 188 |
+| Gaco S42 silicone | 195 |
 | Uniflex silicone | 185 |
 | Gaco patch | 125 |
 | Bleed Trap | 168 |
+| Gaco E5320 | 185 |
 | SW 1-Flash | 110 |
 | SW Bleed Block | 100 |
-| Drainage Mat | 150 |
+| Drainage Mat | 164 |
 | Gaco foam | 2600 |
-| Uniflex foam | 2500 |
+| Uniflex foam | 2400 |
 | RFC labor | 250 |
 | PCS labor per day | 3250 |
 
@@ -205,7 +217,7 @@ Commission percent:
 
 Commission amount:
 
-`round(commission_pct * (total_price_10 - foam_total - rfc_labor_total - scarifying_total - travel_total - repair_costs_total), 0)`
+`round(commission_pct * (total_price_10 - foam_total - rfc_labor_total - scarifying_total - travel_total - repair_costs_total - office_fee_total), 0)`
 
 ## Total Cost
 
