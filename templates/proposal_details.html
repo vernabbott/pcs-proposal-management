@@ -1018,7 +1018,7 @@
 	          <div class="row justify-content-center g-2 mt-2">
 	            <div class="col-4">
 	              {% if is_blank %}
-	                <button type="button" class="btn btn-outline-primary w-100" id="fullDetailButton" disabled>
+	                <button type="submit" class="btn btn-outline-primary w-100" id="fullDetailButton" name="action" value="full_detail_preview" {% if ro %}disabled{% endif %}>
 	                  <i class="bi bi-table me-1"></i> Full Detail
 	                </button>
 	              {% else %}
@@ -1213,12 +1213,16 @@
     // --- Enable/disable Recalculate button based on readiness ---
     var recalcBtn = document.getElementById('recalcButton');
     var createBtn = document.getElementById('createButton');
+    var fullDetailBtn = document.getElementById('fullDetailButton');
     function updateRecalcDisabled() {
       if (recalcBtn) {
         recalcBtn.disabled = isRO || !isCalcReady();
       }
       if (createBtn) {
         createBtn.disabled = isRO || !isCalcReady();
+      }
+      if (fullDetailBtn && fullDetailBtn.tagName === 'BUTTON') {
+        fullDetailBtn.disabled = isRO || !isCalcReady();
       }
     }
 

@@ -66,6 +66,38 @@ class CommissionCalculationTests(unittest.TestCase):
         self.assertEqual(result["commission_amt_20"], 4300)
 
 
+class FullDetailPreviewTests(unittest.TestCase):
+    def test_blank_proposal_can_preview_full_detail_from_posted_values(self):
+        import pcs_proposal_web as app
+
+        payload = {
+            "action": "full_detail_preview",
+            "customer_name": "Preview Customer",
+            "street_address": "123 Preview St",
+            "city": "Denver",
+            "state": "CO",
+            "zip_code": "80202",
+            "flat_roof_squares": "100",
+            "wall_squares": "0",
+            "squares": "100",
+            "current_roof": "TPO/EPDM",
+            "product": "Gaco",
+            "submitted_by": "Vern",
+            "pcs_or_roofer_ind": "PCS Direct",
+            "warranty_incl": "No",
+            "include_travel": "No",
+        }
+
+        with app.app.test_client() as client:
+            response = client.post("/update-proposal/NEW", data=payload)
+
+        html = response.get_data(as_text=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Full Detail - Preview Customer", html)
+        self.assertIn("$36,750", html)
+        self.assertIn("$3,500", html)
+
+
 def load_merge_display_fallbacks(read_profit_summary_for_display):
     source_path = pathlib.Path(__file__).with_name("pcs_proposal_web.py")
     source = source_path.read_text(encoding="utf-8")

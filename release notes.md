@@ -13,6 +13,7 @@ This document summarizes the proposal calculation rules currently implemented in
 - Hardened display logic so formula-backed unit prices use recalculated program values instead of stale cached workbook values.
 - Added explicit manual unit-price override tracking for blank/new proposal creation so a stale displayed price is not saved as an override unless the user actually edits the price field.
 - Updated 10/15/20 commission calculations to exclude office fee, matching the revised Profit Summary workbook formulas.
+- Enabled Full Detail preview during blank/new proposal creation by rendering the page from current calculated form values before a Profit Summary workbook exists.
 - Rebuilt and deployed the packaged macOS application to `/Applications/PCS_Proposal.app`.
 
 ## Core Inputs

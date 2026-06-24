@@ -6382,6 +6382,14 @@ def update_proposal(folder_name):
     except Exception:
         pass
 
+    if allow_blank and action in ("full_detail", "full_detail_preview"):
+        return render_template(
+            "proposal_full_detail.html",
+            data=data,
+            folder_name="NEW",
+            is_preview=True,
+        )
+
     return render_template(
         "proposal_details.html",
         data=data,
