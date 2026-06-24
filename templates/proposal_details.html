@@ -73,6 +73,10 @@
       font-weight: bold !important;
       line-height: 1.2;
     }
+    .daily-profit-low {
+      color: #b42318 !important;
+      font-weight: 800 !important;
+    }
     .profit-summary-grid {
       display: grid;
       grid-template-columns: 108px repeat(3, minmax(86px, 1fr));
@@ -971,11 +975,11 @@
 
           <div class="profit-label">Daily Profit</div>
           {% set val = data.daily_profit %}
-          <input type="text" class="form-control-plaintext profit-value" name="daily_profit" value="{{ val|currency_blank0 }}" readonly>
+          <input type="text" class="form-control-plaintext profit-value{% if val is not none and (val|float) < 3000 %} daily-profit-low{% endif %}" name="daily_profit" value="{{ val|currency_blank0 }}" readonly>
           {% set val = data.daily_profit_15 %}
-          <input type="text" class="form-control-plaintext profit-value" name="daily_profit_15" value="{{ val|currency_blank0 }}" readonly>
+          <input type="text" class="form-control-plaintext profit-value{% if val is not none and (val|float) < 3000 %} daily-profit-low{% endif %}" name="daily_profit_15" value="{{ val|currency_blank0 }}" readonly>
           {% set val = data.daily_profit_20 %}
-          <input type="text" class="form-control-plaintext profit-value" name="daily_profit_20" value="{{ val|currency_blank0 }}" readonly>
+          <input type="text" class="form-control-plaintext profit-value{% if val is not none and (val|float) < 3000 %} daily-profit-low{% endif %}" name="daily_profit_20" value="{{ val|currency_blank0 }}" readonly>
 
           <div class="profit-label">Profit Share</div>
           {% set val = data.profit_share %}
