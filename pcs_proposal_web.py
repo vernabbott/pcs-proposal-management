@@ -139,11 +139,14 @@ from profit_summary_formulas import (
     PS_F_C11,  # silicone_units_10
     PS_F_C12,  # gaco_patch_units
     PS_F_C13,  # bleed_trap_units
+    PS_F_C14,  # gaco_e5320_units
     PS_F_C15,  # sw_1flash_units
     PS_F_C16,  # sw_bleed_block_units
     PS_F_C17,  # drainage_mat_units
     PS_F_C18,  # foam_units
-    PS_F_H11, PS_F_K11, PS_F_N11, PS_F_P11,  # silicone units/totals by term
+    PS_F_D11, PS_F_D12, PS_F_D13, PS_F_D14, PS_F_D15, PS_F_D16, PS_F_D17, PS_F_D18, PS_F_D19, PS_F_D21,
+    PS_F_I14, PS_F_O14, PS_F_T14,
+    PS_F_H11, PS_F_K11, PS_F_N11, PS_F_P11,  # silicone price/units/totals by term
     PS_F_E11, PS_F_E12, PS_F_E13, PS_F_E15, PS_F_E16, PS_F_E17, PS_F_E18,  # line totals
     PS_F_E19, PS_F_E21,  # labor totals
     PS_F_E24,            # warranty total
@@ -286,7 +289,7 @@ TRAVEL_MISC_500 = 500
 TRAVEL_MISC_250 = 250
 GACO_S42_BASE_PRICE = 195
 GACO_PATCH_BASE_PRICE = 125
-GACO_E5320_Price = 185
+GACO_E5320_PRICE = 185
 BLEED_TRAP_BASE_PRICE = 168
 DRAINAGE_MAT_BASE_PRICE = 164
 UNIFLEX_BASE_PRICE = 185
@@ -1056,7 +1059,7 @@ def create_proposal_from_fields(customer_name,
             bleed_trap_units=_get_num("bleed_trap_units", 0.0),
             bleed_trap_price=_get_num("bleed_trap_price", 0.0),
             gaco_e5320_units=_get_num("gaco_e5320_units", 0.0),
-            gaco_e5320_price=_get_num("gaco_e5320_price", GACO_E5320_Price),
+            gaco_e5320_price=_get_num("gaco_e5320_price", GACO_E5320_PRICE),
             sw_bleed_block_units=_get_num("sw_bleed_block_units", 0.0),
             sw_bleed_block_price=_get_num("sw_bleed_block_price", 0.0),
             drainage_mat_units=_get_num("drainage_mat_units", 0.0),
@@ -1267,8 +1270,8 @@ def create_proposal_from_fields(customer_name,
         else:
             merged_map["bleed_trap_units"] = _user_bleed_units
 
-        _user_gaco_e5320_units = _to_int_ceil_clean(merged_map.get("gaco_e5320_units"), 0)
-        merged_map["gaco_e5320_units"] = _user_gaco_e5320_units or 0
+        _user_gaco_e5320_units = _to_int_ceil_clean(merged_map.get("gaco_e5320_units"), None)
+        merged_map["gaco_e5320_units"] = PS_F_C14.replace("\n", "") if not _user_gaco_e5320_units else _user_gaco_e5320_units
 
         # sw_1flash_units: use centralized formula constant unless user-overridden
         if _prodF == "Uniflex":
@@ -1313,7 +1316,7 @@ def create_proposal_from_fields(customer_name,
         merged_map["silicone_price"] = _store_formula_or_value(
             _user_sil_price,
             _base_sil_price,
-            f'=IF(H3="Gaco",{GACO_S42_BASE_PRICE},IF(H3="Uniflex",{UNIFLEX_BASE_PRICE},0))'
+            PS_F_D11.replace("\n", "")
         )
 
         _base_gp_price = GACO_PATCH_BASE_PRICE if _prodF == "Gaco" else 0
@@ -1321,7 +1324,7 @@ def create_proposal_from_fields(customer_name,
         merged_map["gaco_patch_price"] = _store_formula_or_value(
             _user_gp_price,
             _base_gp_price,
-            f'=IF(H3="Gaco",{GACO_PATCH_BASE_PRICE},0)'
+            PS_F_D12.replace("\n", "")
         )
 
         _base_bt_price = BLEED_TRAP_BASE_PRICE if (_prodF == "Gaco" and _roofF == "Mod Bit") else 0
@@ -1329,21 +1332,22 @@ def create_proposal_from_fields(customer_name,
         merged_map["bleed_trap_price"] = _store_formula_or_value(
             _user_bt_price,
             _base_bt_price,
-            f'=IF(AND(H3="Gaco",E5="Mod Bit"),{BLEED_TRAP_BASE_PRICE},0)'
+            PS_F_D13.replace("\n", "")
         )
 
         _user_gaco_e5320_price = _to_float_clean(merged_map.get("gaco_e5320_price"), None)
-        if (_user_gaco_e5320_units or 0) <= 0:
-            merged_map["gaco_e5320_price"] = 0
-        else:
-            merged_map["gaco_e5320_price"] = GACO_E5320_Price if _user_gaco_e5320_price in (None, 0) else _user_gaco_e5320_price
+        merged_map["gaco_e5320_price"] = (
+            PS_F_D14.replace("\n", "")
+            if _user_gaco_e5320_price in (None, 0, GACO_E5320_PRICE)
+            else _user_gaco_e5320_price
+        )
 
         _base_sw1_price = SW_1FLASH_BASE_PRICE if _prodF == "Uniflex" else 0
         _user_sw1_price = _to_float_clean(merged_map.get("sw_1flash_price"), None)
         merged_map["sw_1flash_price"] = _store_formula_or_value(
             _user_sw1_price,
             _base_sw1_price,
-            f'=IF(H3="Uniflex",{SW_1FLASH_BASE_PRICE},0)'
+            PS_F_D15.replace("\n", "")
         )
 
         _base_swbb_price = SW_BLEED_BLOCK_BASE_PRICE if (_prodF == "Uniflex" and _roofF == "Mod Bit") else 0
@@ -1351,7 +1355,7 @@ def create_proposal_from_fields(customer_name,
         merged_map["sw_bleed_block_price"] = _store_formula_or_value(
             _user_swbb_price,
             _base_swbb_price,
-            f'=IF(AND(H3="Uniflex",E5="Mod Bit"),{SW_BLEED_BLOCK_BASE_PRICE},0)'
+            PS_F_D16.replace("\n", "")
         )
 
         _base_drain_price = DRAINAGE_MAT_BASE_PRICE if _roofF in ["Ballasted 60 mil", "Ballasted 45 mil"] else 0
@@ -1359,7 +1363,7 @@ def create_proposal_from_fields(customer_name,
         merged_map["drainage_mat_price"] = _store_formula_or_value(
             _user_drain_price,
             _base_drain_price,
-            f'=IF(OR(E5="Ballasted 60 mil",E5="Ballasted 45 mil"),{DRAINAGE_MAT_BASE_PRICE},0)'
+            PS_F_D17.replace("\n", "")
         )
 
         if _roofF == "Rock/Foam/Coat":
@@ -1370,7 +1374,7 @@ def create_proposal_from_fields(customer_name,
         merged_map["foam_price"] = _store_formula_or_value(
             _user_foam_price,
             _base_foam_price,
-            f'=IF(E5="Rock/Foam/Coat",IF(H3="Gaco",{GACO_FOAM_BASE_PRICE},IF(H3="Uniflex",{UNIFLEX_FOAM_BASE_PRICE},0)),0)'
+            PS_F_D18.replace("\n", "")
         )
 
         _base_rfc_price = RFC_LABOR_RATE if _roofF == "Rock/Foam/Coat" else 0
@@ -1378,7 +1382,14 @@ def create_proposal_from_fields(customer_name,
         merged_map["rfc_labor_price"] = _store_formula_or_value(
             _user_rfc_price,
             _base_rfc_price,
-            f'=IF(E5="Rock/Foam/Coat",{RFC_LABOR_RATE},0)'
+            PS_F_D19.replace("\n", "")
+        )
+
+        _user_pcs_labor_price = _to_float_clean(merged_map.get("pcs_labor_price"), None)
+        merged_map["pcs_labor_price"] = _store_formula_or_value(
+            _user_pcs_labor_price,
+            PCS_BASE_LABOR_RATE,
+            PS_F_D21.replace("\n", "")
         )
 
         # === Force key fields to be written as Excel formulas ===
@@ -2255,13 +2266,9 @@ def write_fields_to_profit_summary(wb_profit, data: dict):
             pass
         _set_worksheet_value(ws, cell, value)
     try:
-        try:
-            _gaco_e5320_price = float((data or {}).get("gaco_e5320_price") or 0)
-        except Exception:
-            _gaco_e5320_price = 0
-        _set_worksheet_value(ws, "I14", _gaco_e5320_price)
-        _set_worksheet_value(ws, "O14", _gaco_e5320_price)
-        _set_worksheet_value(ws, "T14", _gaco_e5320_price)
+        _set_worksheet_value(ws, "I14", PS_F_I14.replace("\n", ""))
+        _set_worksheet_value(ws, "O14", PS_F_O14.replace("\n", ""))
+        _set_worksheet_value(ws, "T14", PS_F_T14.replace("\n", ""))
         _set_worksheet_value(ws, "K14", '=IF(H14<>"",H14*I14,0)')
         _set_worksheet_value(ws, "P14", '=IF(N14<>"",N14*O14,0)')
         _set_worksheet_value(ws, "U14", '=IF(S14<>"",S14*T14,0)')
@@ -2452,7 +2459,7 @@ def read_profit_summary_for_display(folder_path: str) -> dict | None:
     bleed_trap_units  = _num(_get_calc_input_val('bleed_trap_units', None), None)
     bleed_trap_price  = _num(_get_calc_input_val('bleed_trap_price', None), None)
     gaco_e5320_units  = _num(_get_calc_input_val('gaco_e5320_units', 0.0), 0.0)
-    gaco_e5320_price  = _num(_get_calc_input_val('gaco_e5320_price', GACO_E5320_Price), GACO_E5320_Price)
+    gaco_e5320_price  = _num(_get_calc_input_val('gaco_e5320_price', GACO_E5320_PRICE), GACO_E5320_PRICE)
     sw_1flash_units   = _num(_get_calc_input_val('sw_1flash_units', None), None)
     sw_1flash_price   = _num(_get_calc_input_val('sw_1flash_price', None), None)
     sw_bleed_block_units = _num(_get_calc_input_val('sw_bleed_block_units', None), None)
@@ -3279,11 +3286,17 @@ def calculation_routine(
     silicone_units_10, silicone_price = _normalize_unit_price(silicone_units_10, silicone_price, base_silicone_price)
     gaco_patch_units, gaco_patch_price = _normalize_unit_price(gaco_patch_units, gaco_patch_price, base_gaco_patch_price)
     bleed_trap_units, bleed_trap_price = _normalize_unit_price(bleed_trap_units, bleed_trap_price, base_bleed_price)
-    gaco_e5320_units, gaco_e5320_price = _normalize_unit_price(gaco_e5320_units, gaco_e5320_price, GACO_E5320_Price)
+    gaco_e5320_units, gaco_e5320_price = _normalize_unit_price(gaco_e5320_units, gaco_e5320_price, GACO_E5320_PRICE)
     sw_1flash_units, sw_1flash_price = _normalize_unit_price(sw_1flash_units, sw_1flash_price, base_sw_1flash_price)
     sw_bleed_block_units, sw_bleed_block_price = _normalize_unit_price(sw_bleed_block_units, sw_bleed_block_price, base_sw_bleed_block_price)
     drainage_mat_units, drainage_mat_price = _normalize_unit_price(drainage_mat_units, drainage_mat_price, base_drainage_price)
     foam_units, foam_price = _normalize_unit_price(foam_units, foam_price, base_foam_price)
+
+    def _price_overridden(actual_price, base_price):
+        try:
+            return abs(float(actual_price or 0.0) - float(base_price or 0.0)) > 0.01
+        except Exception:
+            return False
 
     # Ensure all units and per-unit prices are whole numbers before multiplying
     silicone_total       = excel_round(silicone_units_10, 0)        * excel_round(silicone_price, 0)
@@ -3481,32 +3494,52 @@ def calculation_routine(
         "calc_silicone_units_10": calc_silicone_units_10,
         "ov_silicone_units_10": ov_silicone_units_10,
         "silicone_price": silicone_price,
+        "calc_silicone_price": base_silicone_price,
+        "ov_silicone_price": _price_overridden(silicone_price, base_silicone_price),
         "silicone_total": silicone_total,
         "silicone_15_total": silicone_15_total,
         "silicone_20_total": silicone_20_total,
         "gaco_patch_units": gaco_patch_units,
         "gaco_patch_price": gaco_patch_price,
+        "calc_gaco_patch_price": base_gaco_patch_price,
+        "ov_gaco_patch_price": _price_overridden(gaco_patch_price, base_gaco_patch_price),
         "gaco_patch_total": gaco_patch_total,
         "bleed_trap_units": bleed_trap_units,
         "bleed_trap_price": bleed_trap_price,
+        "calc_bleed_trap_price": base_bleed_price,
+        "ov_bleed_trap_price": _price_overridden(bleed_trap_price, base_bleed_price),
         "bleed_trap_total": bleed_trap_total,
         "gaco_e5320_units": gaco_e5320_units,
         "gaco_e5320_price": gaco_e5320_price,
+        "calc_gaco_e5320_price": GACO_E5320_PRICE,
+        "ov_gaco_e5320_price": _price_overridden(gaco_e5320_price, GACO_E5320_PRICE),
         "gaco_e5320_total": gaco_e5320_total,
         "sw_1flash_units": sw_1flash_units,
         "sw_1flash_price": sw_1flash_price,
+        "calc_sw_1flash_price": base_sw_1flash_price,
+        "ov_sw_1flash_price": _price_overridden(sw_1flash_price, base_sw_1flash_price),
         "sw_1flash_total": sw_1flash_total,
         "sw_bleed_block_units": sw_bleed_block_units,
         "sw_bleed_block_price": sw_bleed_block_price,
+        "calc_sw_bleed_block_price": base_sw_bleed_block_price,
+        "ov_sw_bleed_block_price": _price_overridden(sw_bleed_block_price, base_sw_bleed_block_price),
         "sw_bleed_block_total": sw_bleed_block_total,
         "drainage_mat_units": drainage_mat_units,
         "drainage_mat_price": drainage_mat_price,
+        "calc_drainage_mat_price": base_drainage_price,
+        "ov_drainage_mat_price": _price_overridden(drainage_mat_price, base_drainage_price),
         "drainage_mat_total": drainage_mat_total,
         "foam_units": foam_units,
         "foam_price": foam_price,
+        "calc_foam_price": base_foam_price,
+        "ov_foam_price": _price_overridden(foam_price, base_foam_price),
         "foam_total": foam_total,
         "rfc_labor_price": rfc_labor_price,
         "pcs_labor_price": pcs_labor_price,
+        "calc_rfc_labor_price": base_rfc_price,
+        "ov_rfc_labor_price": _price_overridden(rfc_labor_price, base_rfc_price),
+        "calc_pcs_labor_price": base_pcs_labor_price,
+        "ov_pcs_labor_price": _price_overridden(pcs_labor_price, base_pcs_labor_price),
         "rfc_labor_total": rfc_labor_total,
         "pcs_labor_total": pcs_labor_total,
         "scarifying_total": scarifying_total,
@@ -5636,6 +5669,11 @@ def update_proposal(folder_name):
             except Exception:
                 return val
 
+        def _clean_price(name):
+            if str(request.form.get(f"ov_{name}") or "").strip().lower() != "yes":
+                return None
+            return _pf(name)
+
         mapped_data_full = {
             "flat_roof_squares": flat_roof_squares,
             "wall_squares": wall_squares,
@@ -5645,20 +5683,20 @@ def update_proposal(folder_name):
             "gaco_patch_units": _pf("gaco_patch_units"),
             "bleed_trap_units": _pf("bleed_trap_units"),
             "gaco_e5320_units": _pf("gaco_e5320_units", 0.0),
-            "gaco_e5320_price": _pf("gaco_e5320_price"),
+            "gaco_e5320_price": _clean_price("gaco_e5320_price"),
             "sw_1flash_units": _pf("sw_1flash_units"),
             "sw_bleed_block_units": _pf("sw_bleed_block_units"),
             "drainage_mat_units": _pf("drainage_mat_units"),
             "foam_units": _pf("foam_units"),
-            "silicone_price": _pf("silicone_price"),
-            "gaco_patch_price": _pf("gaco_patch_price"),
-            "bleed_trap_price": _pf("bleed_trap_price"),
-            "sw_1flash_price": _pf("sw_1flash_price"),
-            "sw_bleed_block_price": _pf("sw_bleed_block_price"),
-            "drainage_mat_price": _pf("drainage_mat_price"),
-            "foam_price": _pf("foam_price"),
-            "rfc_labor_price": _pf("rfc_labor_price"),
-            "pcs_labor_price": _pf("pcs_labor_price"),
+            "silicone_price": _clean_price("silicone_price"),
+            "gaco_patch_price": _clean_price("gaco_patch_price"),
+            "bleed_trap_price": _clean_price("bleed_trap_price"),
+            "sw_1flash_price": _clean_price("sw_1flash_price"),
+            "sw_bleed_block_price": _clean_price("sw_bleed_block_price"),
+            "drainage_mat_price": _clean_price("drainage_mat_price"),
+            "foam_price": _clean_price("foam_price"),
+            "rfc_labor_price": _clean_price("rfc_labor_price"),
+            "pcs_labor_price": _clean_price("pcs_labor_price"),
             "scarifying_total": _pf("scarifying_total"),
             "travel_total": _pf("travel_total"),
             "repair_costs_total": repair_costs_total,
@@ -5785,6 +5823,21 @@ def update_proposal(folder_name):
     raw_rfc_labor_price = request.form.get('rfc_labor_price')
     rfc_labor_price = None if raw_rfc_labor_price is None or str(raw_rfc_labor_price).strip() == '' else parse_float(raw_rfc_labor_price)
     pcs_labor_price = parse_float(request.form.get('pcs_labor_price'))
+
+    def _clear_non_overridden_price(field_name, value):
+        return value if str(request.form.get(f"ov_{field_name}") or "").strip().lower() == "yes" else None
+
+    silicone_price = _clear_non_overridden_price("silicone_price", silicone_price)
+    gaco_patch_price = _clear_non_overridden_price("gaco_patch_price", gaco_patch_price)
+    bleed_trap_price = _clear_non_overridden_price("bleed_trap_price", bleed_trap_price)
+    gaco_e5320_price = _clear_non_overridden_price("gaco_e5320_price", gaco_e5320_price)
+    sw_1flash_price = _clear_non_overridden_price("sw_1flash_price", sw_1flash_price)
+    sw_bleed_block_price = _clear_non_overridden_price("sw_bleed_block_price", sw_bleed_block_price)
+    drainage_mat_price = _clear_non_overridden_price("drainage_mat_price", drainage_mat_price)
+    foam_price = _clear_non_overridden_price("foam_price", foam_price)
+    rfc_labor_price = _clear_non_overridden_price("rfc_labor_price", rfc_labor_price)
+    pcs_labor_price = _clear_non_overridden_price("pcs_labor_price", pcs_labor_price)
+
     raw_scarifying_total = request.form.get('scarifying_total')
     scarifying_total = parse_float(raw_scarifying_total)
     travel_total = parse_float(request.form.get('travel_total'))
@@ -5906,6 +5959,11 @@ def update_proposal(folder_name):
             except Exception:
                 return val
 
+        def _clean_price(name):
+            if str(request.form.get(f"ov_{name}") or "").strip().lower() != "yes":
+                return None
+            return _pf(name)
+
         mapped_data_full = {
             "flat_roof_squares": flat_roof_squares,
             "wall_squares": wall_squares,
@@ -5915,20 +5973,20 @@ def update_proposal(folder_name):
             "gaco_patch_units": _pf("gaco_patch_units"),
             "bleed_trap_units": _pf("bleed_trap_units"),
             "gaco_e5320_units": _pf("gaco_e5320_units", 0.0),
-            "gaco_e5320_price": _pf("gaco_e5320_price"),
+            "gaco_e5320_price": _clean_price("gaco_e5320_price"),
             "sw_1flash_units": _pf("sw_1flash_units"),
             "sw_bleed_block_units": _pf("sw_bleed_block_units"),
             "drainage_mat_units": _pf("drainage_mat_units"),
             "foam_units": _pf("foam_units"),
-            "silicone_price": _pf("silicone_price"),
-            "gaco_patch_price": _pf("gaco_patch_price"),
-            "bleed_trap_price": _pf("bleed_trap_price"),
-            "sw_1flash_price": _pf("sw_1flash_price"),
-            "sw_bleed_block_price": _pf("sw_bleed_block_price"),
-            "drainage_mat_price": _pf("drainage_mat_price"),
-            "foam_price": _pf("foam_price"),
-            "rfc_labor_price": _pf("rfc_labor_price"),
-            "pcs_labor_price": _pf("pcs_labor_price"),
+            "silicone_price": _clean_price("silicone_price"),
+            "gaco_patch_price": _clean_price("gaco_patch_price"),
+            "bleed_trap_price": _clean_price("bleed_trap_price"),
+            "sw_1flash_price": _clean_price("sw_1flash_price"),
+            "sw_bleed_block_price": _clean_price("sw_bleed_block_price"),
+            "drainage_mat_price": _clean_price("drainage_mat_price"),
+            "foam_price": _clean_price("foam_price"),
+            "rfc_labor_price": _clean_price("rfc_labor_price"),
+            "pcs_labor_price": _clean_price("pcs_labor_price"),
             "scarifying_total": _pf("scarifying_total"),
             "travel_total": _pf("travel_total"),
             "repair_costs_total": _pf("repair_costs_total"),
@@ -6109,7 +6167,7 @@ def update_proposal(folder_name):
             bleed_trap_units=float(data.get("bleed_trap_units") or 0.0),
             bleed_trap_price=float(data.get("bleed_trap_price") or 0.0),
             gaco_e5320_units=float(data.get("gaco_e5320_units") or 0.0),
-            gaco_e5320_price=float(data.get("gaco_e5320_price") or GACO_E5320_Price),
+            gaco_e5320_price=float(data.get("gaco_e5320_price") or GACO_E5320_PRICE),
             sw_bleed_block_units=float(data.get("sw_bleed_block_units") or 0.0),
             sw_bleed_block_price=float(data.get("sw_bleed_block_price") or 0.0),
             drainage_mat_units=float(data.get("drainage_mat_units") or 0.0),
@@ -6571,7 +6629,7 @@ def proposal_details(folder_name):
             gaco_patch_units=_to_float(data.get("gaco_patch_units"), 0.0),
             gaco_patch_price=_to_float(data.get("gaco_patch_price"), 0.0),
             gaco_e5320_units=_to_float(data.get("gaco_e5320_units"), 0.0),
-            gaco_e5320_price=_to_float(data.get("gaco_e5320_price"), GACO_E5320_Price),
+            gaco_e5320_price=_to_float(data.get("gaco_e5320_price"), GACO_E5320_PRICE),
             sw_1flash_units=_to_float(data.get("sw_1flash_units"), 0.0),
             sw_1flash_price=_to_float(data.get("sw_1flash_price"), 0.0),
             bleed_trap_units=_to_float(data.get("bleed_trap_units"), 0.0),
@@ -6741,7 +6799,7 @@ def proposal_details(folder_name):
             gaco_patch_units=float(data.get("gaco_patch_units") or 0.0),
             gaco_patch_price=float(data.get("gaco_patch_price") or 0.0),
             gaco_e5320_units=float(data.get("gaco_e5320_units") or 0.0),
-            gaco_e5320_price=float(data.get("gaco_e5320_price") or GACO_E5320_Price),
+            gaco_e5320_price=float(data.get("gaco_e5320_price") or GACO_E5320_PRICE),
             sw_1flash_units=float(data.get("sw_1flash_units") or 0.0),
             sw_1flash_price=float(data.get("sw_1flash_price") or 0.0),
             bleed_trap_units=float(data.get("bleed_trap_units") or 0.0),

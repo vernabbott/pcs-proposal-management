@@ -549,6 +549,8 @@
 
     <input type="hidden" name="calc_bleed_trap_price" value="{{ data.calc_bleed_trap_price if data.calc_bleed_trap_price is not none else '' }}">
     <input type="hidden" name="ov_bleed_trap_price" value="{{ 'Yes' if data.ov_bleed_trap_price else 'No' }}">
+    <input type="hidden" name="calc_gaco_e5320_price" value="{{ data.calc_gaco_e5320_price if data.calc_gaco_e5320_price is not none else '' }}">
+    <input type="hidden" name="ov_gaco_e5320_price" value="{{ 'Yes' if data.ov_gaco_e5320_price else 'No' }}">
 
     <input type="hidden" name="calc_sw_1flash_price" value="{{ data.calc_sw_1flash_price if data.calc_sw_1flash_price is not none else '' }}">
     <input type="hidden" name="ov_sw_1flash_price" value="{{ 'Yes' if data.ov_sw_1flash_price else 'No' }}">
@@ -564,6 +566,8 @@
 
     <input type="hidden" name="calc_rfc_labor_price" value="{{ data.calc_rfc_labor_price if data.calc_rfc_labor_price is not none else '' }}">
     <input type="hidden" name="ov_rfc_labor_price" value="{{ 'Yes' if data.ov_rfc_labor_price else 'No' }}">
+    <input type="hidden" name="calc_pcs_labor_price" value="{{ data.calc_pcs_labor_price if data.calc_pcs_labor_price is not none else '' }}">
+    <input type="hidden" name="ov_pcs_labor_price" value="{{ 'Yes' if data.ov_pcs_labor_price else 'No' }}">
     <div class="detail-panel pricing-inputs-panel">
     <div class="header-grid mb-0">
       
@@ -1326,6 +1330,26 @@
       if (field.id === 'warrantySwitch') return;
       if (explicitlyHandledAutoRecalcFields.indexOf(field.name) !== -1) return;
       field.addEventListener('change', recalcIfReady);
+    });
+
+    [
+      'silicone_price',
+      'gaco_patch_price',
+      'bleed_trap_price',
+      'gaco_e5320_price',
+      'sw_1flash_price',
+      'sw_bleed_block_price',
+      'drainage_mat_price',
+      'foam_price',
+      'rfc_labor_price',
+      'pcs_labor_price'
+    ].forEach(function(name) {
+      var field = document.querySelector('[name="' + name + '"]');
+      var overrideFlag = document.querySelector('[name="ov_' + name + '"]');
+      if (!field || !overrideFlag || field.disabled || field.readOnly) return;
+      field.addEventListener('input', function() {
+        overrideFlag.value = 'Yes';
+      });
     });
 
     updateTotalSquares(true);
