@@ -543,31 +543,41 @@
     <!-- Unit price tracking -->
     <input type="hidden" name="calc_silicone_price" value="{{ data.calc_silicone_price if data.calc_silicone_price is not none else '' }}">
     <input type="hidden" name="ov_silicone_price" value="{{ 'Yes' if data.ov_silicone_price else 'No' }}">
+    <input type="hidden" name="manual_silicone_price" value="{{ data.manual_silicone_price or 'No' }}">
 
     <input type="hidden" name="calc_gaco_patch_price" value="{{ data.calc_gaco_patch_price if data.calc_gaco_patch_price is not none else '' }}">
     <input type="hidden" name="ov_gaco_patch_price" value="{{ 'Yes' if data.ov_gaco_patch_price else 'No' }}">
+    <input type="hidden" name="manual_gaco_patch_price" value="{{ data.manual_gaco_patch_price or 'No' }}">
 
     <input type="hidden" name="calc_bleed_trap_price" value="{{ data.calc_bleed_trap_price if data.calc_bleed_trap_price is not none else '' }}">
     <input type="hidden" name="ov_bleed_trap_price" value="{{ 'Yes' if data.ov_bleed_trap_price else 'No' }}">
+    <input type="hidden" name="manual_bleed_trap_price" value="{{ data.manual_bleed_trap_price or 'No' }}">
     <input type="hidden" name="calc_gaco_e5320_price" value="{{ data.calc_gaco_e5320_price if data.calc_gaco_e5320_price is not none else '' }}">
     <input type="hidden" name="ov_gaco_e5320_price" value="{{ 'Yes' if data.ov_gaco_e5320_price else 'No' }}">
+    <input type="hidden" name="manual_gaco_e5320_price" value="{{ data.manual_gaco_e5320_price or 'No' }}">
 
     <input type="hidden" name="calc_sw_1flash_price" value="{{ data.calc_sw_1flash_price if data.calc_sw_1flash_price is not none else '' }}">
     <input type="hidden" name="ov_sw_1flash_price" value="{{ 'Yes' if data.ov_sw_1flash_price else 'No' }}">
+    <input type="hidden" name="manual_sw_1flash_price" value="{{ data.manual_sw_1flash_price or 'No' }}">
 
     <input type="hidden" name="calc_sw_bleed_block_price" value="{{ data.calc_sw_bleed_block_price if data.calc_sw_bleed_block_price is not none else '' }}">
     <input type="hidden" name="ov_sw_bleed_block_price" value="{{ 'Yes' if data.ov_sw_bleed_block_price else 'No' }}">
+    <input type="hidden" name="manual_sw_bleed_block_price" value="{{ data.manual_sw_bleed_block_price or 'No' }}">
 
     <input type="hidden" name="calc_drainage_mat_price" value="{{ data.calc_drainage_mat_price if data.calc_drainage_mat_price is not none else '' }}">
     <input type="hidden" name="ov_drainage_mat_price" value="{{ 'Yes' if data.ov_drainage_mat_price else 'No' }}">
+    <input type="hidden" name="manual_drainage_mat_price" value="{{ data.manual_drainage_mat_price or 'No' }}">
 
     <input type="hidden" name="calc_foam_price" value="{{ data.calc_foam_price if data.calc_foam_price is not none else '' }}">
     <input type="hidden" name="ov_foam_price" value="{{ 'Yes' if data.ov_foam_price else 'No' }}">
+    <input type="hidden" name="manual_foam_price" value="{{ data.manual_foam_price or 'No' }}">
 
     <input type="hidden" name="calc_rfc_labor_price" value="{{ data.calc_rfc_labor_price if data.calc_rfc_labor_price is not none else '' }}">
     <input type="hidden" name="ov_rfc_labor_price" value="{{ 'Yes' if data.ov_rfc_labor_price else 'No' }}">
+    <input type="hidden" name="manual_rfc_labor_price" value="{{ data.manual_rfc_labor_price or 'No' }}">
     <input type="hidden" name="calc_pcs_labor_price" value="{{ data.calc_pcs_labor_price if data.calc_pcs_labor_price is not none else '' }}">
     <input type="hidden" name="ov_pcs_labor_price" value="{{ 'Yes' if data.ov_pcs_labor_price else 'No' }}">
+    <input type="hidden" name="manual_pcs_labor_price" value="{{ data.manual_pcs_labor_price or 'No' }}">
     <div class="detail-panel pricing-inputs-panel">
     <div class="header-grid mb-0">
       
@@ -1346,9 +1356,11 @@
     ].forEach(function(name) {
       var field = document.querySelector('[name="' + name + '"]');
       var overrideFlag = document.querySelector('[name="ov_' + name + '"]');
+      var manualFlag = document.querySelector('[name="manual_' + name + '"]');
       if (!field || !overrideFlag || field.disabled || field.readOnly) return;
       field.addEventListener('input', function() {
         overrideFlag.value = 'Yes';
+        if (manualFlag) manualFlag.value = 'Yes';
       });
     });
 

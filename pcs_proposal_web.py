@@ -5755,6 +5755,8 @@ def update_proposal(folder_name):
                 return val
 
         def _clean_price(name):
+            if str(request.form.get(f"manual_{name}") or "").strip().lower() != "yes":
+                return None
             if str(request.form.get(f"ov_{name}") or "").strip().lower() != "yes":
                 return None
             return _pf(name)
@@ -6026,6 +6028,8 @@ def update_proposal(folder_name):
         'previous_pcs_or_roofer_ind': previous_pcs_or_roofer_ind,
         'selected_proposal_file_paths': json.dumps(selected_proposal_file_paths),
     }
+    for _price_field in UNIT_PRICE_FIELDS:
+        data[f"manual_{_price_field}"] = request.form.get(f"manual_{_price_field}") or "No"
 
     # If saving an existing proposal, archive old artifacts and regenerate in the same folder
     if action == 'save' and not allow_blank and folder_name:
