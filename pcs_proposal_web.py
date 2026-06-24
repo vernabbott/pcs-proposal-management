@@ -1901,6 +1901,19 @@ EXCEL_CELL_MAP = {
     "commission_amt_20": "P25",
 }
 
+UNIT_PRICE_FIELDS = {
+    "silicone_price",
+    "gaco_patch_price",
+    "bleed_trap_price",
+    "gaco_e5320_price",
+    "sw_1flash_price",
+    "sw_bleed_block_price",
+    "drainage_mat_price",
+    "foam_price",
+    "rfc_labor_price",
+    "pcs_labor_price",
+}
+
 PROFIT_SUMMARY_V2_ROW14_MARKER = "Gaco E5320"
 
 def _shift_cell_row(cell_addr: str, row_delta: int, min_row: int) -> str:
@@ -2239,6 +2252,31 @@ def ensure_profit_summary_validations(wb_profit):
         ws.add_data_validation(roof_dropdown)
         roof_dropdown.add(target_cell)
 
+
+def sync_profit_summary_data_constants(wb_profit):
+    """Keep the Profit Summary Data sheet aligned with program constants."""
+    try:
+        ws = wb_profit["Data"]
+    except Exception:
+        return
+    constants = {
+        "J3": PCS_BASE_LABOR_RATE,
+        "K8": GACO_S42_BASE_PRICE,
+        "K9": GACO_PATCH_BASE_PRICE,
+        "K10": GACO_E5320_PRICE,
+        "K11": BLEED_TRAP_BASE_PRICE,
+        "K12": DRAINAGE_MAT_BASE_PRICE,
+        "N8": UNIFLEX_BASE_PRICE,
+        "N9": SW_1FLASH_BASE_PRICE,
+        "N10": SW_BLEED_BLOCK_BASE_PRICE,
+        "N15": GACO_FOAM_BASE_PRICE,
+        "N16": UNIFLEX_FOAM_BASE_PRICE,
+        "N18": RFC_LABOR_RATE,
+    }
+    for cell, value in constants.items():
+        ws[cell] = value
+
+
 def write_fields_to_profit_summary(wb_profit, data: dict):
     """
     Writes values from `data` to the first sheet of an openpyxl workbook `wb_profit`
@@ -2248,6 +2286,7 @@ def write_fields_to_profit_summary(wb_profit, data: dict):
         ws = wb_profit.worksheets[0]
     except Exception:
         ws = wb_profit.active
+    sync_profit_summary_data_constants(wb_profit)
     for field, cell in EXCEL_CELL_MAP.items():
         if not cell:
             continue
@@ -2398,6 +2437,15 @@ def read_profit_summary_for_display(folder_path: str) -> dict | None:
         except Exception:
             return default
 
+    def _raw_cell_is_formula(field) -> bool:
+        cell = cell_map.get(field)
+        if not cell:
+            return False
+        try:
+            return getattr(ws_raw[cell], "data_type", None) == "f"
+        except Exception:
+            return False
+
     def _get_calc_input_val(field, default=0.0, treat_zero_as_missing=False):
         value = _get_cell_val(field, None)
         missing = value is None
@@ -2472,6 +2520,27 @@ def read_profit_summary_for_display(folder_path: str) -> dict | None:
     pcs_labor_price      = _num(_get_calc_input_val('pcs_labor_price', None), None)
     scarifying_total     = _num(_get_cell_val('scarifying_total'), 0.0)
     repair_costs_total     = _num(_get_cell_val('repair_costs_total'), 0.0)
+
+    if _raw_cell_is_formula("silicone_price"):
+        silicone_price = None
+    if _raw_cell_is_formula("gaco_patch_price"):
+        gaco_patch_price = None
+    if _raw_cell_is_formula("bleed_trap_price"):
+        bleed_trap_price = None
+    if _raw_cell_is_formula("gaco_e5320_price"):
+        gaco_e5320_price = None
+    if _raw_cell_is_formula("sw_1flash_price"):
+        sw_1flash_price = None
+    if _raw_cell_is_formula("sw_bleed_block_price"):
+        sw_bleed_block_price = None
+    if _raw_cell_is_formula("drainage_mat_price"):
+        drainage_mat_price = None
+    if _raw_cell_is_formula("foam_price"):
+        foam_price = None
+    if _raw_cell_is_formula("rfc_labor_price"):
+        rfc_labor_price = None
+    if _raw_cell_is_formula("pcs_labor_price"):
+        pcs_labor_price = None
 
     # Call calculation_routine to get authoritative computed values
     calc_res = calculation_routine(
@@ -2587,6 +2656,9 @@ def read_profit_summary_for_display(folder_path: str) -> dict | None:
             continue
         raw_cell = ws_raw[cell]
         val = data.get(f)
+        if f in UNIT_PRICE_FIELDS and getattr(raw_cell, 'data_type', None) == 'f' and f in calc_res:
+            data[f] = calc_res[f]
+            continue
         # If raw cell is a formula and cached value is blank/0 -> use computed fallback
         if getattr(raw_cell, 'data_type', None) == 'f' and _is_blank_or_zero(val):
             if f in calc_res:
@@ -2655,6 +2727,19 @@ def merge_display_fallbacks(
                     "profit_pct", "profit_pct_15", "profit_pct_20",
                     "pcs_profit", "pcs_profit_15", "pcs_profit_20",
                 }
+                unit_price_fields = globals().get("UNIT_PRICE_FIELDS", {
+                    "silicone_price",
+                    "gaco_patch_price",
+                    "bleed_trap_price",
+                    "gaco_e5320_price",
+                    "sw_1flash_price",
+                    "sw_bleed_block_price",
+                    "drainage_mat_price",
+                    "foam_price",
+                    "rfc_labor_price",
+                    "pcs_labor_price",
+                })
+                always_sync_fields.update(unit_price_fields)
 
                 if prefer_saved_derived:
                     for k in always_sync_fields:
