@@ -21,6 +21,8 @@
             --gold-soft: #fbf1d8;
             --red: #b42318;
             --red-soft: #fee4e2;
+            --indigo: #4b4f9c;
+            --indigo-soft: #eceefe;
         }
 
         body {
@@ -40,7 +42,7 @@
         }
 
         .landing-shell {
-            width: min(1040px, 100%);
+            width: min(1220px, 100%);
         }
 
         .landing-header {
@@ -96,7 +98,7 @@
 
         .work-grid {
             display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
+            grid-template-columns: repeat(5, minmax(0, 1fr));
             gap: 14px;
         }
 
@@ -152,6 +154,11 @@
         .work-card.tracker .work-icon {
             background: var(--red-soft);
             color: var(--red);
+        }
+
+        .work-card.intelligence .work-icon {
+            background: var(--indigo-soft);
+            color: var(--indigo);
         }
 
         .work-title {
@@ -268,6 +275,16 @@
                     <p class="work-copy">Fill missing tracker contact, email, proposal date, and follow-up date fields.</p>
                     <span class="work-action">
                         Update tracker
+                        <i class="bi bi-arrow-right"></i>
+                    </span>
+                </a>
+
+                <a href="{{ url_for('roof_intelligence') }}" class="work-card intelligence">
+                    <span class="work-icon" aria-hidden="true"><i class="bi bi-houses"></i></span>
+                    <h2 class="work-title">Roof Intelligence</h2>
+                    <p class="work-copy">Create an AI-driven roof assessment report from a property address.</p>
+                    <span class="work-action">
+                        Start report
                         <i class="bi bi-arrow-right"></i>
                     </span>
                 </a>

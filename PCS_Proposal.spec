@@ -7,6 +7,7 @@ proposal_summary_template = '/Users/vernabbott/Library/CloudStorage/OneDrive-Per
 datas = [
     ('templates', 'templates'),
     ('static', 'static'),
+    ('roof_intelligence_single_address.py', '.'),
 ]
 try:
     with open(proposal_summary_template, 'rb'):

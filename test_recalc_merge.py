@@ -66,6 +66,70 @@ class CommissionCalculationTests(unittest.TestCase):
         self.assertEqual(result["commission_amt_20"], 4300)
 
 
+class RockFoamCalculationTests(unittest.TestCase):
+    def _calculate(self, **overrides):
+        import pcs_proposal_web as app
+
+        params = dict(
+            squares=100,
+            product="Gaco",
+            roof_type="Rock/Foam/Coat",
+            labor_days=0,
+            warranty_incl="No",
+            include_travel="No",
+            price_per_sq_10=0,
+            commission_pct=0,
+            submitted_by="Vern",
+            previous_submitted_by="Vern",
+            office_fee_pct=0,
+            adjusted_coverage=0,
+            silicone_units_10=0,
+            silicone_price=0,
+            gaco_patch_units=0,
+            gaco_patch_price=0,
+            sw_1flash_units=0,
+            sw_1flash_price=0,
+            bleed_trap_units=0,
+            bleed_trap_price=0,
+            sw_bleed_block_units=0,
+            sw_bleed_block_price=0,
+            drainage_mat_units=0,
+            drainage_mat_price=0,
+            foam_units=0,
+            foam_price=0,
+            rfc_labor_price=0,
+            pcs_labor_price=0,
+            scarifying_total=0,
+            travel_total=0,
+            repair_costs_total=0,
+            previous_squares=100,
+            previous_roof_type="Rock/Foam/Coat",
+            previous_product="Gaco",
+            previous_adjusted_coverage=0,
+            previous_silicone_units_10=0,
+            proposal_note="",
+            pcs_or_roofer_ind="PCS Direct",
+            previous_pcs_or_roofer_ind="PCS Direct",
+            previous_include_travel="No",
+            previous_calc_travel_total=0,
+        )
+        params.update(overrides)
+        return app.calculation_routine(**params)
+
+    def test_rock_foam_zero_formula_cache_recalculates_foam_price(self):
+        result = self._calculate()
+
+        self.assertEqual(result["foam_units"], 4)
+        self.assertEqual(result["foam_price"], 2600)
+        self.assertEqual(result["foam_total"], 10400)
+
+    def test_rock_foam_zero_formula_cache_recalculates_removal_price(self):
+        result = self._calculate()
+
+        self.assertEqual(result["rfc_labor_price"], 250)
+        self.assertEqual(result["rfc_labor_total"], 25000)
+
+
 class FullDetailPreviewTests(unittest.TestCase):
     def test_blank_proposal_can_preview_full_detail_from_posted_values(self):
         import pcs_proposal_web as app

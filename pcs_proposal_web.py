@@ -31,8 +31,19 @@ import sys
 import time
 from urllib.parse import quote, urlsplit, urlunsplit
 
+from roof_intelligence_jobs import (
+    SUPPORTED_ROOF_TYPES,
+    get_job_store,
+)
+
 APP_FOLDER = os.path.dirname(os.path.abspath(__file__))
 APP_ERROR_LOG = os.path.join(APP_FOLDER, "pcs_app_error.log")
+ROOF_INTELLIGENCE_PROJECT_DIR = os.environ.get(
+    "ROOF_INTELLIGENCE_PROJECT_DIR",
+    "/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual Studio/PilotPoint IQ Roof Intelligence Report",
+)
+ROOF_INTELLIGENCE_SCRIPT = os.path.join(APP_FOLDER, "roof_intelligence_single_address.py")
+ROOF_INTELLIGENCE_USER_KEY = os.environ.get("ROOF_INTELLIGENCE_USER_KEY", "local-user")
 HAS_XLWINGS = None
 xw = None
 
@@ -296,7 +307,7 @@ UNIFLEX_BASE_PRICE = 185
 SW_1FLASH_BASE_PRICE = 110
 SW_BLEED_BLOCK_BASE_PRICE = 100
 GACO_FOAM_BASE_PRICE = 2600
-UNIFLEX_FOAM_BASE_PRICE = 2400
+UNIFLEX_FOAM_BASE_PRICE = 2600
 RFC_LABOR_RATE = 250
 BASE_OFFICE_FEE_PCT = 0.05
 SALES_STAFF_OFFICE_FEE_PCT = 0.05
@@ -3314,9 +3325,9 @@ def calculation_routine(
         foam_units = base_foam_units
         foam_price = base_foam_price
     else:
-        if foam_units is None or (isinstance(foam_units, float) and math.isnan(foam_units)):
+        if _is_blank_zero_or_nan(foam_units):
             foam_units = base_foam_units
-        if foam_price is None or (isinstance(foam_price, float) and math.isnan(foam_price)):
+        if _is_blank_zero_or_nan(foam_price):
             foam_price = base_foam_price
 
     # RFC labor price logic (aka rfc_price)
@@ -3327,7 +3338,7 @@ def calculation_routine(
     if rfc_recalc:
         rfc_labor_price = base_rfc_price
     else:
-        if rfc_labor_price is None or (isinstance(rfc_labor_price, float) and math.isnan(rfc_labor_price)):
+        if _is_blank_zero_or_nan(rfc_labor_price):
             rfc_labor_price = base_rfc_price
 
     # PCS labor price logic
@@ -3706,6 +3717,204 @@ def proposal_list():
 @app.route('/blast-emails')
 def blast_email_management():
     return render_template('blast_email_management.html')
+
+
+def _roof_local_worker_enabled():
+    value = os.environ.get("ROOF_INTELLIGENCE_LOCAL_WORKER", "0").strip().lower()
+    return value in {"1", "true", "yes", "on"}
+
+
+def _roof_error_details(message):
+    clean_message = " ".join(str(message or "Unable to complete the Roof Intelligence report.").split())
+    lowered = clean_message.lower()
+    if "no parcel match" in lowered or "parcel" in lowered and "not found" in lowered:
+        return "parcel_not_found", "No matching county parcel was found for that address.", False
+    if "no building" in lowered or "building footprint" in lowered:
+        return "building_not_found", "A building footprint could not be matched to the property parcel.", False
+    if "aerial" in lowered or "imagery" in lowered:
+        return "imagery_unavailable", "A usable aerial image could not be retrieved for the property.", True
+    if "timed out" in lowered or "timeout" in lowered:
+        return "worker_timeout", "Report processing exceeded the local worker time limit.", True
+    if "openai" in lowered or "gemini" in lowered or "ai " in lowered:
+        return "ai_analysis_failed", "The AI roof assessment could not be completed.", True
+    return "internal_processing_error", clean_message[:500], True
+
+
+def _run_local_individual_roof_job(job_id):
+    """Development adapter; production jobs are claimed by PilotPoint IQ."""
+    store = get_job_store()
+    job = store.get_job(job_id, ROOF_INTELLIGENCE_USER_KEY)
+    if not job or job.get("job_type") != "individual_address" or job.get("status") != "queued":
+        return
+
+    try:
+        store.start_job(job_id, stage="locating_property")
+        python_path = os.path.join(ROOF_INTELLIGENCE_PROJECT_DIR, ".venv", "bin", "python")
+        if not os.path.exists(python_path):
+            raise RuntimeError("The PilotPoint IQ Python environment is not available to the local adapter.")
+        if not os.path.exists(ROOF_INTELLIGENCE_SCRIPT):
+            raise RuntimeError("The PCS single-address development adapter was not found.")
+
+        store.update_job(job_id, stage="processing_report")
+        command = [
+            python_path,
+            ROOF_INTELLIGENCE_SCRIPT,
+            "--address",
+            job["input"]["property_address"],
+            "--project-dir",
+            ROOF_INTELLIGENCE_PROJECT_DIR,
+            "--use-ai",
+            "--allow-ai-fallback",
+        ]
+        completed = subprocess.run(
+            command,
+            cwd=ROOF_INTELLIGENCE_PROJECT_DIR,
+            capture_output=True,
+            text=True,
+            timeout=int(os.environ.get("ROOF_INTELLIGENCE_LOCAL_TIMEOUT", "900")),
+            check=False,
+        )
+        payload = {}
+        for line in reversed((completed.stdout or "").splitlines()):
+            line = line.strip()
+            if line.startswith("{") and line.endswith("}"):
+                try:
+                    payload = json.loads(line)
+                except json.JSONDecodeError:
+                    payload = {}
+                break
+        if completed.returncode != 0 or payload.get("error"):
+            raise RuntimeError(
+                payload.get("error")
+                or (completed.stderr or completed.stdout or "Unable to generate the report.").strip()
+            )
+        if not payload.get("report_path") or not os.path.isfile(payload["report_path"]):
+            raise RuntimeError("The worker completed without producing a report PDF.")
+
+        store.update_job(job_id, stage="saving_report")
+        store.complete_individual_job(job_id, payload)
+
+        temporary_image = str(payload.get("aerial_image_file") or "")
+        if temporary_image and os.path.isfile(temporary_image):
+            try:
+                os.remove(temporary_image)
+            except OSError:
+                pass
+    except subprocess.TimeoutExpired:
+        store.fail_job(
+            job_id,
+            "worker_timeout",
+            "Report processing exceeded the local worker time limit.",
+            retryable=True,
+        )
+    except Exception as exc:
+        code, message, retryable = _roof_error_details(exc)
+        store.fail_job(job_id, code, message, retryable=retryable)
+
+
+def _roof_job_payload(store, job):
+    if not job:
+        return None
+    result = dict(job)
+    report = store.get_report_for_job(job["id"])
+    if report:
+        report["view_url"] = url_for("download_roof_intelligence_report", report_id=report["id"])
+        result["report"] = report
+    else:
+        result["report"] = None
+    result["status_url"] = url_for("roof_intelligence_job_status", job_id=job["id"])
+    result["page_url"] = url_for("roof_intelligence", job_id=job["id"])
+    return result
+
+
+@app.route('/roof-intelligence')
+def roof_intelligence():
+    store = get_job_store()
+    requested_job_id = request.args.get("job_id", "").strip()
+    active_job = store.get_job(requested_job_id, ROOF_INTELLIGENCE_USER_KEY) if requested_job_id else None
+    return render_template(
+        'roof_intelligence.html',
+        active_job=_roof_job_payload(store, active_job),
+        recent_jobs=store.list_jobs(ROOF_INTELLIGENCE_USER_KEY, limit=12),
+        notifications=store.list_notifications(ROOF_INTELLIGENCE_USER_KEY, limit=8),
+        supported_roof_types=SUPPORTED_ROOF_TYPES,
+        local_worker_enabled=_roof_local_worker_enabled(),
+    )
+
+
+@app.post('/roof-intelligence/jobs/individual')
+def create_individual_roof_intelligence_job():
+    store = get_job_store()
+    try:
+        job = store.create_individual_job(
+            request.form.get("property_address", ""),
+            user_key=ROOF_INTELLIGENCE_USER_KEY,
+        )
+    except ValueError as exc:
+        flash(str(exc), "danger")
+        return redirect(url_for("roof_intelligence", mode="individual"))
+
+    if _roof_local_worker_enabled():
+        _run_background_task(
+            f"Roof Intelligence individual job {job['id']}",
+            lambda: _run_local_individual_roof_job(job["id"]),
+        )
+    return redirect(url_for("roof_intelligence", job_id=job["id"], mode="individual"))
+
+
+@app.post('/roof-intelligence/jobs/zip')
+def create_zip_roof_intelligence_job():
+    store = get_job_store()
+    try:
+        job = store.create_zip_job(
+            request.form.get("zip_code", ""),
+            request.form.get("report_limit", ""),
+            request.form.get("minimum_roof_size", "10000"),
+            request.form.get("minimum_age", ""),
+            request.form.getlist("roof_types"),
+            user_key=ROOF_INTELLIGENCE_USER_KEY,
+        )
+    except ValueError as exc:
+        flash(str(exc), "danger")
+        return redirect(url_for("roof_intelligence", mode="zip"))
+    return redirect(url_for("roof_intelligence", job_id=job["id"], mode="zip"))
+
+
+@app.get('/api/roof-intelligence/jobs/<job_id>')
+def roof_intelligence_job_status(job_id):
+    store = get_job_store()
+    job = store.get_job(job_id, ROOF_INTELLIGENCE_USER_KEY)
+    if not job:
+        return jsonify({"error": "Roof Intelligence job not found."}), 404
+    return jsonify(_roof_job_payload(store, job))
+
+
+@app.post('/roof-intelligence/notifications/<notification_id>/read')
+def mark_roof_intelligence_notification_read(notification_id):
+    store = get_job_store()
+    store.mark_notification_read(notification_id, ROOF_INTELLIGENCE_USER_KEY)
+    job_id = request.form.get("job_id", "").strip()
+    return redirect(url_for("roof_intelligence", job_id=job_id) if job_id else url_for("roof_intelligence"))
+
+
+@app.route('/roof-intelligence/reports/<report_id>')
+def download_roof_intelligence_report(report_id):
+    store = get_job_store()
+    report = store.get_report(report_id)
+    if not report:
+        return "Report was not found.", 404
+    report_path = str(report.get("report_path") or "")
+    if not report_path or not os.path.isfile(report_path):
+        return "The local report file is no longer available.", 404
+
+    requested_path = os.path.realpath(report_path)
+    allowed_roots = (
+        os.path.realpath(ROOF_INTELLIGENCE_PROJECT_DIR),
+        os.path.realpath(os.path.join(APP_FOLDER, "data", "roof_intelligence_reports")),
+    )
+    if not any(requested_path.startswith(root + os.sep) for root in allowed_roots):
+        return "Report path is not allowed.", 403
+    return send_file(requested_path, mimetype="application/pdf", as_attachment=False)
 
 
 @app.route('/proposal-tracker')
