@@ -68,6 +68,7 @@
 
         .home-link { border: 1px solid var(--line); background: #fff; color: #344054; }
         .home-link:hover { border-color: #98a2b3; color: var(--ink); }
+        .home-link.icon-only { width: 40px; flex: 0 0 40px; padding: 0; font-size: 17px; }
         .button { border: 1px solid var(--navy); background: var(--navy); color: #fff; }
         .button:hover { background: var(--navy-dark); border-color: var(--navy-dark); color: #fff; }
         .button.secondary { border-color: var(--line); background: #fff; color: #344054; }
@@ -85,19 +86,24 @@
 
         .workflow-grid {
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-columns: repeat(2, minmax(220px, 320px)) minmax(0, 1fr);
             gap: 12px;
             margin-bottom: 16px;
+            align-items: start;
         }
+
+        .workflow-option { display: contents; }
 
         .workflow-choice {
             display: grid;
-            grid-template-columns: 42px 1fr;
-            gap: 12px;
+            grid-template-columns: 36px 1fr;
+            gap: 10px;
             align-items: center;
-            padding: 15px;
+            width: 100%;
+            min-height: 74px;
+            padding: 10px 12px;
             border: 1px solid var(--line);
-            border-radius: 10px;
+            border-radius: 9px;
             background: rgba(255, 255, 255, .84);
             color: var(--ink);
             text-align: left;
@@ -110,26 +116,80 @@
             background: #fff;
         }
 
+        .workflow-option[data-mode-container="individual"] > .workflow-choice { grid-column: 1; grid-row: 1; }
+        .workflow-option[data-mode-container="area"] > .workflow-choice { grid-column: 2; grid-row: 1; }
+        .workflow-option[data-mode-container="canonical"] > .workflow-choice { grid-column: 3; grid-row: 1; }
+        .workflow-choice.review-required { border-color: #d92d20; background: #fff8f7; }
+        .workflow-choice.review-required .choice-icon { background: var(--red-soft); color: var(--red); }
+        .review-status-required { color: var(--red); font-weight: 800; }
+        .workflow-choice:disabled { cursor: default; opacity: 1; }
+
+        .workflow-form {
+            overflow: visible;
+            background: #fff;
+        }
+
+        .workflow-dialog {
+            width: min(640px, calc(100vw - 32px));
+            max-width: none;
+            max-height: calc(100vh - 32px);
+            margin: auto;
+            padding: 0;
+            overflow: auto;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: 0 24px 64px rgba(16, 24, 40, .24);
+        }
+        .workflow-dialog.area-dialog { width: min(1180px, calc(100vw - 32px)); }
+        .workflow-dialog.review-dialog { width: min(820px, calc(100vw - 32px)); }
+        .workflow-dialog::backdrop { background: rgba(16, 24, 40, .58); backdrop-filter: blur(2px); }
+        .dialog-header {
+            position: sticky;
+            z-index: 40;
+            top: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 14px 18px;
+            border-bottom: 1px solid #edf0f4;
+            background: rgba(255, 255, 255, .97);
+        }
+        .dialog-title { margin: 0; font-size: 17px; font-weight: 850; }
+        .dialog-close {
+            display: grid;
+            width: 36px;
+            height: 36px;
+            flex: 0 0 36px;
+            place-items: center;
+            padding: 0;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #fff;
+            color: #344054;
+            font-size: 17px;
+        }
+        body:has(.workflow-dialog[open]) { overflow: hidden; }
+
+        .workflow-details {
+            padding: 20px;
+            background: #fff;
+        }
+
         .choice-icon {
             display: grid;
-            width: 42px;
-            height: 42px;
+            width: 36px;
+            height: 36px;
             place-items: center;
-            border-radius: 9px;
+            border-radius: 8px;
             background: var(--blue-soft);
             color: var(--navy);
-            font-size: 20px;
+            font-size: 17px;
         }
 
         .choice-title { display: block; font-weight: 850; }
         .choice-copy { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; line-height: 1.4; }
-
-        .main-grid {
-            display: grid;
-            grid-template-columns: minmax(340px, 430px) minmax(0, 1fr);
-            gap: 16px;
-            align-items: start;
-        }
 
         .panel {
             border: 1px solid var(--line);
@@ -144,24 +204,62 @@
         .panel-copy { margin: 5px 0 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
         .panel-body { padding: 17px; }
 
-        .workflow-form[hidden] { display: none !important; }
         .form-label { margin-bottom: 6px; color: #344054; font-size: 12px; font-weight: 800; }
         .form-control { border-color: var(--line); border-radius: 7px; font-size: 14px; }
         .field-help { margin: 5px 0 0; color: var(--muted); font-size: 11px; line-height: 1.4; }
 
-        .form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-        .roof-types { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+        .form-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+        .roof-type-picker { position: relative; width: min(100%, 430px); }
+        .roof-type-toggle {
+            display: flex;
+            width: 100%;
+            min-height: 42px;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 8px 12px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #fff;
+            color: var(--ink);
+            font-size: 13px;
+            font-weight: 750;
+            text-align: left;
+        }
+        .roof-type-toggle:hover { border-color: #aab7c4; background: #fbfcfd; }
+        .roof-type-toggle[aria-expanded="true"] { border-color: var(--navy); box-shadow: 0 0 0 2px rgba(23, 76, 125, .1); }
+        .roof-type-toggle-label { display: inline-flex; min-width: 0; align-items: center; gap: 8px; }
+        .roof-type-toggle-label i { color: var(--navy); }
+        .roof-type-chevron { color: var(--muted); transition: transform .16s ease; }
+        .roof-type-toggle[aria-expanded="true"] .roof-type-chevron { transform: rotate(180deg); }
+        .roof-types {
+            position: absolute;
+            z-index: 30;
+            top: calc(100% + 6px);
+            left: 0;
+            width: 100%;
+            padding: 6px;
+            border: 1px solid var(--line);
+            border-radius: 9px;
+            background: #fff;
+            box-shadow: 0 14px 32px rgba(16, 24, 40, .16);
+        }
+        .roof-types[hidden] { display: none; }
         .check-option {
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 8px 9px;
-            border: 1px solid #e4e9ef;
-            border-radius: 7px;
-            background: #fafcfd;
+            width: 100%;
+            padding: 9px 10px;
+            border: 0;
+            border-radius: 6px;
+            background: #fff;
             font-size: 12px;
             font-weight: 700;
+            cursor: pointer;
         }
+        .check-option:hover { background: var(--blue-soft); }
+        .check-option:first-child { margin-bottom: 4px; border-bottom: 1px solid #edf0f4; border-radius: 6px 6px 0 0; }
 
         .status-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
         .status-pill {
@@ -264,21 +362,120 @@
         .list-title { display: block; color: var(--ink); font-weight: 800; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .list-title:hover { color: var(--navy); }
         .list-meta { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
+        .canonical-review-row { display: block; }
+        .canonical-review-row .list-main { width: 100%; }
+        .canonical-source-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 11px;
+        }
+        .canonical-source-card {
+            padding: 11px;
+            border: 1px solid #dfe5eb;
+            border-radius: 8px;
+            background: #fafcfd;
+        }
+        .canonical-source-name { display: block; color: var(--ink); font-size: 12px; font-weight: 850; }
+        .canonical-source-detail { display: block; margin-top: 4px; color: var(--muted); font-size: 11px; }
         .mini-status { color: var(--muted); font-size: 10px; font-weight: 850; text-transform: uppercase; }
+        .batch-reports { margin-top: 16px; padding-top: 14px; border-top: 1px solid #e4e9ef; }
+        .batch-reports-header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+        .batch-reports-title { margin: 0; color: var(--ink); font-size: 14px; font-weight: 850; }
+        .batch-report-count { color: var(--muted); font-size: 11px; font-weight: 750; }
 
         .notification.unread { margin: 0 -17px; padding-left: 17px; padding-right: 17px; background: #f5f9fc; }
         .notification-form { margin: 0; }
         .notification-button { padding: 0; border: 0; background: transparent; color: var(--navy); font-size: 11px; font-weight: 800; }
         .dev-note { margin-top: 12px; padding: 9px 10px; border-radius: 7px; background: #f6f7f9; color: var(--muted); font-size: 11px; }
 
+        .map-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 9px; }
+        .area-methods { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 10px; padding: 0; border: 0; }
+        .area-method-option { position: relative; margin: 0; }
+        .area-method-option input { position: absolute; opacity: 0; pointer-events: none; }
+        .area-method-option span {
+            display: inline-flex;
+            min-height: 38px;
+            align-items: center;
+            gap: 7px;
+            padding: 0 12px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #fff;
+            color: #344054;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+        .area-method-option input:checked + span { border-color: var(--navy); background: var(--blue-soft); color: var(--navy); }
+        .area-method-option input:focus-visible + span { outline: 2px solid rgba(23, 76, 125, .25); outline-offset: 2px; }
+        .radius-controls { display: flex; align-items: end; gap: 8px; margin-bottom: 10px; }
+        .radius-controls[hidden] { display: none; }
+        .radius-distance { width: min(520px, 100%); }
+        .radius-slider-header { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+        .radius-value { color: var(--navy); font-size: 13px; font-weight: 850; font-variant-numeric: tabular-nums; }
+        .radius-slider {
+            width: 100%;
+            height: 24px;
+            margin: 1px 0 0;
+            accent-color: var(--navy);
+            cursor: pointer;
+        }
+        .radius-scale { display: flex; justify-content: space-between; margin-top: -2px; color: var(--muted); font-size: 10px; font-weight: 700; }
+        .map-tool {
+            min-height: 36px;
+            padding: 0 11px;
+            border: 1px solid var(--line);
+            border-radius: 7px;
+            background: #fff;
+            color: #344054;
+            font-size: 12px;
+            font-weight: 800;
+        }
+        .map-tool.active { border-color: var(--navy); background: var(--blue-soft); color: var(--navy); }
+        .map-address-search { display: flex; flex: 1 1 340px; min-width: 240px; }
+        .map-address-input {
+            width: 100%;
+            min-height: 36px;
+            padding: 0 11px;
+            border: 1px solid var(--line);
+            border-right: 0;
+            border-radius: 7px 0 0 7px;
+            color: var(--ink);
+            font-size: 12px;
+        }
+        .map-address-input:focus { position: relative; z-index: 1; outline: 2px solid rgba(23, 76, 125, 0.18); border-color: var(--navy); }
+        .map-address-button { border-radius: 0 7px 7px 0; }
+        .map-selection-status { color: var(--muted); font-size: 11px; font-weight: 700; }
+        #area-map {
+            width: 100%;
+            height: clamp(390px, 55vh, 540px);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #e9eef2;
+            cursor: grab;
+        }
+        #area-map.drawing-mode,
+        #area-map.drawing-mode * { cursor: crosshair !important; touch-action: none !important; }
+        .map-instructions { margin: 8px 0 16px; color: var(--muted); font-size: 11px; line-height: 1.45; }
+
         @media (max-width: 880px) {
-            .main-grid, .lower-grid { grid-template-columns: 1fr; }
+            .lower-grid { grid-template-columns: 1fr; }
         }
 
         @media (max-width: 620px) {
             .shell { padding: 18px 12px 28px; }
             .topbar { align-items: flex-start; flex-direction: column; }
-            .workflow-grid, .form-row, .roof-types, .result-grid { grid-template-columns: 1fr; }
+            .workflow-grid, .form-row, .result-grid, .canonical-source-grid { grid-template-columns: 1fr; }
+            .workflow-option[data-mode-container="individual"] > .workflow-choice { grid-column: 1; grid-row: 1; }
+            .workflow-option[data-mode-container="area"] > .workflow-choice { grid-column: 1; grid-row: 2; }
+            .workflow-option[data-mode-container="canonical"] > .workflow-choice { grid-column: 1; grid-row: 3; }
+            .workflow-details { padding: 15px; }
+            .workflow-dialog,
+            .workflow-dialog.area-dialog,
+            .workflow-dialog.review-dialog { width: calc(100vw - 16px); max-height: calc(100vh - 16px); }
+            .map-address-search { flex-basis: 100%; min-width: 100%; order: 3; }
+            .map-selection-status { flex-basis: 100%; order: 4; }
         }
     </style>
 </head>
@@ -287,9 +484,12 @@
         <header class="topbar">
             <div>
                 <h1>Roof Intelligence</h1>
-                <p class="subtitle">Request an individual property assessment or build a targeted ZIP-code report batch.</p>
+                <p class="subtitle">Request an individual property assessment or draw a targeted map area for a report batch.</p>
             </div>
-            <a class="home-link" href="{{ url_for('landing_page') }}"><i class="bi bi-arrow-left"></i>Home</a>
+            <div class="d-flex gap-3">
+                <a class="home-link" href="{{ url_for('landing_page') }}"><i class="bi bi-arrow-left"></i>Home</a>
+                <a class="home-link icon-only" href="{{ url_for('application_settings') }}" aria-label="Settings" title="Settings"><i class="bi bi-gear" aria-hidden="true"></i></a>
+            </div>
         </header>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -299,30 +499,21 @@
         {% endwith %}
 
         <section class="workflow-grid" aria-label="Roof Intelligence report type">
-            <button class="workflow-choice" type="button" data-mode-button="individual">
-                <span class="choice-icon"><i class="bi bi-building"></i></span>
-                <span>
-                    <span class="choice-title">Individual Address</span>
-                    <span class="choice-copy">Generate one assessment from a complete property address.</span>
-                </span>
-            </button>
-            <button class="workflow-choice" type="button" data-mode-button="zip">
-                <span class="choice-icon"><i class="bi bi-map"></i></span>
-                <span>
-                    <span class="choice-title">ZIP Code Batch</span>
-                    <span class="choice-copy">Filter commercial roof candidates and process a controlled report batch.</span>
-                </span>
-            </button>
-        </section>
-
-        <section class="main-grid">
-            <section class="panel">
-                <div class="panel-header">
-                    <h2 class="panel-title">Report Request</h2>
-                    <p class="panel-copy">Submitting creates a persistent background job. You may leave this page while it runs.</p>
-                </div>
-                <div class="panel-body">
-                    <form class="workflow-form" data-mode-form="individual" method="post" action="{{ url_for('create_individual_roof_intelligence_job') }}">
+            <section class="workflow-option" data-mode-container="individual">
+                <button class="workflow-choice" type="button" data-mode-button="individual" aria-controls="individual-request-dialog" aria-haspopup="dialog" aria-expanded="false">
+                    <span class="choice-icon"><i class="bi bi-building"></i></span>
+                    <span>
+                        <span class="choice-title">Individual Address</span>
+                        <span class="choice-copy">Generate one assessment from a complete property address.</span>
+                    </span>
+                </button>
+                <dialog class="workflow-dialog" id="individual-request-dialog" data-mode-dialog="individual" aria-labelledby="individual-dialog-title">
+                    <div class="dialog-header">
+                        <h2 class="dialog-title" id="individual-dialog-title">Individual Address Report</h2>
+                        <button class="dialog-close" type="button" data-dialog-close aria-label="Close individual address request"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+                    </div>
+                <form class="workflow-form" id="individual-request-form" data-mode-form="individual" method="post" action="{{ url_for('create_individual_roof_intelligence_job') }}">
+                    <div class="workflow-details">
                         <div class="mb-3">
                             <label class="form-label" for="property_address">Full Property Address</label>
                             <textarea class="form-control" id="property_address" name="property_address" rows="4" required placeholder="65 N Yuma St, Denver, CO 80223"></textarea>
@@ -330,61 +521,168 @@
                         </div>
                         <button class="button" type="submit"><i class="bi bi-stars"></i>Start Individual Report</button>
                         {% if local_worker_enabled %}
-                            <p class="dev-note">Local PilotPoint processing is enabled for development.</p>
+                            <p class="dev-note">Local PilotPoint processing is ready for addresses in Adams, Arapahoe, Denver, and Jefferson counties. PCS determines the county from the address and ZIP code.</p>
                         {% else %}
                             <p class="dev-note">The request will remain queued until a PilotPoint IQ worker claims it.</p>
                         {% endif %}
-                    </form>
+                    </div>
+                </form>
+                </dialog>
+            </section>
 
-                    <form class="workflow-form" data-mode-form="zip" method="post" action="{{ url_for('create_zip_roof_intelligence_job') }}" hidden>
-                        <div class="form-row mb-3">
-                            <div>
-                                <label class="form-label" for="zip_code">ZIP Code</label>
-                                <input class="form-control" id="zip_code" name="zip_code" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" required placeholder="80223">
+            <section class="workflow-option" data-mode-container="area">
+                <button class="workflow-choice" type="button" data-mode-button="area" aria-controls="area-request-dialog" aria-haspopup="dialog" aria-expanded="false">
+                    <span class="choice-icon"><i class="bi bi-map"></i></span>
+                    <span>
+                        <span class="choice-title">Map Area Batch</span>
+                        <span class="choice-copy">Draw a rectangle around the area where properties should be identified.</span>
+                    </span>
+                </button>
+                <dialog class="workflow-dialog area-dialog" id="area-request-dialog" data-mode-dialog="area" aria-labelledby="area-dialog-title">
+                    <div class="dialog-header">
+                        <h2 class="dialog-title" id="area-dialog-title">Map Area Batch</h2>
+                        <button class="dialog-close" type="button" data-dialog-close aria-label="Close map area request"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+                    </div>
+                <form class="workflow-form" id="area-request-form" data-mode-form="area" method="post" action="{{ url_for('create_area_roof_intelligence_job') }}">
+                    <div class="workflow-details">
+                        <div class="mb-3">
+                            <span class="form-label d-block">Property Search Area</span>
+                            <fieldset class="area-methods" aria-label="Area selection method">
+                                <label class="area-method-option">
+                                    <input type="radio" name="selection_type" value="rectangle" checked>
+                                    <span><i class="bi bi-bounding-box"></i> Rectangle</span>
+                                </label>
+                                <label class="area-method-option">
+                                    <input type="radio" name="selection_type" value="radius">
+                                    <span><i class="bi bi-record-circle"></i> Address Radius</span>
+                                </label>
+                            </fieldset>
+                            <div class="radius-controls" id="radius-controls" hidden>
+                                <div class="radius-distance">
+                                    <div class="radius-slider-header">
+                                        <label class="form-label" for="radius_miles">Radius Distance</label>
+                                        <output class="radius-value" id="radius-miles-value" for="radius_miles">1.0 miles</output>
+                                    </div>
+                                    <input class="radius-slider" id="radius_miles" name="radius_miles" type="range" min="0.1" max="10" step="0.1" value="1">
+                                    <div class="radius-scale" aria-hidden="true"><span>0.1 mi</span><span>10 mi</span></div>
+                                </div>
                             </div>
-                            <div>
-                                <label class="form-label" for="report_limit">Report Limit</label>
-                                <input class="form-control" id="report_limit" name="report_limit" type="number" min="1" max="1000" required value="10">
+                            <div class="map-toolbar">
+                                <button class="map-tool" id="draw-area-button" type="button" aria-pressed="false"><i class="bi bi-bounding-box"></i> Draw Rectangle</button>
+                                <button class="map-tool" id="clear-area-button" type="button"><i class="bi bi-x-lg"></i> Clear</button>
+                                <div class="map-address-search">
+                                    <label class="visually-hidden" for="map-address">Center map on an address</label>
+                                    <input class="map-address-input" id="map-address" type="search" autocomplete="street-address" placeholder="Enter an address to center the map">
+                                    <button class="map-tool map-address-button" id="center-map-address-button" type="button" aria-label="Center map on address"><i class="bi bi-geo-alt"></i> Locate</button>
+                                </div>
+                                <span class="map-selection-status" id="map-selection-status" aria-live="polite">No area selected</span>
                             </div>
+                            <div id="area-map" role="application" aria-label="Map centered on downtown Denver for selecting a property search area"></div>
+                            <p class="map-instructions" id="map-instructions">Drag the Google map to move around, scroll or pinch to zoom, and double-click to zoom in. When ready, choose Draw Rectangle, press at the first corner, drag to the opposite corner, and release. The completed rectangle can be moved or resized.</p>
+                            {% if not google_maps_configured %}<p class="dev-note"><strong>Google Maps is not configured.</strong> <a href="{{ url_for('application_settings') }}">Open Local Settings</a> and save the restricted API key.</p>{% endif %}
+                            <input type="hidden" id="bounds_north" name="bounds_north">
+                            <input type="hidden" id="bounds_south" name="bounds_south">
+                            <input type="hidden" id="bounds_east" name="bounds_east">
+                            <input type="hidden" id="bounds_west" name="bounds_west">
+                            <input type="hidden" id="center_lat" name="center_lat">
+                            <input type="hidden" id="center_lng" name="center_lng">
+                            <input type="hidden" id="center_address" name="center_address">
                         </div>
                         <div class="form-row mb-3">
                             <div>
-                                <label class="form-label" for="minimum_roof_size">Minimum Roof Size (SF)</label>
-                                <input class="form-control" id="minimum_roof_size" name="minimum_roof_size" type="number" min="1" required value="10000">
-                            </div>
-                            <div>
-                                <label class="form-label" for="minimum_age">Minimum Building/Roof Age Estimate</label>
-                                <input class="form-control" id="minimum_age" name="minimum_age" type="number" min="0" placeholder="Optional">
+                                <label class="form-label" for="minimum_roof_squares">Minimum Roof Size (Squares)</label>
+                                <input class="form-control" id="minimum_roof_squares" name="minimum_roof_squares" type="text" inputmode="decimal" required value="100" aria-describedby="minimum-roof-squares-help">
+                                <p class="field-help" id="minimum-roof-squares-help">1 square = 100 square feet. Values are rounded up to the next whole square.</p>
                             </div>
                         </div>
                         <div class="mb-3">
                             <span class="form-label d-block">Roof Types</span>
-                            <div class="roof-types">
-                                <label class="check-option">
-                                    <input class="form-check-input m-0" type="checkbox" id="roof_type_all" name="roof_types" value="All" checked>
-                                    All roof types
-                                </label>
-                                {% for roof_type in supported_roof_types %}
+                            <div class="roof-type-picker" id="roof-type-picker">
+                                <button class="roof-type-toggle" id="roof-type-toggle" type="button" aria-expanded="false" aria-controls="roof-type-menu">
+                                    <span class="roof-type-toggle-label"><i class="bi bi-layers"></i><span id="roof-type-summary">All roof types</span></span>
+                                    <i class="bi bi-chevron-down roof-type-chevron" aria-hidden="true"></i>
+                                </button>
+                                <div class="roof-types" id="roof-type-menu" role="group" aria-label="Select roof types" hidden>
                                     <label class="check-option">
-                                        <input class="form-check-input m-0 roof-type-item" type="checkbox" name="roof_types" value="{{ roof_type }}" checked>
-                                        {{ roof_type }}
+                                        <input class="form-check-input m-0" type="checkbox" id="roof_type_all" name="roof_types" value="All" checked>
+                                        All roof types
                                     </label>
-                                {% endfor %}
+                                    {% for roof_type in supported_roof_types %}
+                                        <label class="check-option">
+                                            <input class="form-check-input m-0 roof-type-item" type="checkbox" name="roof_types" value="{{ roof_type }}" checked>
+                                            {{ roof_type }}
+                                        </label>
+                                    {% endfor %}
+                                </div>
                             </div>
-                            <p class="field-help">Unknown age records are excluded when a minimum age is entered. Roof type may require classification before exclusion.</p>
+                            <p class="field-help">Roof type may require classification before exclusion.</p>
                         </div>
-                        <button class="button" type="submit"><i class="bi bi-collection"></i>Start ZIP Batch</button>
-                        <p class="dev-note">ZIP batches require the PilotPoint IQ batch worker and will remain queued until one is connected.</p>
-                    </form>
-                </div>
+                        <button class="button" id="submit-area-batch" type="submit" disabled><i class="bi bi-collection"></i>Start Area Batch</button>
+                        <p class="dev-note">The selected geographic bounds are saved with the batch request. Area processing will use these bounds to identify candidate addresses.</p>
+                    </div>
+                </form>
+                </dialog>
             </section>
 
-            <section class="panel" id="job-workspace"
+            <section class="workflow-option" data-mode-container="canonical">
+                <button class="workflow-choice{% if canonical_reviews %} review-required{% endif %}" type="button"
+                        data-mode-button="canonical" aria-controls="canonical-review-dialog"
+                        aria-haspopup="dialog" aria-expanded="false"{% if not canonical_reviews %} disabled{% endif %}>
+                    <span class="choice-icon"><i class="bi bi-check2-square"></i></span>
+                    <span>
+                        <span class="choice-title">Canonical Footprint Review</span>
+                        {% if canonical_reviews %}
+                            <span class="choice-copy review-status-required">{{ canonical_reviews|length }} footprint {{ 'discrepancy requires' if canonical_reviews|length == 1 else 'discrepancies require' }} review.</span>
+                        {% else %}
+                            <span class="choice-copy">No footprint discrepancies to review.</span>
+                        {% endif %}
+                    </span>
+                </button>
+                {% if canonical_reviews %}
+                    <dialog class="workflow-dialog review-dialog" id="canonical-review-dialog" data-mode-dialog="canonical" aria-labelledby="canonical-review-dialog-title">
+                        <div class="dialog-header">
+                            <h2 class="dialog-title" id="canonical-review-dialog-title">Canonical Footprint Review</h2>
+                            <button class="dialog-close" type="button" data-dialog-close aria-label="Close canonical footprint review"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+                        </div>
+                        <div class="workflow-details">
+                            <p class="panel-copy mb-2">Review the address and footprint measurement from each source, then approve the authoritative source.</p>
+                            {% for review in canonical_reviews %}
+                                <form class="list-row canonical-review-row" method="post" action="{{ url_for('resolve_canonical_footprint_review', canonical_id=review.canonical_id) }}">
+                                    <div class="list-main">
+                                        <span class="list-title">{{ review.requested_address or 'Address unavailable' }}</span>
+                                        <span class="list-meta">{{ review.county }}{% if review.parcel_id %} · Parcel {{ review.parcel_id }}{% endif %} · {{ review.difference_pct or 'Unknown' }}% difference · Canonical ID {{ review.canonical_id }}</span>
+                                        <div class="canonical-source-grid">
+                                            {% for source in review.sources or [] %}
+                                                <div class="canonical-source-card">
+                                                    <span class="canonical-source-name">{{ 'Microsoft footprint' if source.source_type == 'microsoft' else 'County GIS footprint' }}</span>
+                                                    <span class="canonical-source-detail">{{ '{:,.0f}'.format(source.footprint_sqft|float) }} sq ft</span>
+                                                    <span class="canonical-source-detail">Information date: {{ source.source_updated_at[:10] if source.source_updated_at else 'Not available' }}</span>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                        <select class="field-control mt-2" name="selected_source" required>
+                                            <option value="">Select authoritative source</option>
+                                            <option value="supabase">Microsoft footprint</option>
+                                            <option value="county">County GIS footprint</option>
+                                        </select>
+                                        <textarea class="field-control mt-2" name="reason" minlength="10" required placeholder="Document why this source is authoritative."></textarea>
+                                        <button class="button mt-2" type="submit">Approve Canonical Footprint</button>
+                                    </div>
+                                </form>
+                            {% endfor %}
+                        </div>
+                    </dialog>
+                {% endif %}
+            </section>
+        </section>
+
+        <section class="panel" id="job-workspace"
                 {% if active_job %}
                     data-job-id="{{ active_job.id }}"
                     data-job-status="{{ active_job.status }}"
                     data-job-stage="{{ active_job.stage }}"
                     data-started-at="{{ active_job.started_at or active_job.queued_at }}"
+                    data-finished-at="{{ active_job.finished_at or '' }}"
                 {% endif %}>
                 <div class="panel-header">
                     <h2 class="panel-title">Job Workspace</h2>
@@ -400,7 +698,7 @@
                             {% if active_job.job_type == 'individual_address' %}
                                 {{ active_job.input.property_address }}
                             {% else %}
-                                ZIP {{ active_job.zip_code }} report batch
+                                {% if active_job.input.bounds %}Selected map area report batch{% else %}ZIP {{ active_job.zip_code }} report batch{% endif %}
                             {% endif %}
                         </div>
                         <div class="job-meta">Job {{ active_job.id }}</div>
@@ -413,18 +711,41 @@
                             {% if active_job.status == 'queued' %}
                                 <p class="field-help mt-2">The job is saved and waiting for an available PilotPoint IQ worker.</p>
                             {% endif %}
+                            <form class="job-actions" method="post" action="{{ url_for('cancel_roof_intelligence_job', job_id=active_job.id) }}">
+                                <button class="button secondary" type="submit"><i class="bi bi-x-circle"></i>Cancel Job</button>
+                            </form>
                         {% endif %}
 
                         {% if active_job.job_type == 'zip_batch' %}
                             <div class="progress-grid">
                                 <div class="metric"><span class="metric-label">Candidates</span><span class="metric-value" id="candidate-count">{{ active_job.candidate_count }}</span></div>
-                                <div class="metric"><span class="metric-label">Completed</span><span class="metric-value" id="completed-count">{{ active_job.completed_count }} / {{ active_job.report_limit }}</span></div>
+                                <div class="metric"><span class="metric-label">Completed</span><span class="metric-value" id="completed-count">{{ active_job.completed_count }}</span></div>
                                 <div class="metric"><span class="metric-label">Failed</span><span class="metric-value" id="failed-count">{{ active_job.failed_count }}</span></div>
                                 <div class="metric"><span class="metric-label">Skipped</span><span class="metric-value" id="skipped-count">{{ active_job.skipped_count }}</span></div>
                             </div>
+                            <div class="batch-reports" id="batch-reports">
+                                <div class="batch-reports-header">
+                                    <h3 class="batch-reports-title">Completed Reports</h3>
+                                    <span class="batch-report-count" id="batch-report-count">{{ active_job.reports|length }} available</span>
+                                </div>
+                                <ul class="list mt-2" id="batch-report-list">
+                                    {% for report in active_job.reports %}
+                                        <li class="list-row" data-report-id="{{ report.id }}">
+                                            <div class="list-main">
+                                                <a class="list-title" href="{{ report.view_url }}" target="_blank" rel="noopener">{{ report.address or report.result.address or 'Roof Intelligence Report' }}</a>
+                                                <span class="list-meta">{{ report.county or report.result.county or 'County unavailable' }} · {{ report.roof_area_sqft or report.result.building_footprint_sqft or 'Roof area unavailable' }}{% if report.roof_area_sqft or report.result.building_footprint_sqft %} SF{% endif %}</span>
+                                            </div>
+                                            <span class="mini-status">PDF</span>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                                <p class="field-help mt-2 mb-0" id="batch-report-empty"{% if active_job.reports %} hidden{% endif %}>
+                                    {% if active_job.status in ('completed', 'completed_with_errors') %}No properties within the selected area met all report filters.{% else %}Completed reports will appear here as each property finishes.{% endif %}
+                                </p>
+                            </div>
                         {% endif %}
 
-                        {% if active_job.status == 'completed' and active_job.report %}
+                        {% if active_job.status == 'completed' and active_job.job_type == 'individual_address' and active_job.report %}
                             {% set report = active_job.report %}
                             {% set result = report.result %}
                             <div class="stage"><i class="bi bi-check-circle-fill"></i><span>Report ready</span></div>
@@ -447,11 +768,48 @@
                                 <p class="field-help mb-0">Failure code: {{ active_job.error_code or 'processing_error' }}{% if active_job.retryable %} · This job may be retried.{% endif %}</p>
                             </div>
                             <div class="job-actions">
-                                <a class="button secondary" href="{{ url_for('roof_intelligence', mode='individual' if active_job.job_type == 'individual_address' else 'zip') }}">Edit Request</a>
+                                <a class="button secondary" href="{{ url_for('roof_intelligence', mode='individual' if active_job.job_type == 'individual_address' else 'area') }}">Edit Request</a>
                             </div>
+                            {% if active_job.error_code == 'footprint_discrepancy' %}
+                                {% set validation = active_job.error_details.get('footprint_validation', {}) %}
+                                <form class="panel mt-3" method="post" action="{{ url_for('resolve_roof_footprint_discrepancy', job_id=active_job.id) }}">
+                                    <h3 class="panel-title">Resolve footprint discrepancy</h3>
+                                    <p class="panel-copy">Review the source areas, select the trusted outline, and document why it should be used. This decision is retained in the audit history.</p>
+                                    <div class="result-grid">
+                                        <div class="metric"><span class="metric-label">{{ validation.get('primary_label', 'Supabase') }}</span><span class="metric-value">{{ validation.get('primary_sqft', 'Unavailable') }} SF</span></div>
+                                        <div class="metric"><span class="metric-label">{{ validation.get('secondary_label', 'County GIS') }}</span><span class="metric-value">{{ validation.get('secondary_sqft', 'Unavailable') }} SF</span></div>
+                                        <div class="metric"><span class="metric-label">Difference</span><span class="metric-value">{{ validation.get('difference_pct', 'Unavailable') }}%</span></div>
+                                    </div>
+                                    <label class="field-label" for="selected-footprint-source">Trusted footprint source</label>
+                                    <select class="field-control" id="selected-footprint-source" name="selected_source" required>
+                                        <option value="">Select a source</option>
+                                        <option value="supabase">Supabase Microsoft footprint</option>
+                                        <option value="county">County GIS footprint</option>
+                                    </select>
+                                    <label class="field-label mt-2" for="footprint-resolution-reason">Resolution reason</label>
+                                    <textarea class="field-control" id="footprint-resolution-reason" name="reason" minlength="10" required placeholder="Explain why this source is trusted."></textarea>
+                                    <button class="button mt-2" type="submit">Approve and Retry Report</button>
+                                </form>
+                            {% endif %}
                         {% elif active_job.status in ('completed', 'completed_with_errors') and active_job.job_type == 'zip_batch' %}
                             <div class="stage"><i class="bi bi-check-circle-fill"></i><span>Batch processing finished</span></div>
-                            <p class="field-help">Completed reports and item-level exclusions will appear here when the PilotPoint batch worker is connected.</p>
+                            {% for item in active_job.failed_items if item.reason_code == 'footprint_discrepancy' %}
+                                {% set validation = item.error_details.get('footprint_validation', {}) %}
+                                <form class="panel mt-3" method="post" action="{{ url_for('resolve_roof_footprint_discrepancy', job_id=active_job.id) }}">
+                                    <input type="hidden" name="item_id" value="{{ item.id }}">
+                                    <h3 class="panel-title">Resolve {{ item.input.get('address', 'property') }}</h3>
+                                    <p class="panel-copy">{{ validation.get('primary_label', 'Supabase') }} {{ validation.get('primary_sqft', 'Unavailable') }} SF · {{ validation.get('secondary_label', 'County GIS') }} {{ validation.get('secondary_sqft', 'Unavailable') }} SF · Difference {{ validation.get('difference_pct', 'Unavailable') }}%</p>
+                                    <select class="field-control" name="selected_source" required>
+                                        <option value="">Select the trusted source</option>
+                                        <option value="supabase">Supabase Microsoft footprint</option>
+                                        <option value="county">County GIS footprint</option>
+                                    </select>
+                                    <textarea class="field-control mt-2" name="reason" minlength="10" required placeholder="Explain why this source is trusted."></textarea>
+                                    <button class="button mt-2" type="submit">Approve and Retry Property</button>
+                                </form>
+                            {% endfor %}
+                        {% elif active_job.status == 'cancelled' %}
+                            <div class="stage"><i class="bi bi-x-circle"></i><span>Job cancelled</span></div>
                         {% endif %}
                     {% else %}
                         <div class="empty-state">
@@ -463,7 +821,6 @@
                         </div>
                     {% endif %}
                 </div>
-            </section>
         </section>
 
         <section class="lower-grid">
@@ -478,8 +835,8 @@
                             {% for job in recent_jobs %}
                                 <li class="list-row">
                                     <div class="list-main">
-                                        <a class="list-title" href="{{ url_for('roof_intelligence', job_id=job.id, mode='individual' if job.job_type == 'individual_address' else 'zip') }}">
-                                            {% if job.job_type == 'individual_address' %}{{ job.input.property_address }}{% else %}ZIP {{ job.zip_code }} · up to {{ job.report_limit }} reports{% endif %}
+                                        <a class="list-title" href="{{ url_for('roof_intelligence', job_id=job.id, mode='individual' if job.job_type == 'individual_address' else 'area') }}">
+                                            {% if job.job_type == 'individual_address' %}{{ job.input.property_address }}{% elif job.input.bounds %}Selected map area{% else %}ZIP {{ job.zip_code }} · up to {{ job.report_limit }} reports{% endif %}
                                         </a>
                                         <span class="list-meta">{{ job.created_at.replace('T', ' ')[:19] }} · {{ job.stage.replace('_', ' ') }}</span>
                                     </div>
@@ -496,7 +853,7 @@
             <section class="panel">
                 <div class="panel-header">
                     <h2 class="panel-title">Notifications</h2>
-                    <p class="panel-copy">Completion and failure notices appear here.</p>
+                    <p class="panel-copy">Selected-job notices and county data-health alerts appear here.</p>
                 </div>
                 <div class="panel-body py-1">
                     {% if notifications %}
@@ -517,10 +874,39 @@
                             {% endfor %}
                         </ul>
                     {% else %}
-                        <p class="text-muted my-3">No Roof Intelligence notifications.</p>
+                        {% if active_job %}
+                            <p class="text-muted my-3">No notifications for this Roof Intelligence job.</p>
+                        {% else %}
+                            <p class="text-muted my-3">Select a recent Roof Intelligence job to view its notifications.</p>
+                        {% endif %}
                     {% endif %}
                 </div>
             </section>
+
+            <section class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">County Data Health History</h2>
+                    <p class="panel-copy">Recent scheduled parcel, footprint, assessor, and imagery checks.</p>
+                </div>
+                <div class="panel-body py-1">
+                    {% if county_health %}
+                        <ul class="list">
+                            {% for check in county_health %}
+                                <li class="list-row">
+                                    <div class="list-main">
+                                        <span class="list-title">{{ check.result.get('county', check.county_key) }}</span>
+                                        <span class="list-meta">{{ check.checked_at.replace('T', ' ')[:19] }}{% if check.result.get('error') %} · {{ check.result.get('error') }}{% endif %}</span>
+                                    </div>
+                                    <span class="mini-status">{{ check.status }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted my-3">No scheduled county health checks have run yet.</p>
+                    {% endif %}
+                </div>
+            </section>
+
         </section>
     </main>
 
@@ -528,34 +914,476 @@
         (() => {
             const params = new URLSearchParams(window.location.search);
             const workspace = document.getElementById('job-workspace');
-            const inferredMode = workspace?.dataset.jobId
-                ? ({{ "'zip'" if active_job and active_job.job_type == 'zip_batch' else "'individual'" }})
-                : 'individual';
-            let mode = params.get('mode') === 'zip' ? 'zip' : inferredMode;
+            const inferredMode = {{ ('area' if active_job and active_job.job_type == 'zip_batch' else 'individual' if active_job else none) | tojson }};
+            const requestedMode = params.get('mode');
+            let mode = requestedMode === 'area' || requestedMode === 'individual' ? requestedMode : inferredMode;
+            let areaMap = null;
+            let ensureAreaMap = () => {};
 
-            const setMode = (nextMode) => {
+            const openModeDialog = (nextMode) => {
                 mode = nextMode;
+                document.querySelectorAll('[data-mode-dialog][open]').forEach((openDialog) => openDialog.close());
                 document.querySelectorAll('[data-mode-button]').forEach((button) => {
-                    button.classList.toggle('active', button.dataset.modeButton === mode);
+                    const isActive = button.dataset.modeButton === mode;
+                    button.classList.toggle('active', isActive);
+                    button.setAttribute('aria-expanded', String(isActive));
                 });
-                document.querySelectorAll('[data-mode-form]').forEach((form) => {
-                    form.hidden = form.dataset.modeForm !== mode;
+                document.querySelectorAll('[data-mode-container]').forEach((container) => {
+                    container.classList.toggle('active', container.dataset.modeContainer === mode);
                 });
+                const dialog = document.querySelector(`[data-mode-dialog="${mode}"]`);
+                if (dialog && !dialog.open) dialog.showModal();
+                if (mode === 'area') {
+                    ensureAreaMap();
+                    if (areaMap && window.google?.maps) window.setTimeout(() => google.maps.event.trigger(areaMap, 'resize'), 0);
+                }
             };
 
             document.querySelectorAll('[data-mode-button]').forEach((button) => {
-                button.addEventListener('click', () => setMode(button.dataset.modeButton));
+                button.addEventListener('click', () => openModeDialog(button.dataset.modeButton));
             });
-            setMode(mode);
+            document.querySelectorAll('[data-dialog-close]').forEach((button) => {
+                button.addEventListener('click', () => button.closest('dialog')?.close());
+            });
+            document.querySelectorAll('[data-mode-dialog]').forEach((dialog) => {
+                dialog.addEventListener('click', (event) => {
+                    if (event.target === dialog) dialog.close();
+                });
+                dialog.addEventListener('close', () => {
+                    const closedMode = dialog.dataset.modeDialog;
+                    const closedButton = document.querySelector(`[data-mode-button="${closedMode}"]`);
+                    closedButton?.setAttribute('aria-expanded', 'false');
+                    closedButton?.classList.remove('active');
+                    document.querySelector(`[data-mode-container="${closedMode}"]`)?.classList.remove('active');
+                });
+            });
+            document.querySelectorAll('[data-mode-form]').forEach((form) => {
+                form.addEventListener('submit', () => form.closest('dialog')?.close());
+            });
 
+            const mapElement = document.getElementById('area-map');
+            const drawButton = document.getElementById('draw-area-button');
+            const clearButton = document.getElementById('clear-area-button');
+            const mapAddressInput = document.getElementById('map-address');
+            const centerAddressButton = document.getElementById('center-map-address-button');
+            const selectionStatus = document.getElementById('map-selection-status');
+            const mapInstructions = document.getElementById('map-instructions');
+            const areaSubmit = document.getElementById('submit-area-batch');
+            const areaForm = document.getElementById('area-request-form');
+            const minimumRoofSquares = document.getElementById('minimum_roof_squares');
+            const selectionTypeInputs = Array.from(document.querySelectorAll('input[name="selection_type"]'));
+            const radiusControls = document.getElementById('radius-controls');
+            const radiusMilesInput = document.getElementById('radius_miles');
+            const radiusMilesValue = document.getElementById('radius-miles-value');
+            const centerInputs = {
+                lat: document.getElementById('center_lat'),
+                lng: document.getElementById('center_lng'),
+                address: document.getElementById('center_address'),
+            };
+            const boundInputs = {
+                north: document.getElementById('bounds_north'),
+                south: document.getElementById('bounds_south'),
+                east: document.getElementById('bounds_east'),
+                west: document.getElementById('bounds_west'),
+            };
+            let googleMapsLoadPromise = null;
+
+            const currentSelectionType = () => document.querySelector('input[name="selection_type"]:checked')?.value || 'rectangle';
+            const updateAreaMethodControls = () => {
+                const radiusMode = currentSelectionType() === 'radius';
+                if (radiusControls) radiusControls.hidden = !radiusMode;
+                if (radiusMilesInput) radiusMilesInput.required = radiusMode;
+                if (mapAddressInput) mapAddressInput.required = radiusMode;
+                if (drawButton) drawButton.hidden = radiusMode;
+                if (mapInstructions) {
+                    mapInstructions.textContent = radiusMode
+                        ? 'Adjust the radius slider from 0.1 to 10 miles, then locate an address. The map will display the exact circular search area.'
+                        : 'Drag the Google map to move around, scroll or pinch to zoom, and double-click to zoom in. When ready, choose Draw Rectangle, press at the first corner, drag to the opposite corner, and release. The completed rectangle can be moved or resized.';
+                }
+            };
+            selectionTypeInputs.forEach((input) => input.addEventListener('change', updateAreaMethodControls));
+            updateAreaMethodControls();
+
+            const updateRadiusSliderValue = () => {
+                const radiusMiles = Number(radiusMilesInput?.value || 1);
+                const label = `${radiusMiles.toFixed(1)} miles`;
+                if (radiusMilesValue) radiusMilesValue.textContent = label;
+                radiusMilesInput?.setAttribute('aria-valuetext', label);
+            };
+            updateRadiusSliderValue();
+
+            const formatRoofSquares = () => {
+                if (!minimumRoofSquares) return;
+                const number = Number(minimumRoofSquares.value.replaceAll(',', '').trim());
+                if (!Number.isFinite(number) || number <= 0) return;
+                minimumRoofSquares.value = Math.ceil(number).toLocaleString('en-US');
+            };
+            minimumRoofSquares?.addEventListener('blur', formatRoofSquares);
+            areaForm?.addEventListener('submit', formatRoofSquares);
+            formatRoofSquares();
+
+            const loadGoogleMaps = () => {
+                if (window.google?.maps) return Promise.resolve(window.google.maps);
+                if (googleMapsLoadPromise) return googleMapsLoadPromise;
+                googleMapsLoadPromise = fetch("{{ url_for('google_maps_browser_configuration') }}", {
+                    headers: {'Accept': 'application/json'},
+                    cache: 'no-store',
+                }).then(async (response) => {
+                    if (!response.ok) throw new Error('Google Maps API key is not configured.');
+                    const configuration = await response.json();
+                    return new Promise((resolve, reject) => {
+                        const callbackName = `pcsGoogleMapsReady${Date.now()}`;
+                        window[callbackName] = () => {
+                            delete window[callbackName];
+                            resolve(window.google.maps);
+                        };
+                        const script = document.createElement('script');
+                        script.async = true;
+                        script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(configuration.api_key)}&loading=async&v=weekly&callback=${callbackName}`;
+                        script.onerror = () => {
+                            delete window[callbackName];
+                            reject(new Error('Google Maps could not be loaded.'));
+                        };
+                        document.head.appendChild(script);
+                    });
+                });
+                return googleMapsLoadPromise;
+            };
+
+            const initializeGoogleAreaMap = async () => {
+                const {Geocoder} = await google.maps.importLibrary('geocoding');
+                areaMap = new google.maps.Map(mapElement, {
+                    center: {lat: 39.7392, lng: -104.9903},
+                    zoom: 13,
+                    gestureHandling: 'greedy',
+                    scrollwheel: true,
+                    keyboardShortcuts: true,
+                    zoomControl: true,
+                    mapTypeId: google.maps.MapTypeId.HYBRID,
+                    mapTypeControl: true,
+                    mapTypeControlOptions: {
+                        mapTypeIds: [google.maps.MapTypeId.ROADMAP, google.maps.MapTypeId.HYBRID],
+                    },
+                    streetViewControl: false,
+                    fullscreenControl: true,
+                });
+                const geocoder = new Geocoder();
+                let drawingEnabled = false;
+                let startPoint = null;
+                let areaRectangle = null;
+                let areaCircle = null;
+                let radiusCenter = null;
+                let locatedAddress = '';
+                let rectangleComplete = false;
+                let activePointerId = null;
+
+                const projectionOverlay = new google.maps.OverlayView();
+                projectionOverlay.onAdd = () => {};
+                projectionOverlay.draw = () => {};
+                projectionOverlay.onRemove = () => {};
+                projectionOverlay.setMap(areaMap);
+
+                const pointerLatLng = (event) => {
+                    const projection = projectionOverlay.getProjection();
+                    if (!projection) return null;
+                    const mapBounds = mapElement.getBoundingClientRect();
+                    return projection.fromContainerPixelToLatLng(new google.maps.Point(
+                        event.clientX - mapBounds.left,
+                        event.clientY - mapBounds.top,
+                    ));
+                };
+
+                const rectangleBounds = (first, second) => ({
+                    north: Math.max(first.lat(), second.lat()),
+                    south: Math.min(first.lat(), second.lat()),
+                    east: Math.max(first.lng(), second.lng()),
+                    west: Math.min(first.lng(), second.lng()),
+                });
+
+                const distanceMiles = (first, second) => {
+                    const radians = (degrees) => degrees * Math.PI / 180;
+                    const latitudeDelta = radians(second.lat() - first.lat());
+                    const longitudeDelta = radians(second.lng() - first.lng());
+                    const firstLatitude = radians(first.lat());
+                    const secondLatitude = radians(second.lat());
+                    const value = Math.sin(latitudeDelta / 2) ** 2
+                        + Math.cos(firstLatitude) * Math.cos(secondLatitude) * Math.sin(longitudeDelta / 2) ** 2;
+                    return 3958.7613 * 2 * Math.atan2(Math.sqrt(value), Math.sqrt(1 - value));
+                };
+
+                const setDrawingEnabled = (enabled) => {
+                    drawingEnabled = enabled;
+                    startPoint = null;
+                    drawButton?.classList.toggle('active', enabled);
+                    drawButton?.setAttribute('aria-pressed', String(enabled));
+                    mapElement.classList.toggle('drawing-mode', enabled);
+                    areaMap.setOptions({
+                        gestureHandling: enabled ? 'none' : 'greedy',
+                        scrollwheel: !enabled,
+                        keyboardShortcuts: !enabled,
+                        disableDoubleClickZoom: enabled,
+                        draggableCursor: enabled ? 'crosshair' : null,
+                    });
+                    if (enabled && selectionStatus) selectionStatus.textContent = 'Press and drag across the search area';
+                };
+                const clearSelection = () => {
+                    if (areaRectangle) areaRectangle.setMap(null);
+                    if (areaCircle) areaCircle.setMap(null);
+                    areaRectangle = null;
+                    areaCircle = null;
+                    radiusCenter = null;
+                    locatedAddress = '';
+                    rectangleComplete = false;
+                    startPoint = null;
+                    Object.values(boundInputs).forEach((input) => { if (input) input.value = ''; });
+                    Object.values(centerInputs).forEach((input) => { if (input) input.value = ''; });
+                    if (selectionStatus) selectionStatus.textContent = 'No area selected';
+                    if (areaSubmit) areaSubmit.disabled = true;
+                };
+                const saveBounds = (bounds) => {
+                    const northEast = bounds.getNorthEast();
+                    const southWest = bounds.getSouthWest();
+                    const northWest = new google.maps.LatLng(northEast.lat(), southWest.lng());
+                    boundInputs.north.value = northEast.lat().toFixed(7);
+                    boundInputs.south.value = southWest.lat().toFixed(7);
+                    boundInputs.east.value = northEast.lng().toFixed(7);
+                    boundInputs.west.value = southWest.lng().toFixed(7);
+                    const width = distanceMiles(northWest, northEast);
+                    const height = distanceMiles(northWest, southWest);
+                    if (selectionStatus) selectionStatus.textContent = `Area selected · ${width.toFixed(2)} × ${height.toFixed(2)} miles`;
+                    if (areaSubmit) areaSubmit.disabled = false;
+                };
+
+                const saveRadius = ({fitMap = false} = {}) => {
+                    const radiusMiles = Number(radiusMilesInput?.value);
+                    if (!radiusCenter || !Number.isFinite(radiusMiles) || radiusMiles <= 0) {
+                        if (areaCircle) areaCircle.setMap(null);
+                        areaCircle = null;
+                        Object.values(boundInputs).forEach((input) => { if (input) input.value = ''; });
+                        if (selectionStatus) {
+                            selectionStatus.textContent = radiusCenter
+                                ? 'Enter a positive radius distance in miles'
+                                : 'Enter a radius, then locate an address';
+                        }
+                        if (areaSubmit) areaSubmit.disabled = true;
+                        return;
+                    }
+                    if (!areaCircle) {
+                        areaCircle = new google.maps.Circle({
+                            map: areaMap,
+                            strokeColor: '#174c7d',
+                            strokeWeight: 2,
+                            fillColor: '#2e78ad',
+                            fillOpacity: 0.18,
+                            clickable: false,
+                        });
+                    }
+                    areaCircle.setCenter(radiusCenter);
+                    areaCircle.setRadius(radiusMiles * 1609.344);
+                    const bounds = areaCircle.getBounds();
+                    const northEast = bounds.getNorthEast();
+                    const southWest = bounds.getSouthWest();
+                    boundInputs.north.value = northEast.lat().toFixed(7);
+                    boundInputs.south.value = southWest.lat().toFixed(7);
+                    boundInputs.east.value = northEast.lng().toFixed(7);
+                    boundInputs.west.value = southWest.lng().toFixed(7);
+                    centerInputs.lat.value = radiusCenter.lat().toFixed(7);
+                    centerInputs.lng.value = radiusCenter.lng().toFixed(7);
+                    centerInputs.address.value = locatedAddress;
+                    const formattedRadius = radiusMiles.toFixed(1);
+                    if (selectionStatus) selectionStatus.textContent = `Radius selected · ${formattedRadius} miles from ${locatedAddress}`;
+                    if (areaSubmit) areaSubmit.disabled = false;
+                    if (fitMap) areaMap.fitBounds(bounds, 36);
+                };
+
+                const centerMapOnAddress = () => {
+                    const address = mapAddressInput?.value.trim();
+                    if (!address) {
+                        if (selectionStatus) selectionStatus.textContent = 'Enter an address to locate';
+                        mapAddressInput?.focus();
+                        return;
+                    }
+                    if (centerAddressButton) centerAddressButton.disabled = true;
+                    if (selectionStatus) selectionStatus.textContent = 'Finding address…';
+                    geocoder.geocode({address, region: 'US'}, (results, status) => {
+                        if (centerAddressButton) centerAddressButton.disabled = false;
+                        const match = results?.[0];
+                        if (status !== 'OK' || !match) {
+                            if (selectionStatus) {
+                                selectionStatus.textContent = status === 'REQUEST_DENIED'
+                                    ? 'Address lookup unavailable. Enable the Geocoding API for this Google Maps key.'
+                                    : 'Address not found. Include city, state, and ZIP code.';
+                            }
+                            return;
+                        }
+                        clearSelection();
+                        setDrawingEnabled(false);
+                        areaMap.setCenter(match.geometry.location);
+                        if (currentSelectionType() === 'radius') {
+                            radiusCenter = match.geometry.location;
+                            locatedAddress = match.formatted_address;
+                            saveRadius({fitMap: true});
+                        } else {
+                            areaMap.setZoom(18);
+                            if (selectionStatus) selectionStatus.textContent = `Map centered on ${match.formatted_address} · no area selected`;
+                        }
+                    });
+                };
+
+                selectionTypeInputs.forEach((input) => input.addEventListener('change', () => {
+                    clearSelection();
+                    setDrawingEnabled(false);
+                    if (selectionStatus) {
+                        selectionStatus.textContent = currentSelectionType() === 'radius'
+                            ? 'Enter a radius, then locate an address'
+                            : 'No area selected';
+                    }
+                }));
+                radiusMilesInput?.addEventListener('input', () => {
+                    updateRadiusSliderValue();
+                    if (currentSelectionType() === 'radius' && radiusCenter) saveRadius();
+                });
+                drawButton?.addEventListener('click', () => {
+                    if (currentSelectionType() === 'rectangle') setDrawingEnabled(!drawingEnabled);
+                });
+                clearButton?.addEventListener('click', () => { clearSelection(); setDrawingEnabled(false); });
+                centerAddressButton?.addEventListener('click', centerMapOnAddress);
+                mapAddressInput?.addEventListener('input', () => {
+                    if (currentSelectionType() === 'radius' && radiusCenter) clearSelection();
+                });
+                mapAddressInput?.addEventListener('keydown', (event) => {
+                    if (event.key !== 'Enter') return;
+                    event.preventDefault();
+                    centerMapOnAddress();
+                });
+                mapElement.addEventListener('pointerdown', (event) => {
+                    if (currentSelectionType() !== 'rectangle' || !drawingEnabled || (event.pointerType === 'mouse' && event.button !== 0)) return;
+                    const point = pointerLatLng(event);
+                    if (!point) {
+                        if (selectionStatus) selectionStatus.textContent = 'The map is still loading. Try drawing again.';
+                        return;
+                    }
+                    event.preventDefault();
+                    event.stopPropagation();
+                    activePointerId = event.pointerId;
+                    try { mapElement.setPointerCapture(event.pointerId); } catch (_) {}
+                    clearSelection();
+                    startPoint = point;
+                    areaRectangle = new google.maps.Rectangle({
+                        map: areaMap,
+                        bounds: rectangleBounds(startPoint, startPoint),
+                        strokeColor: '#174c7d',
+                        strokeWeight: 2,
+                        fillColor: '#2e78ad',
+                        fillOpacity: 0.18,
+                        clickable: false,
+                    });
+                    areaRectangle.addListener('bounds_changed', () => {
+                        if (rectangleComplete) saveBounds(areaRectangle.getBounds());
+                    });
+                    if (selectionStatus) selectionStatus.textContent = 'Drag to the opposite corner and release';
+                }, true);
+                mapElement.addEventListener('pointermove', (event) => {
+                    if (!drawingEnabled || activePointerId !== event.pointerId || !startPoint || !areaRectangle) return;
+                    const point = pointerLatLng(event);
+                    if (!point) return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    areaRectangle.setBounds(rectangleBounds(startPoint, point));
+                }, true);
+                const finishRectangle = (event) => {
+                    if (!drawingEnabled || activePointerId !== event.pointerId || !startPoint || !areaRectangle) return;
+                    const point = pointerLatLng(event);
+                    event.preventDefault();
+                    event.stopPropagation();
+                    try { mapElement.releasePointerCapture(event.pointerId); } catch (_) {}
+                    activePointerId = null;
+                    if (!point) {
+                        clearSelection();
+                        return;
+                    }
+                    const completedBounds = rectangleBounds(startPoint, point);
+                    if (completedBounds.north === completedBounds.south || completedBounds.east === completedBounds.west) {
+                        clearSelection();
+                        if (selectionStatus) selectionStatus.textContent = 'Drag across the map to create an area';
+                        return;
+                    }
+                    areaRectangle.setBounds(completedBounds);
+                    rectangleComplete = true;
+                    areaRectangle.setOptions({editable: true, draggable: true, clickable: true});
+                    saveBounds(areaRectangle.getBounds());
+                    setDrawingEnabled(false);
+                };
+                mapElement.addEventListener('pointerup', finishRectangle, true);
+                mapElement.addEventListener('pointercancel', (event) => {
+                    if (activePointerId !== event.pointerId) return;
+                    activePointerId = null;
+                    clearSelection();
+                    if (selectionStatus) selectionStatus.textContent = 'Drawing cancelled. Try again.';
+                }, true);
+                setDrawingEnabled(false);
+                if (selectionStatus) selectionStatus.textContent = 'No area selected';
+            };
+
+            ensureAreaMap = () => {
+                if (!mapElement || areaMap) return;
+                if (selectionStatus) selectionStatus.textContent = 'Loading Google Maps…';
+                loadGoogleMaps().then(initializeGoogleAreaMap).catch((error) => {
+                    mapElement.innerHTML = `${error.message} <a href="{{ url_for('application_settings') }}">Open Local Settings</a>.`;
+                    if (selectionStatus) selectionStatus.textContent = 'Map unavailable';
+                    googleMapsLoadPromise = null;
+                });
+            };
+
+            if (requestedMode && !workspace?.dataset.jobId) openModeDialog(mode);
+
+            const roofTypePicker = document.getElementById('roof-type-picker');
+            const roofTypeToggle = document.getElementById('roof-type-toggle');
+            const roofTypeMenu = document.getElementById('roof-type-menu');
+            const roofTypeSummary = document.getElementById('roof-type-summary');
             const allBox = document.getElementById('roof_type_all');
             const typeBoxes = Array.from(document.querySelectorAll('.roof-type-item'));
+
+            const closeRoofTypeMenu = () => {
+                if (roofTypeMenu) roofTypeMenu.hidden = true;
+                roofTypeToggle?.setAttribute('aria-expanded', 'false');
+            };
+            const updateRoofTypeSummary = () => {
+                if (!roofTypeSummary) return;
+                const selected = typeBoxes.filter((box) => box.checked);
+                if (allBox?.checked || selected.length === typeBoxes.length) {
+                    roofTypeSummary.textContent = 'All roof types';
+                } else if (selected.length === 0) {
+                    roofTypeSummary.textContent = 'Select roof types';
+                } else if (selected.length === 1) {
+                    roofTypeSummary.textContent = selected[0].value;
+                } else {
+                    roofTypeSummary.textContent = `${selected.length} roof types selected`;
+                }
+            };
+
+            roofTypeToggle?.addEventListener('click', () => {
+                const willOpen = roofTypeMenu?.hidden ?? false;
+                if (roofTypeMenu) roofTypeMenu.hidden = !willOpen;
+                roofTypeToggle.setAttribute('aria-expanded', String(willOpen));
+            });
             allBox?.addEventListener('change', () => {
                 typeBoxes.forEach((box) => { box.checked = allBox.checked; });
+                updateRoofTypeSummary();
             });
             typeBoxes.forEach((box) => box.addEventListener('change', () => {
                 allBox.checked = typeBoxes.every((item) => item.checked);
+                updateRoofTypeSummary();
             }));
+            document.addEventListener('click', (event) => {
+                if (!roofTypePicker?.contains(event.target)) closeRoofTypeMenu();
+            });
+            document.addEventListener('keydown', (event) => {
+                if (event.key !== 'Escape' || roofTypeMenu?.hidden) return;
+                closeRoofTypeMenu();
+                roofTypeToggle?.focus();
+            });
+            updateRoofTypeSummary();
 
             if (!workspace?.dataset.jobId) return;
 
@@ -570,16 +1398,62 @@
             };
 
             const startTime = Date.parse(workspace.dataset.startedAt || '');
+            const finishedTime = Date.parse(workspace.dataset.finishedAt || '');
             const clock = document.getElementById('job-clock');
-            const tick = () => {
-                if (!clock || Number.isNaN(startTime)) return;
-                clock.textContent = formatElapsed((Date.now() - startTime) / 1000);
-            };
-            tick();
-            window.setInterval(tick, 1000);
-
             const activeStatuses = new Set(['queued', 'running']);
-            if (!activeStatuses.has(workspace.dataset.jobStatus)) return;
+            const jobIsActive = activeStatuses.has(workspace.dataset.jobStatus);
+            const batchReportList = document.getElementById('batch-report-list');
+            const batchReportEmpty = document.getElementById('batch-report-empty');
+            const batchReportCount = document.getElementById('batch-report-count');
+            const displayedReportIds = new Set(
+                Array.from(batchReportList?.querySelectorAll('[data-report-id]') || [])
+                    .map((row) => row.dataset.reportId)
+            );
+            const syncBatchReports = (reports) => {
+                if (!batchReportList) return;
+                reports.forEach((report) => {
+                    const reportId = String(report.id || report.view_url || '');
+                    if (!reportId || displayedReportIds.has(reportId)) return;
+
+                    const result = report.result || {};
+                    const address = report.address || result.address || 'Roof Intelligence Report';
+                    const county = report.county || result.county || 'County unavailable';
+                    const roofArea = report.roof_area_sqft || result.building_footprint_sqft;
+                    const row = document.createElement('li');
+                    row.className = 'list-row';
+                    row.dataset.reportId = reportId;
+
+                    const main = document.createElement('div');
+                    main.className = 'list-main';
+                    const link = document.createElement('a');
+                    link.className = 'list-title';
+                    link.href = report.view_url;
+                    link.target = '_blank';
+                    link.rel = 'noopener';
+                    link.textContent = address;
+                    const meta = document.createElement('span');
+                    meta.className = 'list-meta';
+                    meta.textContent = `${county} · ${roofArea ? `${roofArea} SF` : 'Roof area unavailable'}`;
+                    const badge = document.createElement('span');
+                    badge.className = 'mini-status';
+                    badge.textContent = 'PDF';
+
+                    main.append(link, meta);
+                    row.append(main, badge);
+                    batchReportList.append(row);
+                    displayedReportIds.add(reportId);
+                });
+                if (batchReportEmpty) batchReportEmpty.hidden = displayedReportIds.size > 0;
+                if (batchReportCount) batchReportCount.textContent = `${displayedReportIds.size} available`;
+            };
+            const tick = (referenceTime = Date.now()) => {
+                if (!clock || Number.isNaN(startTime)) return;
+                clock.textContent = formatElapsed((referenceTime - startTime) / 1000);
+            };
+            tick(jobIsActive || Number.isNaN(finishedTime) ? Date.now() : finishedTime);
+            if (jobIsActive) window.setInterval(tick, 1000);
+
+            if (!jobIsActive) return;
 
             const statusUrl = `/api/roof-intelligence/jobs/${encodeURIComponent(workspace.dataset.jobId)}`;
             window.setInterval(async () => {
@@ -587,10 +1461,6 @@
                     const response = await fetch(statusUrl, {headers: {'Accept': 'application/json'}, cache: 'no-store'});
                     if (!response.ok) return;
                     const job = await response.json();
-                    if (!activeStatuses.has(job.status)) {
-                        window.location.reload();
-                        return;
-                    }
                     workspace.dataset.jobStatus = job.status;
                     const status = document.getElementById('job-status');
                     const stage = document.getElementById('job-stage');
@@ -598,7 +1468,7 @@
                     if (stage) stage.textContent = job.stage.replaceAll('_', ' ');
                     const values = {
                         'candidate-count': job.candidate_count,
-                        'completed-count': `${job.completed_count} / ${job.report_limit || 0}`,
+                        'completed-count': job.completed_count,
                         'failed-count': job.failed_count,
                         'skipped-count': job.skipped_count,
                     };
@@ -606,6 +1476,8 @@
                         const element = document.getElementById(id);
                         if (element) element.textContent = value;
                     });
+                    syncBatchReports(job.reports || []);
+                    if (!activeStatuses.has(job.status)) window.location.reload();
                 } catch (_) {
                     // A temporary polling failure does not change the persisted job.
                 }

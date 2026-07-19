@@ -48,9 +48,34 @@
         .landing-header {
             display: flex;
             justify-content: space-between;
-            align-items: flex-end;
+            align-items: flex-start;
             gap: 20px;
             margin-bottom: 18px;
+        }
+
+        .header-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 9px; }
+
+        .settings-icon-button {
+            display: inline-flex;
+            width: 40px;
+            height: 40px;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--panel);
+            color: #344054;
+            font-size: 18px;
+            text-decoration: none;
+            transition: border-color 140ms ease, box-shadow 140ms ease, color 140ms ease;
+        }
+
+        .settings-icon-button:hover,
+        .settings-icon-button:focus-visible {
+            border-color: #9bb7d7;
+            box-shadow: 0 4px 12px rgba(16, 24, 40, .1);
+            color: var(--primary);
+            outline: none;
         }
 
         .brand-kicker {
@@ -98,7 +123,7 @@
 
         .work-grid {
             display: grid;
-            grid-template-columns: repeat(5, minmax(0, 1fr));
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 14px;
         }
 
@@ -199,14 +224,6 @@
                 padding: 18px;
             }
 
-            .landing-header {
-                display: block;
-            }
-
-            .status-pill {
-                margin-top: 14px;
-            }
-
             .work-grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
@@ -232,9 +249,12 @@
                     <h1 class="landing-title" id="landing-title">PCS Management</h1>
                     <p class="landing-subtitle">Choose the workflow you want to work in.</p>
                 </div>
-                <div class="status-pill" aria-label="Application status">
-                    <span class="status-dot" aria-hidden="true"></span>
-                    Ready
+                <div class="header-actions">
+                    <div class="status-pill" aria-label="Application status">
+                        <span class="status-dot" aria-hidden="true"></span>
+                        Ready
+                    </div>
+                    <a class="settings-icon-button" href="{{ url_for('application_settings') }}" aria-label="Settings" title="Settings"><i class="bi bi-gear" aria-hidden="true"></i></a>
                 </div>
             </header>
 
@@ -288,6 +308,7 @@
                         <i class="bi bi-arrow-right"></i>
                     </span>
                 </a>
+
             </nav>
         </section>
     </main>

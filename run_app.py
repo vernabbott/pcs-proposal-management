@@ -12,6 +12,8 @@ import webbrowser
 APP_STATE_DIR = "/tmp/pcs_proposal_app"
 APP_STARTUP_LOG_PATH = os.path.join(APP_STATE_DIR, "startup.log")
 SERVER_ONLY_ENV = "PCS_PROPOSAL_SERVER_ONLY"
+DESKTOP_LIFECYCLE_ENV = "PCS_PROPOSAL_DESKTOP_LIFECYCLE"
+LOCAL_ROOF_WORKER_ENV = "ROOF_INTELLIGENCE_LOCAL_WORKER"
 
 
 def _log_startup(message):
@@ -119,6 +121,8 @@ def _run_server(host, port):
 def _start_server_process(host, port):
     env = os.environ.copy()
     env[SERVER_ONLY_ENV] = "1"
+    env[DESKTOP_LIFECYCLE_ENV] = "1"
+    env.setdefault(LOCAL_ROOF_WORKER_ENV, "1")
     env["PORT"] = str(port)
     env["PCS_PROPOSAL_HOST"] = host
 

@@ -32,17 +32,25 @@ import time
 from urllib.parse import quote, urlsplit, urlunsplit
 
 from roof_intelligence_jobs import (
+    DEFAULT_DATA_DIR,
     SUPPORTED_ROOF_TYPES,
     get_job_store,
 )
+from pcs_local_settings import (
+    google_maps_api_key,
+    remove_google_maps_api_key,
+    save_google_maps_api_key,
+)
 
 APP_FOLDER = os.path.dirname(os.path.abspath(__file__))
-APP_ERROR_LOG = os.path.join(APP_FOLDER, "pcs_app_error.log")
+APP_ERROR_LOG = str(DEFAULT_DATA_DIR / "pcs_app_error.log")
+os.makedirs(os.path.dirname(APP_ERROR_LOG), exist_ok=True)
 ROOF_INTELLIGENCE_PROJECT_DIR = os.environ.get(
     "ROOF_INTELLIGENCE_PROJECT_DIR",
     "/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual Studio/PilotPoint IQ Roof Intelligence Report",
 )
 ROOF_INTELLIGENCE_SCRIPT = os.path.join(APP_FOLDER, "roof_intelligence_single_address.py")
+ROOF_INTELLIGENCE_AREA_SCRIPT = os.path.join(APP_FOLDER, "roof_intelligence_area_batch.py")
 ROOF_INTELLIGENCE_USER_KEY = os.environ.get("ROOF_INTELLIGENCE_USER_KEY", "local-user")
 HAS_XLWINGS = None
 xw = None
@@ -298,7 +306,7 @@ TRAVEL_ROOMS_PER_NIGHT = 6
 TRAVEL_FOOD_PER_DAY = 700
 TRAVEL_MISC_500 = 500
 TRAVEL_MISC_250 = 250
-GACO_S42_BASE_PRICE = 195
+GACO_S42_BASE_PRICE = 190
 GACO_PATCH_BASE_PRICE = 125
 GACO_E5320_PRICE = 185
 BLEED_TRAP_BASE_PRICE = 168
@@ -1600,6 +1608,108 @@ if os.path.exists(_BUNDLED_PROPOSAL_SUMMARY_TEMPLATE_PATH):
 app = Flask(__name__, template_folder=TEMPLATE_PATH, static_folder=STATIC_PATH)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key")
 
+DESKTOP_LIFECYCLE_ENABLED = os.environ.get("PCS_PROPOSAL_DESKTOP_LIFECYCLE", "0").strip().lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
+}
+DESKTOP_STARTUP_GRACE_SECONDS = 60.0
+DESKTOP_CLOSE_GRACE_SECONDS = 5.0
+_desktop_lifecycle_lock = threading.Lock()
+_desktop_server_started_at = time.monotonic()
+_desktop_last_heartbeat = None
+_desktop_close_requested_at = None
+DESKTOP_BACKGROUND_WORK_ACTIVE = threading.Event()
+
+
+def _desktop_session_should_stop(
+    now,
+    *,
+    server_started_at,
+    last_heartbeat,
+    close_requested_at,
+    startup_grace=DESKTOP_STARTUP_GRACE_SECONDS,
+    close_grace=DESKTOP_CLOSE_GRACE_SECONDS,
+):
+    if close_requested_at is not None:
+        return now - close_requested_at >= close_grace
+    return last_heartbeat is None and now - server_started_at >= startup_grace
+
+
+def _desktop_lifecycle_watchdog():
+    while True:
+        time.sleep(1)
+        now = time.monotonic()
+        with _desktop_lifecycle_lock:
+            should_stop = _desktop_session_should_stop(
+                now,
+                server_started_at=_desktop_server_started_at,
+                last_heartbeat=_desktop_last_heartbeat,
+                close_requested_at=_desktop_close_requested_at,
+            )
+        if should_stop and not DESKTOP_BACKGROUND_WORK_ACTIVE.is_set():
+            _safe_debug("[INFO] PCS desktop browser session ended; stopping the local server.")
+            os._exit(0)
+
+
+if DESKTOP_LIFECYCLE_ENABLED:
+    threading.Thread(
+        target=_desktop_lifecycle_watchdog,
+        name="pcs-desktop-lifecycle",
+        daemon=True,
+    ).start()
+
+
+@app.post("/api/desktop-session/heartbeat")
+def desktop_session_heartbeat():
+    global _desktop_last_heartbeat, _desktop_close_requested_at
+    if not DESKTOP_LIFECYCLE_ENABLED:
+        return ("", 404)
+    with _desktop_lifecycle_lock:
+        _desktop_last_heartbeat = time.monotonic()
+        _desktop_close_requested_at = None
+    return ("", 204)
+
+
+@app.post("/api/desktop-session/closed")
+def desktop_session_closed():
+    global _desktop_close_requested_at
+    if not DESKTOP_LIFECYCLE_ENABLED:
+        return ("", 404)
+    with _desktop_lifecycle_lock:
+        _desktop_close_requested_at = time.monotonic()
+    return ("", 204)
+
+
+_DESKTOP_LIFECYCLE_SCRIPT = """
+<script id="pcs-desktop-lifecycle">
+(() => {
+    const heartbeat = () => fetch('/api/desktop-session/heartbeat', {
+        method: 'POST',
+        cache: 'no-store',
+        keepalive: true,
+    }).catch(() => {});
+    heartbeat();
+    const heartbeatTimer = window.setInterval(heartbeat, 2000);
+    window.addEventListener('pagehide', () => {
+        window.clearInterval(heartbeatTimer);
+        navigator.sendBeacon('/api/desktop-session/closed', '');
+    });
+})();
+</script>
+"""
+
+
+@app.after_request
+def _inject_desktop_lifecycle(response):
+    if not DESKTOP_LIFECYCLE_ENABLED or response.mimetype != "text/html":
+        return response
+    body = response.get_data(as_text=True)
+    if "</body>" in body and 'id="pcs-desktop-lifecycle"' not in body:
+        response.set_data(body.replace("</body>", f"{_DESKTOP_LIFECYCLE_SCRIPT}</body>", 1))
+    return response
+
 # ---- Error logging to the application folder so packaged app errors are visible ----
 import logging
 from logging.handlers import RotatingFileHandler
@@ -1648,7 +1758,11 @@ def _log_request_min():
         with open(APP_ERROR_LOG, "a", encoding="utf-8") as _f:
             _f.write(f"\n[REQ] {request.method} {request.path}\n")
             if request.method == 'POST':
-                _f.write(f"[FORM] {dict(request.form)}\n")
+                logged_form = dict(request.form)
+                for sensitive_name in ("google_maps_api_key", "api_key", "password", "secret", "token"):
+                    if sensitive_name in logged_form:
+                        logged_form[sensitive_name] = "[REDACTED]"
+                _f.write(f"[FORM] {logged_form}\n")
     except Exception:
         pass
 
@@ -3724,9 +3838,26 @@ def _roof_local_worker_enabled():
     return value in {"1", "true", "yes", "on"}
 
 
+def _roof_worker_readiness_error():
+    if not os.path.isdir(ROOF_INTELLIGENCE_PROJECT_DIR):
+        return "The PilotPoint IQ project folder is not available on this Mac."
+    python_path = os.path.join(ROOF_INTELLIGENCE_PROJECT_DIR, ".venv", "bin", "python")
+    if not os.path.isfile(python_path):
+        return "The PilotPoint IQ Python environment is not installed or is incomplete."
+    if not os.path.isfile(ROOF_INTELLIGENCE_SCRIPT):
+        return "The PCS Roof Intelligence adapter is missing from the desktop app."
+    if not os.path.isfile(ROOF_INTELLIGENCE_AREA_SCRIPT):
+        return "The PCS area-batch adapter is missing from the desktop app."
+    return None
+
+
 def _roof_error_details(message):
     clean_message = " ".join(str(message or "Unable to complete the Roof Intelligence report.").split())
     lowered = clean_message.lower()
+    if "footprint discrepancy needs attention" in lowered:
+        return "footprint_discrepancy", clean_message[:500], False
+    if "no supported county parcel match" in lowered:
+        return "unsupported_county", clean_message[:500], False
     if "no parcel match" in lowered or "parcel" in lowered and "not found" in lowered:
         return "parcel_not_found", "No matching county parcel was found for that address.", False
     if "no building" in lowered or "building footprint" in lowered:
@@ -3740,20 +3871,72 @@ def _roof_error_details(message):
     return "internal_processing_error", clean_message[:500], True
 
 
+def _footprint_error_context(payload, fallback_address=""):
+    message = str(payload.get("error") or "")
+    match = re.search(
+        r"for\s+(.+?)\s+parcel\s+([A-Za-z0-9-]+):.*?footprint\s+([\d,.]+)\s+sq\s*ft\s+versus\s+county\s+GIS\s+footprint\s+([\d,.]+)\s+sq\s*ft\s+\(([\d.]+)%",
+        message,
+        re.IGNORECASE,
+    )
+    context = {
+        "error_code": "footprint_discrepancy",
+        "address": fallback_address,
+        "error": message,
+    }
+    if match:
+        context.update(
+            {
+                "county": match.group(1),
+                "parcel": match.group(2),
+                "footprint_validation": {
+                    "status": "discrepancy",
+                    "primary_sqft": float(match.group(3).replace(",", "")),
+                    "secondary_sqft": float(match.group(4).replace(",", "")),
+                    "difference_pct": float(match.group(5)),
+                    "primary_label": "Supabase Microsoft",
+                    "secondary_label": "County GIS",
+                },
+            }
+        )
+    else:
+        assessor_match = re.search(
+            r"for\s+(.+?)\s+parcel\s+([A-Za-z0-9-]+):\s*selected\s+footprint\s+([\d,.]+)\s+sq\s*ft\s+versus\s+explicit\s+county\s+assessor\s+footprint\s+([\d,.]+)\s+sq\s*ft\s+\(([\d.]+)%",
+            message,
+            re.IGNORECASE,
+        )
+        if assessor_match:
+            context.update(
+                {
+                    "county": assessor_match.group(1),
+                    "parcel": assessor_match.group(2),
+                    "footprint_validation": {
+                        "status": "discrepancy",
+                        "primary_sqft": float(assessor_match.group(3).replace(",", "")),
+                        "secondary_sqft": float(assessor_match.group(4).replace(",", "")),
+                        "difference_pct": float(assessor_match.group(5)),
+                        "primary_label": "Selected building",
+                        "secondary_label": "County assessor",
+                    },
+                }
+            )
+    canonical_match = re.search(r"Canonical footprint\s+(\d+)\s+is pending review", message, re.IGNORECASE)
+    if canonical_match:
+        context["canonical_id"] = int(canonical_match.group(1))
+    return context
+
+
 def _run_local_individual_roof_job(job_id):
-    """Development adapter; production jobs are claimed by PilotPoint IQ."""
+    """Process an individual job that was atomically claimed by the local worker."""
     store = get_job_store()
     job = store.get_job(job_id, ROOF_INTELLIGENCE_USER_KEY)
-    if not job or job.get("job_type") != "individual_address" or job.get("status") != "queued":
+    if not job or job.get("job_type") != "individual_address" or job.get("status") != "running":
         return
 
     try:
-        store.start_job(job_id, stage="locating_property")
+        readiness_error = _roof_worker_readiness_error()
+        if readiness_error:
+            raise RuntimeError(readiness_error)
         python_path = os.path.join(ROOF_INTELLIGENCE_PROJECT_DIR, ".venv", "bin", "python")
-        if not os.path.exists(python_path):
-            raise RuntimeError("The PilotPoint IQ Python environment is not available to the local adapter.")
-        if not os.path.exists(ROOF_INTELLIGENCE_SCRIPT):
-            raise RuntimeError("The PCS single-address development adapter was not found.")
 
         store.update_job(job_id, stage="processing_report")
         command = [
@@ -3763,9 +3946,17 @@ def _run_local_individual_roof_job(job_id):
             job["input"]["property_address"],
             "--project-dir",
             ROOF_INTELLIGENCE_PROJECT_DIR,
+            "--county",
+            "auto",
             "--use-ai",
             "--allow-ai-fallback",
         ]
+        override = job["input"].get("footprint_override") or {}
+        if override.get("selected_source"):
+            command.extend([
+                "--footprint-source", str(override["selected_source"]),
+                "--footprint-override-reason", str(override.get("reason") or ""),
+            ])
         completed = subprocess.run(
             command,
             cwd=ROOF_INTELLIGENCE_PROJECT_DIR,
@@ -3784,10 +3975,11 @@ def _run_local_individual_roof_job(job_id):
                     payload = {}
                 break
         if completed.returncode != 0 or payload.get("error"):
-            raise RuntimeError(
-                payload.get("error")
-                or (completed.stderr or completed.stdout or "Unable to generate the report.").strip()
-            )
+            error = payload.get("error") or (completed.stderr or completed.stdout or "Unable to generate the report.").strip()
+            code, message, retryable = _roof_error_details(error)
+            details = _footprint_error_context(payload, job["input"].get("property_address", "")) if code == "footprint_discrepancy" else payload
+            store.fail_job(job_id, code, message, retryable=retryable, error_details=details)
+            return
         if not payload.get("report_path") or not os.path.isfile(payload["report_path"]):
             raise RuntimeError("The worker completed without producing a report PDF.")
 
@@ -3812,6 +4004,286 @@ def _run_local_individual_roof_job(job_id):
         store.fail_job(job_id, code, message, retryable=retryable)
 
 
+def _last_json_payload(completed):
+    payload = {}
+    for line in reversed((completed.stdout or "").splitlines()):
+        line = line.strip()
+        if line.startswith("{") and line.endswith("}"):
+            try:
+                return json.loads(line)
+            except json.JSONDecodeError:
+                continue
+    return payload
+
+
+def _canonical_footprint_reviews(limit=20):
+    if not _roof_local_worker_enabled():
+        return []
+    command = [
+        os.path.join(ROOF_INTELLIGENCE_PROJECT_DIR, ".venv", "bin", "python"),
+        os.path.join(ROOF_INTELLIGENCE_PROJECT_DIR, "scripts", "review_canonical_footprints.py"),
+        "--limit", str(limit),
+    ]
+    try:
+        completed = subprocess.run(
+            command, cwd=ROOF_INTELLIGENCE_PROJECT_DIR, capture_output=True,
+            text=True, timeout=30, check=False,
+        )
+        if completed.returncode == 0:
+            payload = json.loads(completed.stdout or "[]")
+            return payload if isinstance(payload, list) else []
+    except Exception:
+        pass
+    return []
+
+
+def _resolve_canonical_footprint(canonical_id, selected_source, reason):
+    source = "microsoft" if selected_source == "supabase" else selected_source
+    command = [
+        os.path.join(ROOF_INTELLIGENCE_PROJECT_DIR, ".venv", "bin", "python"),
+        os.path.join(ROOF_INTELLIGENCE_PROJECT_DIR, "scripts", "review_canonical_footprints.py"),
+        "--resolve", str(int(canonical_id)), "--source", source,
+        "--reason", str(reason), "--reviewer", ROOF_INTELLIGENCE_USER_KEY,
+    ]
+    completed = subprocess.run(
+        command, cwd=ROOF_INTELLIGENCE_PROJECT_DIR, capture_output=True,
+        text=True, timeout=30, check=False,
+    )
+    if completed.returncode != 0:
+        raise RuntimeError((completed.stderr or completed.stdout or "Unable to resolve canonical footprint.").strip())
+    return json.loads(completed.stdout)
+
+
+class RoofWorkerFailure(RuntimeError):
+    def __init__(self, payload):
+        self.payload = payload or {}
+        super().__init__(self.payload.get("error") or "Unable to generate the report.")
+
+
+def _discover_local_area_candidates(job):
+    job_input = job.get("input", {})
+    bounds = job_input.get("bounds") or {}
+    python_path = os.path.join(ROOF_INTELLIGENCE_PROJECT_DIR, ".venv", "bin", "python")
+    command = [
+        python_path,
+        ROOF_INTELLIGENCE_AREA_SCRIPT,
+        "--project-dir", ROOF_INTELLIGENCE_PROJECT_DIR,
+        "--north", str(bounds.get("north", "")),
+        "--south", str(bounds.get("south", "")),
+        "--east", str(bounds.get("east", "")),
+        "--west", str(bounds.get("west", "")),
+        "--minimum-roof-size", str(job.get("minimum_roof_size") or 1),
+        "--max-candidates", str(int(os.environ.get("ROOF_INTELLIGENCE_AREA_MAX_CANDIDATES", "2000"))),
+    ]
+    selection_type = job_input.get("selection_type") or "rectangle"
+    command.extend(["--selection-type", selection_type])
+    if selection_type == "radius":
+        center = job_input.get("center") or {}
+        command.extend([
+            "--center-lat", str(center.get("lat", "")),
+            "--center-lng", str(center.get("lng", "")),
+            "--radius-miles", str(job_input.get("radius_miles", "")),
+        ])
+    completed = subprocess.run(
+        command,
+        cwd=ROOF_INTELLIGENCE_PROJECT_DIR,
+        capture_output=True,
+        text=True,
+        timeout=int(os.environ.get("ROOF_INTELLIGENCE_AREA_DISCOVERY_TIMEOUT", "900")),
+        check=False,
+    )
+    payload = _last_json_payload(completed)
+    if completed.returncode != 0 or payload.get("error"):
+        raise RuntimeError(
+            payload.get("error")
+            or (completed.stderr or completed.stdout or "Unable to discover properties in the selected area.").strip()
+        )
+    return list(payload.get("candidates") or []), list(payload.get("warnings") or [])
+
+
+def _run_local_candidate_report(candidate):
+    python_path = os.path.join(ROOF_INTELLIGENCE_PROJECT_DIR, ".venv", "bin", "python")
+    command = [
+        python_path,
+        ROOF_INTELLIGENCE_SCRIPT,
+        "--address", candidate["address"],
+        "--project-dir", ROOF_INTELLIGENCE_PROJECT_DIR,
+        "--county", candidate.get("county_profile") or "auto",
+        "--use-ai",
+        "--allow-ai-fallback",
+    ]
+    if candidate.get("parcel"):
+        command.extend(["--parcel-id", str(candidate["parcel"])])
+    override = candidate.get("footprint_override") or {}
+    if override.get("selected_source"):
+        command.extend([
+            "--footprint-source", str(override["selected_source"]),
+            "--footprint-override-reason", str(override.get("reason") or ""),
+        ])
+    completed = subprocess.run(
+        command,
+        cwd=ROOF_INTELLIGENCE_PROJECT_DIR,
+        capture_output=True,
+        text=True,
+        timeout=int(os.environ.get("ROOF_INTELLIGENCE_LOCAL_TIMEOUT", "900")),
+        check=False,
+    )
+    payload = _last_json_payload(completed)
+    if completed.returncode != 0 or payload.get("error"):
+        if not payload:
+            payload = {"error": (completed.stderr or completed.stdout or "Unable to generate the report.").strip()}
+        raise RoofWorkerFailure(payload)
+    if not payload.get("report_path") or not os.path.isfile(payload["report_path"]):
+        raise RuntimeError("The worker completed without producing a report PDF.")
+    return payload
+
+
+def _roof_type_matches_selection(result, selected_types):
+    if set(selected_types or []) == set(SUPPORTED_ROOF_TYPES):
+        return True
+    value = str(result.get("roof_type") or "").strip().lower()
+    aliases = {
+        "TPO": ("tpo",),
+        "PVC": ("pvc",),
+        "EPDM": ("epdm",),
+        "Modified Bitumen": ("modified bitumen", "mod bit"),
+        "Ballasted": ("ballasted",),
+        "Tar and Gravel": ("tar and gravel", "built-up", "bur"),
+        "Metal": ("metal",),
+    }
+    return any(
+        term in value
+        for roof_type in selected_types or []
+        for term in aliases.get(roof_type, (roof_type.lower(),))
+    )
+
+
+def _remove_area_temporary_files(result, *, remove_report=False):
+    paths = [str(result.get("aerial_image_file") or "")]
+    if remove_report:
+        paths.append(str(result.get("report_path") or ""))
+    for path in paths:
+        if path and os.path.isfile(path):
+            try:
+                os.remove(path)
+            except OSError:
+                pass
+
+
+def _run_local_area_roof_job(job_id):
+    store = get_job_store()
+    job = store.get_job(job_id, ROOF_INTELLIGENCE_USER_KEY)
+    if not job or job.get("job_type") != "zip_batch" or job.get("status") != "running":
+        return
+    try:
+        readiness_error = _roof_worker_readiness_error()
+        if readiness_error:
+            raise RuntimeError(readiness_error)
+        items = store.list_area_items(job_id)
+        if not items:
+            store.update_job(job_id, stage="discovering_properties")
+            candidates, warnings = _discover_local_area_candidates(job)
+            if warnings:
+                _safe_debug("[ROOF AREA] " + " | ".join(warnings))
+            items = store.prepare_area_candidates(job_id, candidates)
+
+        while True:
+            current = store.get_job(job_id, ROOF_INTELLIGENCE_USER_KEY)
+            if not current or current.get("status") == "cancelled":
+                return
+            item = store.claim_next_area_item(job_id)
+            if not item:
+                break
+            try:
+                result = _run_local_candidate_report(item["input"])
+                if not _roof_type_matches_selection(result, current.get("roof_types") or []):
+                    _remove_area_temporary_files(result, remove_report=True)
+                    store.skip_area_item(
+                        job_id,
+                        item["id"],
+                        "roof_type_excluded",
+                        f"Detected roof type '{result.get('roof_type') or 'Unknown'}' was not selected.",
+                    )
+                    continue
+                store.complete_area_item(job_id, item["id"], result)
+                _remove_area_temporary_files(result)
+            except subprocess.TimeoutExpired:
+                store.fail_area_item(job_id, item["id"], "worker_timeout", "Report processing exceeded the local worker time limit.")
+            except RoofWorkerFailure as exc:
+                code, message, _ = _roof_error_details(exc)
+                details = _footprint_error_context(exc.payload, item["input"].get("address", "")) if code == "footprint_discrepancy" else exc.payload
+                store.fail_area_item(job_id, item["id"], code, message, error_details=details)
+            except Exception as exc:
+                code, message, _ = _roof_error_details(exc)
+                store.fail_area_item(job_id, item["id"], code, message)
+
+        store.finish_area_job(job_id)
+    except subprocess.TimeoutExpired:
+        store.fail_job(
+            job_id,
+            "area_discovery_timeout",
+            "Property discovery exceeded the local worker time limit.",
+            retryable=True,
+        )
+    except Exception as exc:
+        code, message, retryable = _roof_error_details(exc)
+        store.fail_job(job_id, code, message, retryable=retryable, stage="area_batch_failed")
+
+
+_roof_worker_wake = threading.Event()
+_roof_worker_lock = threading.Lock()
+_roof_worker_thread = None
+
+
+def _roof_worker_loop():
+    store = get_job_store()
+    store.recover_interrupted_individual_jobs()
+    store.recover_interrupted_area_jobs()
+    while True:
+        job = store.claim_next_individual_job()
+        if job:
+            DESKTOP_BACKGROUND_WORK_ACTIVE.set()
+            _run_local_individual_roof_job(job["id"])
+            continue
+
+        job = store.claim_next_area_job()
+        if job:
+            DESKTOP_BACKGROUND_WORK_ACTIVE.set()
+            _run_local_area_roof_job(job["id"])
+            continue
+
+        DESKTOP_BACKGROUND_WORK_ACTIVE.clear()
+        # Close the small signal/claim race without busy-waiting.
+        if store.has_queued_individual_jobs():
+            DESKTOP_BACKGROUND_WORK_ACTIVE.set()
+            continue
+        if store.has_queued_area_jobs():
+            DESKTOP_BACKGROUND_WORK_ACTIVE.set()
+            continue
+        _roof_worker_wake.wait(timeout=2.0)
+        _roof_worker_wake.clear()
+
+
+def _ensure_roof_worker_started():
+    global _roof_worker_thread
+    if not _roof_local_worker_enabled():
+        return False
+    with _roof_worker_lock:
+        if _roof_worker_thread is None or not _roof_worker_thread.is_alive():
+            DESKTOP_BACKGROUND_WORK_ACTIVE.set()
+            _roof_worker_thread = threading.Thread(
+                target=_roof_worker_loop,
+                name="pcs-roof-intelligence-worker",
+                daemon=True,
+            )
+            _roof_worker_thread.start()
+    _roof_worker_wake.set()
+    return True
+
+
+_ensure_roof_worker_started()
+
+
 def _roof_job_payload(store, job):
     if not job:
         return None
@@ -3822,6 +4294,13 @@ def _roof_job_payload(store, job):
         result["report"] = report
     else:
         result["report"] = None
+    reports = store.get_reports_for_job(job["id"])
+    for batch_report in reports:
+        batch_report["view_url"] = url_for("download_roof_intelligence_report", report_id=batch_report["id"])
+    result["reports"] = reports
+    items = store.list_area_items(job["id"]) if job.get("job_type") == "zip_batch" else []
+    result["items"] = items
+    result["failed_items"] = [item for item in items if item.get("status") == "failed"]
     result["status_url"] = url_for("roof_intelligence_job_status", job_id=job["id"])
     result["page_url"] = url_for("roof_intelligence", job_id=job["id"])
     return result
@@ -3832,22 +4311,69 @@ def roof_intelligence():
     store = get_job_store()
     requested_job_id = request.args.get("job_id", "").strip()
     active_job = store.get_job(requested_job_id, ROOF_INTELLIGENCE_USER_KEY) if requested_job_id else None
+    recent_notifications = store.list_notifications(ROOF_INTELLIGENCE_USER_KEY, limit=30)
+    selected_notifications = [
+        item for item in recent_notifications
+        if not active_job or item.get("job_id") in {None, active_job["id"]}
+    ][:8]
     return render_template(
         'roof_intelligence.html',
         active_job=_roof_job_payload(store, active_job),
         recent_jobs=store.list_jobs(ROOF_INTELLIGENCE_USER_KEY, limit=12),
-        notifications=store.list_notifications(ROOF_INTELLIGENCE_USER_KEY, limit=8),
+        notifications=selected_notifications,
+        county_health=store.list_county_health(limit=20),
+        canonical_reviews=_canonical_footprint_reviews(limit=20),
         supported_roof_types=SUPPORTED_ROOF_TYPES,
         local_worker_enabled=_roof_local_worker_enabled(),
+        google_maps_configured=bool(google_maps_api_key()),
     )
+
+
+@app.route('/settings', methods=['GET', 'POST'])
+def application_settings():
+    if request.method == 'POST':
+        action = request.form.get("action", "save")
+        if action == "remove_google_maps_key":
+            remove_google_maps_api_key()
+            flash("The local Google Maps API key was removed.", "success")
+            return redirect(url_for("application_settings"))
+        try:
+            save_google_maps_api_key(request.form.get("google_maps_api_key", ""))
+        except ValueError as exc:
+            flash(str(exc), "danger")
+        else:
+            flash("Google Maps is configured for Roof Intelligence.", "success")
+            return redirect(url_for("application_settings"))
+    key = google_maps_api_key()
+    return render_template(
+        'settings.html',
+        google_maps_configured=bool(key),
+        google_maps_key_suffix=key[-4:] if key else "",
+    )
+
+
+@app.get('/api/local-settings/google-maps')
+def google_maps_browser_configuration():
+    key = google_maps_api_key()
+    if not key:
+        return jsonify({"configured": False}), 404
+    response = jsonify({"configured": True, "api_key": key})
+    response.headers["Cache-Control"] = "no-store, private"
+    response.headers["Pragma"] = "no-cache"
+    return response
 
 
 @app.post('/roof-intelligence/jobs/individual')
 def create_individual_roof_intelligence_job():
     store = get_job_store()
     try:
+        address = request.form.get("property_address", "")
+        if _roof_local_worker_enabled():
+            readiness_error = _roof_worker_readiness_error()
+            if readiness_error:
+                raise ValueError(readiness_error)
         job = store.create_individual_job(
-            request.form.get("property_address", ""),
+            address,
             user_key=ROOF_INTELLIGENCE_USER_KEY,
         )
     except ValueError as exc:
@@ -3855,29 +4381,36 @@ def create_individual_roof_intelligence_job():
         return redirect(url_for("roof_intelligence", mode="individual"))
 
     if _roof_local_worker_enabled():
-        _run_background_task(
-            f"Roof Intelligence individual job {job['id']}",
-            lambda: _run_local_individual_roof_job(job["id"]),
-        )
+        DESKTOP_BACKGROUND_WORK_ACTIVE.set()
+        _ensure_roof_worker_started()
     return redirect(url_for("roof_intelligence", job_id=job["id"], mode="individual"))
 
 
-@app.post('/roof-intelligence/jobs/zip')
-def create_zip_roof_intelligence_job():
+@app.post('/roof-intelligence/jobs/area')
+def create_area_roof_intelligence_job():
     store = get_job_store()
     try:
-        job = store.create_zip_job(
-            request.form.get("zip_code", ""),
-            request.form.get("report_limit", ""),
-            request.form.get("minimum_roof_size", "10000"),
-            request.form.get("minimum_age", ""),
-            request.form.getlist("roof_types"),
+        job = store.create_area_job(
+            request.form.get("bounds_north", ""),
+            request.form.get("bounds_south", ""),
+            request.form.get("bounds_east", ""),
+            request.form.get("bounds_west", ""),
+            minimum_roof_squares=request.form.get("minimum_roof_squares", "100"),
+            roof_types=request.form.getlist("roof_types"),
             user_key=ROOF_INTELLIGENCE_USER_KEY,
+            selection_type=request.form.get("selection_type", "rectangle"),
+            center_lat=request.form.get("center_lat", ""),
+            center_lng=request.form.get("center_lng", ""),
+            center_address=request.form.get("center_address", ""),
+            radius_miles=request.form.get("radius_miles", ""),
         )
     except ValueError as exc:
         flash(str(exc), "danger")
-        return redirect(url_for("roof_intelligence", mode="zip"))
-    return redirect(url_for("roof_intelligence", job_id=job["id"], mode="zip"))
+        return redirect(url_for("roof_intelligence", mode="area"))
+    if _roof_local_worker_enabled():
+        DESKTOP_BACKGROUND_WORK_ACTIVE.set()
+        _ensure_roof_worker_started()
+    return redirect(url_for("roof_intelligence", job_id=job["id"], mode="area"))
 
 
 @app.get('/api/roof-intelligence/jobs/<job_id>')
@@ -3887,6 +4420,62 @@ def roof_intelligence_job_status(job_id):
     if not job:
         return jsonify({"error": "Roof Intelligence job not found."}), 404
     return jsonify(_roof_job_payload(store, job))
+
+
+@app.post('/roof-intelligence/jobs/<job_id>/cancel')
+def cancel_roof_intelligence_job(job_id):
+    store = get_job_store()
+    job = store.cancel_job(job_id, ROOF_INTELLIGENCE_USER_KEY)
+    if not job:
+        flash("Roof Intelligence job not found.", "danger")
+        return redirect(url_for("roof_intelligence"))
+    _roof_worker_wake.set()
+    flash("The Roof Intelligence job was cancelled.", "success")
+    return redirect(url_for("roof_intelligence", job_id=job_id, mode="individual" if job["job_type"] == "individual_address" else "area"))
+
+
+@app.post('/roof-intelligence/jobs/<job_id>/resolve-footprint')
+def resolve_roof_footprint_discrepancy(job_id):
+    store = get_job_store()
+    try:
+        job = store.resolve_footprint_discrepancy(
+            job_id,
+            request.form.get("selected_source", ""),
+            request.form.get("reason", ""),
+            user_key=ROOF_INTELLIGENCE_USER_KEY,
+            item_id=request.form.get("item_id", "").strip() or None,
+        )
+    except (ValueError, KeyError) as exc:
+        flash(str(exc), "danger")
+        return redirect(url_for("roof_intelligence", job_id=job_id))
+    if _roof_local_worker_enabled():
+        DESKTOP_BACKGROUND_WORK_ACTIVE.set()
+        _ensure_roof_worker_started()
+    flash("The footprint resolution was recorded and the report was queued again.", "success")
+    return redirect(
+        url_for(
+            "roof_intelligence",
+            job_id=job_id,
+            mode="individual" if job["job_type"] == "individual_address" else "area",
+        )
+    )
+
+
+@app.post('/roof-intelligence/canonical-footprints/<int:canonical_id>/resolve')
+def resolve_canonical_footprint_review(canonical_id):
+    try:
+        selected_source = request.form.get("selected_source", "")
+        reason = request.form.get("reason", "")
+        if selected_source not in {"supabase", "county"}:
+            raise ValueError("Select either the Microsoft or county footprint.")
+        if len(" ".join(reason.split())) < 10:
+            raise ValueError("Enter a resolution reason of at least 10 characters.")
+        _resolve_canonical_footprint(canonical_id, selected_source, reason)
+    except (ValueError, RuntimeError) as exc:
+        flash(str(exc), "danger")
+    else:
+        flash("The canonical footprint decision was recorded for future reports.", "success")
+    return redirect(url_for("roof_intelligence"))
 
 
 @app.post('/roof-intelligence/notifications/<notification_id>/read')

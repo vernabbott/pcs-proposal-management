@@ -8,6 +8,7 @@ datas = [
     ('templates', 'templates'),
     ('static', 'static'),
     ('roof_intelligence_single_address.py', '.'),
+    ('roof_intelligence_area_batch.py', '.'),
 ]
 try:
     with open(proposal_summary_template, 'rb'):

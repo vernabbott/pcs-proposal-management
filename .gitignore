@@ -11,6 +11,7 @@ ENV/
 
 # Environment files
 .env
+pcs_local_settings.py
 
 # Logs and debug
 *.log
@@ -68,3 +69,4 @@ coverage.xml
 data/*.sqlite3
 data/*.sqlite3-shm
 data/*.sqlite3-wal
+outputs/
