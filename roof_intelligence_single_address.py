@@ -365,6 +365,21 @@ def safe_report_name(parcel: str, address: str) -> str:
     return f"{parcel}-{safe_address or 'roof-report'}.pdf"
 
 
+def generate_roof_analysis(reports, row, aerial_path, cache_dir, args, ai_model):
+    """Run PilotPoint's production two-stage roof-reference workflow for PCS orders."""
+    return reports.load_or_create_analysis(
+        row,
+        aerial_path,
+        None,
+        cache_dir,
+        args.use_ai,
+        args.ai_provider,
+        ai_model,
+        args.allow_ai_fallback,
+        use_roof_references=True,
+    )
+
+
 def should_pause_for_footprint_review(
     validation: dict,
     footprint_source: str,
@@ -651,16 +666,7 @@ def main() -> int:
     cache_dir = Path(args.analysis_cache_dir)
     if not cache_dir.is_absolute():
         cache_dir = project_dir / cache_dir
-    analysis = reports.load_or_create_analysis(
-        row,
-        aerial_path,
-        None,
-        cache_dir,
-        args.use_ai,
-        args.ai_provider,
-        ai_model,
-        args.allow_ai_fallback,
-    )
+    analysis = generate_roof_analysis(reports, row, aerial_path, cache_dir, args, ai_model)
     analysis = reports.apply_aerial_age_adjustment(row, analysis)
 
     output_dir = Path(args.output_dir)

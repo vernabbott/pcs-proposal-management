@@ -3,7 +3,7 @@ from io import BytesIO
 from pathlib import Path
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 from urllib.parse import parse_qs, urlsplit
 
 import roof_intelligence_jobs
@@ -30,6 +30,31 @@ class RoofIntelligenceJobStoreTests(unittest.TestCase):
         self.assertEqual(job["status"], "queued")
         self.assertEqual(job["job_type"], "individual_address")
         self.assertEqual(job["input"]["property_address"], "65 N Yuma St, Denver, CO 80223")
+
+    def test_pcs_orders_enable_pilotpoint_roof_reference_workflow(self):
+        reports = Mock()
+        reports.load_or_create_analysis.return_value = {"roof_type": "TPO"}
+        args = type(
+            "Args",
+            (),
+            {
+                "use_ai": True,
+                "ai_provider": "openai",
+                "allow_ai_fallback": True,
+            },
+        )()
+
+        result = single_address.generate_roof_analysis(
+            reports,
+            {"Parcel Number": "123"},
+            Path("aerial.jpg"),
+            Path("analysis-cache"),
+            args,
+            "test-model",
+        )
+
+        self.assertEqual(result["roof_type"], "TPO")
+        self.assertTrue(reports.load_or_create_analysis.call_args.kwargs["use_roof_references"])
 
     def test_area_job_persists_rectangle_and_applies_filters(self):
         job = self.store.create_area_job("39.75", "39.72", "-104.97", "-105.02", "100", ["All"])
