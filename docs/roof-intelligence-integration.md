@@ -374,6 +374,8 @@ Optional normalized observation rows when individual findings need to be queried
 
 The integration will use county-level parcel and assessor services. The earlier `colorado_parcel_data.csv` dependency was a local cache of Denver parcel data despite its statewide-sounding filename. It is not required for the modern single-address architecture.
 
+PilotPoint owns footprint collection, Microsoft-to-county comparison, canonical remediation, and the directional 5% rule. PCS owns ordering, presentation, and review workflow only; it consumes the validation status returned by PilotPoint and does not reimplement the comparison.
+
 Individual-address lookup:
 
 ```text

@@ -276,7 +276,7 @@ def find_parcel_live(address: str, collector, county_name: str) -> tuple[dict, f
 
 
 def configure_collector_for_county(collector, profile) -> None:
-    collector.DENVER_BUILDINGS_URL = profile.building_url
+    collector.BUILDINGS_URL = profile.building_url
     collector.PARCELS_URL = profile.parcel_url
     collector.IMAGERY_SOURCES = list(profile.imagery_sources)
     collector.BUILDING_SOURCE_KIND = getattr(profile, "building_source", "arcgis")
@@ -286,10 +286,10 @@ def configure_collector_for_county(collector, profile) -> None:
     collector._COLLECT_BUILDING_FIELDS = None
     building_crs = getattr(profile, "building_crs", None)
     if building_crs is None:
-        collector.init_crs_transformers(collector.DENVER_BUILDINGS_URL, collector.PARCELS_URL)
+        collector.init_crs_transformers(collector.BUILDINGS_URL, collector.PARCELS_URL)
     else:
         collector.init_crs_transformers(
-            collector.DENVER_BUILDINGS_URL,
+            collector.BUILDINGS_URL,
             collector.PARCELS_URL,
             building_crs,
         )
@@ -377,37 +377,6 @@ def should_pause_for_footprint_review(
     )
 
 
-def apply_directional_footprint_rule(
-    validation: dict,
-    county_area_key: str,
-    tolerance_pct: float = 5.0,
-) -> dict:
-    """Require review only when county area exceeds Microsoft by the tolerance."""
-    result = dict(validation or {})
-    if result.get("status") not in {"validated", "discrepancy"}:
-        return result
-    try:
-        microsoft_sqft = float(result["primary_sqft"])
-        county_sqft = float(result[county_area_key])
-    except (KeyError, TypeError, ValueError):
-        return result
-    if microsoft_sqft <= 0 or county_sqft <= 0:
-        return result
-
-    county_excess_pct = ((county_sqft - microsoft_sqft) / microsoft_sqft) * 100.0
-    result["difference_pct"] = round(abs(county_excess_pct), 2)
-    result["county_excess_pct"] = round(max(county_excess_pct, 0.0), 2)
-    result["comparison_rule"] = "county_exceeds_microsoft"
-    result["tolerance_pct"] = tolerance_pct
-    if county_excess_pct > tolerance_pct:
-        result["status"] = "discrepancy"
-        result.pop("resolution", None)
-    else:
-        result["status"] = "validated"
-        result["resolution"] = "microsoft_preferred"
-    return result
-
-
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate one Roof Intelligence report by address.")
     parser.add_argument("--address", required=True, help="Property address")
@@ -451,7 +420,7 @@ def main() -> int:
         raise RuntimeError(f"Roof Intelligence project directory does not exist: {project_dir}")
 
     sys.path.insert(0, str(project_dir))
-    import collect_denver_buildings_with_parcels as collector
+    import collect_county_buildings_with_parcels as collector
     import generate_roof_intelligence_reports as reports
     from assessor_detail import (
         enrich_report_row,
@@ -555,9 +524,6 @@ def main() -> int:
         footprint_validation = collector.validate_building_footprint_sources(
             record, secondary_buildings
         )
-        footprint_validation = apply_directional_footprint_rule(
-            footprint_validation, "secondary_sqft"
-        )
         if footprint_validation.get("status") == "primary_only":
             footprint_warnings.append(
                 "Building footprint was available only from the Supabase Microsoft footprint table; "
@@ -637,9 +603,6 @@ def main() -> int:
         assessor_warnings.extend(assessor_result.warnings)
         assessor_footprint_validation = validate_assessor_footprint(
             row.get("Building Footprint Sq Ft"), assessor_result.records
-        )
-        assessor_footprint_validation = apply_directional_footprint_rule(
-            assessor_footprint_validation, "assessor_sqft"
         )
         if should_pause_for_footprint_review(
             assessor_footprint_validation,

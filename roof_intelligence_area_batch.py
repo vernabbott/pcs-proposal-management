@@ -253,7 +253,7 @@ def discover_candidates(
     selection: dict | None = None,
 ) -> tuple[list[dict], list[str]]:
     sys.path.insert(0, str(project_dir))
-    import collect_denver_buildings_with_parcels as collector
+    import collect_county_buildings_with_parcels as collector
     from county_config import COUNTY_PROFILES
     from roof_intelligence_single_address import configure_collector_for_county
 

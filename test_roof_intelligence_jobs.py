@@ -491,51 +491,6 @@ class AreaCandidateTests(unittest.TestCase):
         self.assertTrue(single_address.should_pause_for_footprint_review(validation, "auto", False))
         self.assertFalse(single_address.should_pause_for_footprint_review(validation, "auto", True))
 
-    def test_microsoft_larger_footprint_is_accepted(self):
-        validation = single_address.apply_directional_footprint_rule({
-            "status": "discrepancy",
-            "primary_sqft": 1200,
-            "secondary_sqft": 1000,
-            "difference_pct": 16.67,
-        }, "secondary_sqft")
-
-        self.assertEqual(validation["status"], "validated")
-        self.assertEqual(validation["resolution"], "microsoft_preferred")
-        self.assertEqual(validation["county_excess_pct"], 0.0)
-
-    def test_county_up_to_five_percent_larger_is_accepted(self):
-        validation = single_address.apply_directional_footprint_rule({
-            "status": "validated",
-            "primary_sqft": 1000,
-            "secondary_sqft": 1050,
-            "difference_pct": 5.0,
-        }, "secondary_sqft")
-
-        self.assertEqual(validation["status"], "validated")
-        self.assertFalse(single_address.should_pause_for_footprint_review(validation, "auto", False))
-
-    def test_county_more_than_five_percent_larger_requires_review(self):
-        validation = single_address.apply_directional_footprint_rule({
-            "status": "discrepancy",
-            "primary_sqft": 1000,
-            "secondary_sqft": 1051,
-            "difference_pct": 5.1,
-        }, "secondary_sqft")
-
-        self.assertEqual(validation["status"], "discrepancy")
-        self.assertEqual(validation["county_excess_pct"], 5.1)
-        self.assertTrue(single_address.should_pause_for_footprint_review(validation, "auto", False))
-
-    def test_directional_rule_applies_to_assessor_area(self):
-        validation = single_address.apply_directional_footprint_rule({
-            "status": "discrepancy",
-            "primary_sqft": 1500,
-            "assessor_sqft": 1200,
-            "difference_pct": 20.0,
-        }, "assessor_sqft")
-
-        self.assertEqual(validation["status"], "validated")
-        self.assertEqual(validation["resolution"], "microsoft_preferred")
 
 class CountyResolutionTests(unittest.TestCase):
     class Profile:
@@ -548,7 +503,7 @@ class CountyResolutionTests(unittest.TestCase):
 
     class Collector:
         PARCELS_URL = ""
-        DENVER_BUILDINGS_URL = ""
+        BUILDINGS_URL = ""
         _COLLECT_PARCEL_FIELDS = None
         _COLLECT_BUILDING_FIELDS = None
 
