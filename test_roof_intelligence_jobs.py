@@ -455,6 +455,88 @@ class AreaCandidateTests(unittest.TestCase):
         self.assertEqual(body["geometry"], [params["geometry"]])
         self.assertNotIn("geometry=", request.full_url)
 
+    def test_exact_selected_parcel_is_loaded_by_identifier(self):
+        class Collector:
+            PARCELS_URL = "parcels"
+
+            @staticmethod
+            def collect_parcel_fields():
+                return ["SCHEDNUM", "SITUS_ADDRESS_LINE1"]
+
+            @staticmethod
+            def fetch_page(_url, where, _offset, _fields, return_geometry=True):
+                self.assertEqual(where, "SCHEDNUM = '0119107010000'")
+                self.assertTrue(return_geometry)
+                return {"features": [{
+                    "attributes": {"SCHEDNUM": "0119107010000", "SITUS_ADDRESS_LINE1": "4300 N FOREST ST"},
+                    "geometry": {"rings": []},
+                }]}
+
+            @staticmethod
+            def parcel_join_key(record):
+                return record.get("SCHEDNUM", "")
+
+            @staticmethod
+            def geometry_to_wkt(_geometry):
+                return "POLYGON EMPTY"
+
+        parcel = single_address.collect_live_parcel_by_id("0119107010000", Collector())
+
+        self.assertEqual(parcel["full_parcel_number"], "0119107010000")
+        self.assertEqual(parcel["parcel_geometry"], "POLYGON EMPTY")
+
+    def test_batch_mode_does_not_pause_for_pending_footprint_review(self):
+        validation = {"status": "discrepancy", "difference_pct": 20.0}
+
+        self.assertTrue(single_address.should_pause_for_footprint_review(validation, "auto", False))
+        self.assertFalse(single_address.should_pause_for_footprint_review(validation, "auto", True))
+
+    def test_microsoft_larger_footprint_is_accepted(self):
+        validation = single_address.apply_directional_footprint_rule({
+            "status": "discrepancy",
+            "primary_sqft": 1200,
+            "secondary_sqft": 1000,
+            "difference_pct": 16.67,
+        }, "secondary_sqft")
+
+        self.assertEqual(validation["status"], "validated")
+        self.assertEqual(validation["resolution"], "microsoft_preferred")
+        self.assertEqual(validation["county_excess_pct"], 0.0)
+
+    def test_county_up_to_five_percent_larger_is_accepted(self):
+        validation = single_address.apply_directional_footprint_rule({
+            "status": "validated",
+            "primary_sqft": 1000,
+            "secondary_sqft": 1050,
+            "difference_pct": 5.0,
+        }, "secondary_sqft")
+
+        self.assertEqual(validation["status"], "validated")
+        self.assertFalse(single_address.should_pause_for_footprint_review(validation, "auto", False))
+
+    def test_county_more_than_five_percent_larger_requires_review(self):
+        validation = single_address.apply_directional_footprint_rule({
+            "status": "discrepancy",
+            "primary_sqft": 1000,
+            "secondary_sqft": 1051,
+            "difference_pct": 5.1,
+        }, "secondary_sqft")
+
+        self.assertEqual(validation["status"], "discrepancy")
+        self.assertEqual(validation["county_excess_pct"], 5.1)
+        self.assertTrue(single_address.should_pause_for_footprint_review(validation, "auto", False))
+
+    def test_directional_rule_applies_to_assessor_area(self):
+        validation = single_address.apply_directional_footprint_rule({
+            "status": "discrepancy",
+            "primary_sqft": 1500,
+            "assessor_sqft": 1200,
+            "difference_pct": 20.0,
+        }, "assessor_sqft")
+
+        self.assertEqual(validation["status"], "validated")
+        self.assertEqual(validation["resolution"], "microsoft_preferred")
+
 class CountyResolutionTests(unittest.TestCase):
     class Profile:
         def __init__(self, key):
@@ -645,6 +727,7 @@ class RoofIntelligenceRouteTests(unittest.TestCase):
         self.assertEqual(command[command.index("--county") + 1], "adams")
         self.assertIn("--parcel-id", command)
         self.assertEqual(command[command.index("--parcel-id") + 1], "0172131300018")
+        self.assertIn("--allow-pending-footprint-review", command)
         self.assertNotIn("--parcel-cache", command)
 
     def test_canonical_review_queue_is_loaded_from_roof_project(self):
@@ -936,6 +1019,46 @@ class RoofIntelligenceRouteTests(unittest.TestCase):
         self.assertEqual(command[command.index("--center-lat") + 1], "39.7392")
         self.assertEqual(command[command.index("--center-lng") + 1], "-104.9903")
         self.assertEqual(command[command.index("--radius-miles") + 1], "0.1")
+
+    def test_area_discovery_retries_transient_coordinate_system_failure(self):
+        job = {
+            "minimum_roof_size": 10000,
+            "input": {
+                "selection_type": "radius",
+                "bounds": {"north": 39.75, "south": 39.72, "east": -104.97, "west": -105.02},
+                "center": {"lat": 39.7392, "lng": -104.9903},
+                "radius_miles": 0.1,
+            },
+        }
+        failed = type("Completed", (), {
+            "returncode": 1,
+            "stdout": '{"error": "County parcel discovery failed: Unable to determine building/parcel coordinate systems; aborting before aerial imagery can be requested."}',
+            "stderr": "",
+        })()
+        succeeded = type("Completed", (), {
+            "returncode": 0,
+            "stdout": '{"candidates": [{"candidate_key": "denver:one"}], "warnings": []}',
+            "stderr": "",
+        })()
+
+        with patch.object(self.web.subprocess, "run", side_effect=[failed, succeeded]) as run, \
+             patch.object(self.web.time, "sleep") as sleep:
+            candidates, warnings = self.web._discover_local_area_candidates(job)
+
+        self.assertEqual(candidates, [{"candidate_key": "denver:one"}])
+        self.assertEqual(warnings, [])
+        self.assertEqual(run.call_count, 2)
+        sleep.assert_called_once_with(2.0)
+
+    def test_coordinate_system_failure_is_not_reported_as_imagery_failure(self):
+        code, message, retryable = self.web._roof_error_details(
+            "Unable to determine building/parcel coordinate systems; "
+            "aborting before aerial imagery can be requested at the wrong location."
+        )
+
+        self.assertEqual(code, "gis_service_unavailable")
+        self.assertIn("County GIS services", message)
+        self.assertTrue(retryable)
 
     def test_area_job_can_be_cancelled_from_workspace(self):
         store = RoofIntelligenceJobStore(self.db_path)

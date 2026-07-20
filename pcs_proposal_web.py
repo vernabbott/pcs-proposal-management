@@ -3862,6 +3862,12 @@ def _roof_error_details(message):
         return "parcel_not_found", "No matching county parcel was found for that address.", False
     if "no building" in lowered or "building footprint" in lowered:
         return "building_not_found", "A building footprint could not be matched to the property parcel.", False
+    if "coordinate systems" in lowered or "county parcel discovery failed" in lowered:
+        return (
+            "gis_service_unavailable",
+            "County GIS services were temporarily unavailable while locating properties. Please retry the report.",
+            True,
+        )
     if "aerial" in lowered or "imagery" in lowered:
         return "imagery_unavailable", "A usable aerial image could not be retrieved for the property.", True
     if "timed out" in lowered or "timeout" in lowered:
@@ -4084,21 +4090,34 @@ def _discover_local_area_candidates(job):
             "--center-lng", str(center.get("lng", "")),
             "--radius-miles", str(job_input.get("radius_miles", "")),
         ])
-    completed = subprocess.run(
-        command,
-        cwd=ROOF_INTELLIGENCE_PROJECT_DIR,
-        capture_output=True,
-        text=True,
-        timeout=int(os.environ.get("ROOF_INTELLIGENCE_AREA_DISCOVERY_TIMEOUT", "900")),
-        check=False,
-    )
-    payload = _last_json_payload(completed)
-    if completed.returncode != 0 or payload.get("error"):
-        raise RuntimeError(
+    attempts = max(1, int(os.environ.get("ROOF_INTELLIGENCE_AREA_DISCOVERY_ATTEMPTS", "2")))
+    for attempt in range(1, attempts + 1):
+        completed = subprocess.run(
+            command,
+            cwd=ROOF_INTELLIGENCE_PROJECT_DIR,
+            capture_output=True,
+            text=True,
+            timeout=int(os.environ.get("ROOF_INTELLIGENCE_AREA_DISCOVERY_TIMEOUT", "900")),
+            check=False,
+        )
+        payload = _last_json_payload(completed)
+        if completed.returncode == 0 and not payload.get("error"):
+            return list(payload.get("candidates") or []), list(payload.get("warnings") or [])
+
+        error = str(
             payload.get("error")
             or (completed.stderr or completed.stdout or "Unable to discover properties in the selected area.").strip()
         )
-    return list(payload.get("candidates") or []), list(payload.get("warnings") or [])
+        transient_crs_failure = (
+            "coordinate systems" in error.lower()
+            or "county parcel discovery failed" in error.lower()
+        )
+        if not transient_crs_failure or attempt >= attempts:
+            raise RuntimeError(error)
+        _safe_debug(f"[ROOF AREA] GIS discovery attempt {attempt} failed; retrying.")
+        time.sleep(float(os.environ.get("ROOF_INTELLIGENCE_AREA_RETRY_DELAY", "2")))
+
+    raise RuntimeError("Unable to discover properties in the selected area.")
 
 
 def _run_local_candidate_report(candidate):
@@ -4109,6 +4128,7 @@ def _run_local_candidate_report(candidate):
         "--address", candidate["address"],
         "--project-dir", ROOF_INTELLIGENCE_PROJECT_DIR,
         "--county", candidate.get("county_profile") or "auto",
+        "--allow-pending-footprint-review",
         "--use-ai",
         "--allow-ai-fallback",
     ]

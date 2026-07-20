@@ -200,6 +200,41 @@ def collect_live_parcels_for_address(address: str, collector) -> list[dict]:
     return parcels
 
 
+def collect_live_parcel_by_id(parcel_id: str, collector) -> dict | None:
+    """Load the exact parcel selected during map-area discovery."""
+    requested = re.sub(r"[^A-Za-z0-9]", "", str(parcel_id or "")).upper()
+    if not requested:
+        return None
+    fields = collector.collect_parcel_fields()
+    identifier_fields = (
+        "SCHEDNUM", "PARID", "ParcelNo", "PARCELNUMBER", "PARCELNUM", "PARCEL_SPN",
+        "PARCEL_ID", "PARCELID", "PARCELNB", "PARCEL", "PIN", "SPN", "AIN", "Folio",
+    )
+    for field in identifier_fields:
+        if field not in fields:
+            continue
+        try:
+            page = collector.fetch_page(
+                collector.PARCELS_URL,
+                f"{field} = {sql_literal(parcel_id)}",
+                0,
+                fields,
+                return_geometry=True,
+            )
+        except Exception:
+            continue
+        for feature in page.get("features", []):
+            attrs = feature.get("attributes", {}) or {}
+            actual = re.sub(r"[^A-Za-z0-9]", "", str(collector.parcel_join_key(attrs) or "")).upper()
+            if actual != requested:
+                continue
+            attrs["parcel_shape_area"] = attrs.get("Shape__Area") or attrs.get("SHAPE__Area")
+            attrs["parcel_geometry"] = collector.geometry_to_wkt(feature.get("geometry"))
+            attrs["full_parcel_number"] = collector.parcel_join_key(attrs)
+            return attrs
+    return None
+
+
 def find_parcel_for_address(address: str, parcels: list[dict], collector) -> tuple[dict, float, str]:
     query = normalize_address(address)
     zip_code = address_zip(address)
@@ -330,6 +365,49 @@ def safe_report_name(parcel: str, address: str) -> str:
     return f"{parcel}-{safe_address or 'roof-report'}.pdf"
 
 
+def should_pause_for_footprint_review(
+    validation: dict,
+    footprint_source: str,
+    allow_pending_review: bool,
+) -> bool:
+    return (
+        validation.get("status") == "discrepancy"
+        and footprint_source == "auto"
+        and not allow_pending_review
+    )
+
+
+def apply_directional_footprint_rule(
+    validation: dict,
+    county_area_key: str,
+    tolerance_pct: float = 5.0,
+) -> dict:
+    """Require review only when county area exceeds Microsoft by the tolerance."""
+    result = dict(validation or {})
+    if result.get("status") not in {"validated", "discrepancy"}:
+        return result
+    try:
+        microsoft_sqft = float(result["primary_sqft"])
+        county_sqft = float(result[county_area_key])
+    except (KeyError, TypeError, ValueError):
+        return result
+    if microsoft_sqft <= 0 or county_sqft <= 0:
+        return result
+
+    county_excess_pct = ((county_sqft - microsoft_sqft) / microsoft_sqft) * 100.0
+    result["difference_pct"] = round(abs(county_excess_pct), 2)
+    result["county_excess_pct"] = round(max(county_excess_pct, 0.0), 2)
+    result["comparison_rule"] = "county_exceeds_microsoft"
+    result["tolerance_pct"] = tolerance_pct
+    if county_excess_pct > tolerance_pct:
+        result["status"] = "discrepancy"
+        result.pop("resolution", None)
+    else:
+        result["status"] = "validated"
+        result["resolution"] = "microsoft_preferred"
+    return result
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate one Roof Intelligence report by address.")
     parser.add_argument("--address", required=True, help="Property address")
@@ -358,6 +436,11 @@ def parse_args() -> argparse.Namespace:
         help="Audited source resolution for a previously reported footprint discrepancy",
     )
     parser.add_argument("--footprint-override-reason", default="")
+    parser.add_argument(
+        "--allow-pending-footprint-review",
+        action="store_true",
+        help="Generate a batch report with the primary footprint while preserving its review item",
+    )
     return parser.parse_args()
 
 
@@ -390,11 +473,17 @@ def main() -> int:
     else:
         profile = county_profile(args.county)
         configure_collector_for_county(collector, profile)
-        parcel, match_score, matched_address, lookup_source = find_parcel_live(
-            args.address,
-            collector,
-            profile.display_name,
-        )
+        parcel = collect_live_parcel_by_id(args.parcel_id, collector) if args.parcel_id else None
+        if parcel is not None:
+            match_score = 1.0
+            matched_address = collector.address_from_record(parcel) or args.address
+            lookup_source = f"Live {profile.display_name} parcel service (PCS-selected parcel)"
+        else:
+            parcel, match_score, matched_address, lookup_source = find_parcel_live(
+                args.address,
+                collector,
+                profile.display_name,
+            )
 
     parcel_geometry = collector.get_parcel_bounds_in_building_crs([parcel])
     if not parcel_geometry:
@@ -466,6 +555,9 @@ def main() -> int:
         footprint_validation = collector.validate_building_footprint_sources(
             record, secondary_buildings
         )
+        footprint_validation = apply_directional_footprint_rule(
+            footprint_validation, "secondary_sqft"
+        )
         if footprint_validation.get("status") == "primary_only":
             footprint_warnings.append(
                 "Building footprint was available only from the Supabase Microsoft footprint table; "
@@ -505,13 +597,23 @@ def main() -> int:
             "canonical_status": canonical_record.get("canonical_status"),
             "canonical_validation": canonical_record.get("canonical_validation"),
         })
-    if footprint_validation.get("status") == "discrepancy" and args.footprint_source == "auto":
+    if footprint_validation.get("status") == "discrepancy" and args.allow_pending_footprint_review:
+        footprint_warnings.append(
+            "The county GIS footprint exceeds the Microsoft footprint by "
+            f"{footprint_validation['county_excess_pct']:.2f}%. The batch report uses the Microsoft "
+            "footprint while the canonical footprint remains pending review."
+        )
+    elif should_pause_for_footprint_review(
+        footprint_validation,
+        args.footprint_source,
+        args.allow_pending_footprint_review,
+    ):
         raise RuntimeError(
             f"Building footprint discrepancy needs attention for {profile.display_name} parcel {parcel_key}: "
             "Supabase Microsoft footprint "
             f"{footprint_validation['primary_sqft']:.0f} sq ft versus county GIS footprint "
             f"{footprint_validation['secondary_sqft']:.0f} sq ft "
-            f"({footprint_validation['difference_pct']:.2f}% difference; 5% allowed). "
+            f"(county is {footprint_validation['county_excess_pct']:.2f}% larger; 5% allowed). "
             f"Canonical footprint {record.get('canonical_id')} is pending review."
         )
     collector.add_aerial_image_fields(record)
@@ -536,7 +638,14 @@ def main() -> int:
         assessor_footprint_validation = validate_assessor_footprint(
             row.get("Building Footprint Sq Ft"), assessor_result.records
         )
-        if assessor_footprint_validation.get("status") == "discrepancy" and args.footprint_source == "auto":
+        assessor_footprint_validation = apply_directional_footprint_rule(
+            assessor_footprint_validation, "assessor_sqft"
+        )
+        if should_pause_for_footprint_review(
+            assessor_footprint_validation,
+            args.footprint_source,
+            args.allow_pending_footprint_review,
+        ):
             if record.get("canonical_id"):
                 mark_canonical_pending_review(record["canonical_id"], {
                     **assessor_footprint_validation,
@@ -546,7 +655,13 @@ def main() -> int:
                 f"Building footprint discrepancy needs attention for {profile.display_name} parcel {parcel_key}: selected footprint "
                 f"{assessor_footprint_validation['primary_sqft']:.0f} sq ft versus explicit "
                 f"county assessor footprint {assessor_footprint_validation['assessor_sqft']:.0f} sq ft "
-                f"({assessor_footprint_validation['difference_pct']:.2f}% difference; 5% allowed)."
+                f"(county is {assessor_footprint_validation['county_excess_pct']:.2f}% larger; 5% allowed)."
+            )
+        if assessor_footprint_validation.get("status") == "discrepancy" and args.allow_pending_footprint_review:
+            assessor_warnings.append(
+                "The explicit county assessor area exceeds the Microsoft footprint by "
+                f"{assessor_footprint_validation['county_excess_pct']:.2f}%. The batch report was generated "
+                "while the footprint remains pending review."
             )
         if assessor_footprint_validation.get("status") == "discrepancy":
             assessor_warnings.append(
