@@ -122,11 +122,11 @@
     <h1 class="full-detail-title">Full Detail - {{ data.customer_name or folder_name }}</h1>
     {% if is_preview %}
       <a href="{{ url_for('proposal_details_new') }}" class="btn btn-outline-secondary" onclick="history.back(); return false;">
-        <i class="bi bi-arrow-left me-1"></i> Back to Detail
+        <i class="bi bi-arrow-left me-1"></i> Back
       </a>
     {% else %}
       <a href="{{ url_for('proposal_details', folder_name=folder_name) }}" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left me-1"></i> Back to Detail
+        <i class="bi bi-arrow-left me-1"></i> Back
       </a>
     {% endif %}
   </div>

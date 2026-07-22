@@ -4341,7 +4341,7 @@ def roof_intelligence():
         active_job=_roof_job_payload(store, active_job),
         recent_jobs=store.list_jobs(ROOF_INTELLIGENCE_USER_KEY, limit=12),
         notifications=selected_notifications,
-        county_health=store.list_county_health(limit=20),
+        county_health=store.list_latest_county_health(limit=20),
         canonical_reviews=_canonical_footprint_reviews(limit=20),
         supported_roof_types=SUPPORTED_ROOF_TYPES,
         local_worker_enabled=_roof_local_worker_enabled(),
@@ -4984,13 +4984,22 @@ def get_weekly_follow_up_recipients_for_submitter(submitted_by):
     return recipients_by_submitter.get(submitter, get_email_recipients_for_submitter(submitter))
 
 
+def get_weekly_follow_up_bcc_recipients():
+    return ["mark@procoatingsystems.com"]
+
+
+def get_weekly_follow_up_sender_email():
+    return "vern@procoatingsystems.com"
+
+
 def _open_outlook_html_draft_for_submitter(subject_text, plain_text_body, html_body, submitted_by, recipients=None):
     if sys.platform != "darwin":
         return None
 
     recipients = recipients or get_email_recipients_for_submitter(submitted_by)
-    sender_email = get_sender_email_for_submitter(submitted_by)
-    submitter_label = str(submitted_by or "").strip()
+    sender_email = get_weekly_follow_up_sender_email()
+    sender_label = "Vern"
+    bcc_recipients = get_weekly_follow_up_bcc_recipients()
 
     if _is_running_new_outlook():
         status = _open_new_outlook_template_draft(
@@ -4998,10 +5007,13 @@ def _open_outlook_html_draft_for_submitter(subject_text, plain_text_body, html_b
             plain_text_body,
             html_body,
             recipients,
+            bcc_recipients,
+            sender_email,
         )
         return _build_outlook_draft_warning(status, sender_email)
 
     recipient_blob = "||".join(recipients)
+    bcc_recipient_blob = "||".join(bcc_recipients)
     account_match_enabled = "1"
     script_lines = [
         "on run argv",
@@ -5011,8 +5023,10 @@ def _open_outlook_html_draft_for_submitter(subject_text, plain_text_body, html_b
         "set recipientBlob to item 4 of argv",
         "set senderLabel to item 5 of argv",
         "set accountMatchFlag to item 6 of argv",
+        "set bccRecipientBlob to item 7 of argv",
         'set AppleScript\'s text item delimiters to "||"',
         "set recipientList to text items of recipientBlob",
+        "set bccRecipientList to text items of bccRecipientBlob",
         "set availableAccounts to {}",
         "set matchStatus to \"fallback:account-match-disabled\"",
         'tell application "Microsoft Outlook"',
@@ -5103,6 +5117,12 @@ def _open_outlook_html_draft_for_submitter(subject_text, plain_text_body, html_b
         "make new to recipient at end of to recipients of newMessage with properties {email address:{address:cleanAddress}}",
         "end if",
         "end repeat",
+        "repeat with recipientAddress in bccRecipientList",
+        "set cleanAddress to (recipientAddress as string)",
+        'if cleanAddress is not "" then',
+        "make new bcc recipient at end of bcc recipients of newMessage with properties {email address:{address:cleanAddress}}",
+        "end if",
+        "end repeat",
         "open newMessage",
         "return matchStatus",
         "end tell",
@@ -5115,8 +5135,9 @@ def _open_outlook_html_draft_for_submitter(subject_text, plain_text_body, html_b
         str(html_body or ""),
         sender_email,
         recipient_blob,
-        submitter_label,
+        sender_label,
         account_match_enabled,
+        bcc_recipient_blob,
     ]
     try:
         result = subprocess.run(
@@ -5927,10 +5948,22 @@ def _set_text_message_part(part, body_text, subtype):
         part["Content-Transfer-Encoding"] = "base64"
     part.set_payload(payload)
 
-def _open_new_outlook_template_draft(subject_text, plain_text_body, html_body, recipients):
+def _open_new_outlook_template_draft(
+    subject_text,
+    plain_text_body,
+    html_body,
+    recipients,
+    bcc_recipients=None,
+    sender_email=None,
+):
     recipient_text = ", ".join(
         str(address or "").strip()
         for address in (recipients or [])
+        if str(address or "").strip()
+    )
+    bcc_recipient_text = ", ".join(
+        str(address or "").strip()
+        for address in (bcc_recipients or [])
         if str(address or "").strip()
     )
     try:
@@ -5940,6 +5973,10 @@ def _open_new_outlook_template_draft(subject_text, plain_text_body, html_body, r
         raise RuntimeError(f"Unable to read proposal summary email template: {exc}") from exc
 
     _replace_message_header(message, "To", recipient_text)
+    if sender_email:
+        _replace_message_header(message, "From", str(sender_email).strip())
+    if bcc_recipient_text:
+        _replace_message_header(message, "Bcc", bcc_recipient_text)
     _replace_message_header(message, "Subject", str(subject_text or "").strip())
 
     for stale_header in ("Date", "Message-ID", "Thread-Index", "X-MS-TNEF-Correlator"):

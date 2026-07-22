@@ -61,6 +61,13 @@
             font-size: 13px;
         }
 
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .home-btn,
         .new-proposal-btn {
             display: inline-flex;
             align-items: center;
@@ -74,6 +81,18 @@
             font-weight: 700;
             text-decoration: none;
             white-space: nowrap;
+        }
+
+        .home-btn {
+            border-color: var(--pcs-border);
+            background: var(--pcs-panel);
+            color: var(--pcs-text);
+        }
+
+        .home-btn:hover {
+            border-color: #aeb9c6;
+            background: #e9edf2;
+            color: var(--pcs-text);
         }
 
         .new-proposal-btn:hover {
@@ -290,6 +309,12 @@
                 align-items: stretch;
             }
 
+            .topbar-actions {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .home-btn,
             .new-proposal-btn {
                 justify-content: center;
             }
@@ -398,9 +423,14 @@
                 <h1 class="screen-title">{{ status_label }}</h1>
                 <p class="screen-subtitle">Proposal folders sorted by customer and project address.</p>
             </div>
-            <a href="{{ url_for('proposal_details_new', read_only='no') }}" class="new-proposal-btn">
-                <i class="bi bi-plus-lg"></i> New Proposal
-            </a>
+            <div class="topbar-actions">
+                <a href="{{ url_for('landing_page') }}" class="home-btn">
+                    <i class="bi bi-house-door"></i> Home
+                </a>
+                <a href="{{ url_for('proposal_details_new', read_only='no') }}" class="new-proposal-btn">
+                    <i class="bi bi-plus-lg"></i> New Proposal
+                </a>
+            </div>
         </div>
 
         <div class="toolbar">

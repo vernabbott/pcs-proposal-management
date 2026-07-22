@@ -61,5 +61,83 @@ class LauncherEnvironmentTests(unittest.TestCase):
         self.assertEqual(environment[run_app.LOCAL_ROOF_WORKER_ENV], "1")
 
 
+class WeeklyFollowUpEmailTests(unittest.TestCase):
+    def test_follow_up_sender_is_always_vern(self):
+        self.assertEqual(
+            pcs_proposal_web.get_weekly_follow_up_sender_email(),
+            "vern@procoatingsystems.com",
+        )
+
+    def test_follow_up_bcc_recipients_include_mark(self):
+        self.assertEqual(
+            pcs_proposal_web.get_weekly_follow_up_bcc_recipients(),
+            ["mark@procoatingsystems.com"],
+        )
+
+    @patch("pcs_proposal_web._open_new_outlook_template_draft")
+    @patch("pcs_proposal_web._is_running_new_outlook", return_value=True)
+    @patch("pcs_proposal_web.sys.platform", "darwin")
+    def test_new_outlook_follow_up_draft_passes_mark_as_bcc(
+        self,
+        _new_outlook_mock,
+        open_draft_mock,
+    ):
+        open_draft_mock.return_value = "fallback:new-outlook-template"
+
+        pcs_proposal_web._open_outlook_html_draft_for_submitter(
+            "Follow-Up List",
+            "Plain body",
+            "<p>HTML body</p>",
+            "David",
+            ["david@procoatingsystems.com"],
+        )
+
+        open_draft_mock.assert_called_once_with(
+            "Follow-Up List",
+            "Plain body",
+            "<p>HTML body</p>",
+            ["david@procoatingsystems.com"],
+            ["mark@procoatingsystems.com"],
+            "vern@procoatingsystems.com",
+        )
+
+    @patch("pcs_proposal_web.subprocess.run")
+    @patch("pcs_proposal_web._is_running_new_outlook", return_value=False)
+    @patch("pcs_proposal_web.sys.platform", "darwin")
+    def test_classic_outlook_follow_up_draft_adds_mark_as_bcc(
+        self,
+        _new_outlook_mock,
+        run_mock,
+    ):
+        run_mock.return_value.stdout = "matched"
+
+        pcs_proposal_web._open_outlook_html_draft_for_submitter(
+            "Follow-Up List",
+            "Plain body",
+            "<p>HTML body</p>",
+            "Richard",
+            ["richard@procoatingsystems.com"],
+        )
+
+        command = run_mock.call_args.args[0]
+        self.assertTrue(
+            any(
+                line.startswith("make new bcc recipient at end of bcc recipients of newMessage")
+                for line in command
+            )
+        )
+        self.assertEqual(
+            command[-5:],
+            [
+                "vern@procoatingsystems.com",
+                "richard@procoatingsystems.com",
+                "Vern",
+                "1",
+                "mark@procoatingsystems.com",
+            ],
+        )
+        self.assertEqual(command[-1], "mark@procoatingsystems.com")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -64,6 +64,15 @@ def normalize_address(value: object) -> str:
     return " ".join(replacements.get(token, token) for token in text.split())
 
 
+def normalize_county_health_status(value: object) -> str:
+    status = str(value or "failed").strip().lower()
+    if status == "ok":
+        return "healthy"
+    if status in {"healthy", "degraded", "failed"}:
+        return status
+    return "failed"
+
+
 def validate_full_address(value: object) -> str:
     address = " ".join(str(value or "").split())
     if not address:
@@ -1407,34 +1416,51 @@ class RoofIntelligenceJobStore:
         with self.connect() as connection:
             for result in payload.get("results") or []:
                 county_key = normalize_address(result.get("county"))
+                status = normalize_county_health_status(result.get("status"))
+                normalized_result = dict(result)
+                normalized_result["status"] = status
                 previous = connection.execute(
                     "SELECT status, result_json FROM county_health_checks WHERE county_key = ? ORDER BY checked_at DESC LIMIT 1",
                     (county_key,),
                 ).fetchone()
                 connection.execute(
                     "INSERT INTO county_health_checks (id, county_key, status, result_json, checked_at) VALUES (?, ?, ?, ?, ?)",
-                    (str(uuid.uuid4()), county_key, result.get("status", "failed"), json.dumps(result, default=str), checked_at),
+                    (str(uuid.uuid4()), county_key, status, json.dumps(normalized_result, default=str), checked_at),
                 )
                 prior_result = json.loads(previous["result_json"]) if previous else {}
+                previous_status = normalize_county_health_status(previous["status"]) if previous else None
                 changed = (
-                    (previous is None and result.get("status") == "failed")
+                    (previous is None and status in {"degraded", "failed"})
                     or (
                         previous is not None
                         and (
-                            previous["status"] != result.get("status")
-                            or prior_result.get("error") != result.get("error")
+                            previous_status != status
+                            or prior_result.get("error") != normalized_result.get("error")
                         )
                     )
                 )
                 if changed:
-                    title = (
-                        "County discovery health issue"
-                        if result.get("status") == "failed"
-                        else "County discovery health recovered"
-                    )
-                    message = result.get("error") or f"{result.get('county')} discovery checks are healthy."
+                    titles = {
+                        "failed": "County discovery health issue",
+                        "degraded": "County discovery health degraded",
+                        "healthy": "County discovery health recovered",
+                    }
+                    title = titles[status]
+                    if normalized_result.get("error"):
+                        message = normalized_result["error"]
+                    elif status == "degraded":
+                        message = (
+                            f"{normalized_result.get('passed_count', 1)} of "
+                            f"{normalized_result.get('sample_count', 2)} county samples passed."
+                        )
+                    else:
+                        message = f"{normalized_result.get('county')} discovery checks are {status}."
                     notifications.append(
-                        (f"county_health_{county_key}_{checked_at}", title, f"{result.get('county')}: {message}")
+                        (
+                            f"county_health_{county_key}_{checked_at}",
+                            title,
+                            f"{normalized_result.get('county')}: {message}",
+                        )
                     )
         for kind, title, message in notifications:
             self._create_notification(user_key, None, None, kind, title, message)
@@ -1453,6 +1479,33 @@ class RoofIntelligenceJobStore:
         with self.connect() as connection:
             rows = connection.execute(
                 "SELECT * FROM county_health_checks ORDER BY checked_at DESC, county_key LIMIT ?",
+                (max(1, min(int(limit), 200)),),
+            ).fetchall()
+        results = []
+        for row in rows:
+            item = dict(row)
+            item["result"] = json.loads(item.pop("result_json") or "{}")
+            results.append(item)
+        return results
+
+    def list_latest_county_health(self, limit: int = 20) -> list[dict]:
+        """Return only the newest stored result for each county."""
+        with self.connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT id, county_key, status, result_json, checked_at
+                FROM (
+                    SELECT checks.*,
+                           ROW_NUMBER() OVER (
+                               PARTITION BY county_key
+                               ORDER BY checked_at DESC, rowid DESC
+                           ) AS county_rank
+                    FROM county_health_checks AS checks
+                )
+                WHERE county_rank = 1
+                ORDER BY checked_at DESC, county_key
+                LIMIT ?
+                """,
                 (max(1, min(int(limit), 200)),),
             ).fetchall()
         results = []

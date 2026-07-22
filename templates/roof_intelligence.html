@@ -177,6 +177,38 @@
             background: #fff;
         }
 
+        .address-autocomplete { position: relative; }
+        .address-suggestions {
+            position: absolute;
+            z-index: 60;
+            top: calc(100% + 4px);
+            right: 0;
+            left: 0;
+            max-height: 260px;
+            margin: 0;
+            padding: 5px;
+            overflow-y: auto;
+            list-style: none;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #fff;
+            box-shadow: 0 12px 30px rgba(16, 24, 40, .18);
+        }
+        .address-suggestion {
+            width: 100%;
+            padding: 10px 11px;
+            border: 0;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--ink);
+            text-align: left;
+            cursor: pointer;
+        }
+        .address-suggestion:hover,
+        .address-suggestion.active { background: var(--blue-soft); }
+        .address-suggestion-main { display: block; font-weight: 750; }
+        .address-suggestion-secondary { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; }
+
         .choice-icon {
             display: grid;
             width: 36px;
@@ -516,8 +548,11 @@
                     <div class="workflow-details">
                         <div class="mb-3">
                             <label class="form-label" for="property_address">Full Property Address</label>
-                            <textarea class="form-control" id="property_address" name="property_address" rows="4" required placeholder="65 N Yuma St, Denver, CO 80223"></textarea>
-                            <p class="field-help">Include the street address, city, state, and five-digit ZIP code.</p>
+                            <div class="address-autocomplete">
+                                <input class="form-control" id="property_address" name="property_address" type="search" required autocomplete="off" placeholder="65 N Yuma St, Denver, CO 80223" role="combobox" aria-autocomplete="list" aria-controls="property-address-suggestions" aria-expanded="false">
+                                <ul class="address-suggestions" id="property-address-suggestions" role="listbox" hidden></ul>
+                            </div>
+                            <p class="field-help" id="property-address-help">Start typing, then choose a suggested address to fill in the complete street address, city, state, and ZIP code.</p>
                         </div>
                         <button class="button" type="submit"><i class="bi bi-stars"></i>Start Individual Report</button>
                         {% if local_worker_enabled %}
@@ -885,8 +920,8 @@
 
             <section class="panel">
                 <div class="panel-header">
-                    <h2 class="panel-title">County Data Health History</h2>
-                    <p class="panel-copy">Recent scheduled parcel, footprint, assessor, and imagery checks.</p>
+                    <h2 class="panel-title">Current County Data Health</h2>
+                    <p class="panel-copy">The most recent parcel, footprint, assessor, and imagery check for each county.</p>
                 </div>
                 <div class="panel-body py-1">
                     {% if county_health %}
@@ -895,7 +930,7 @@
                                 <li class="list-row">
                                     <div class="list-main">
                                         <span class="list-title">{{ check.result.get('county', check.county_key) }}</span>
-                                        <span class="list-meta">{{ check.checked_at.replace('T', ' ')[:19] }}{% if check.result.get('error') %} · {{ check.result.get('error') }}{% endif %}</span>
+                                        <span class="list-meta"><time data-local-datetime="{{ check.checked_at }}" datetime="{{ check.checked_at }}">{{ check.checked_at.replace('T', ' ')[:19] }} UTC</time>{% if check.result.get('error') %} · {{ check.result.get('error') }}{% endif %}</span>
                                     </div>
                                     <span class="mini-status">{{ check.status }}</span>
                                 </li>
@@ -919,6 +954,21 @@
             let mode = requestedMode === 'area' || requestedMode === 'individual' ? requestedMode : inferredMode;
             let areaMap = null;
             let ensureAreaMap = () => {};
+            let ensureIndividualAutocomplete = () => {};
+
+            const localDateTimeFormatter = new Intl.DateTimeFormat(undefined, {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                second: '2-digit',
+                timeZoneName: 'short',
+            });
+            document.querySelectorAll('[data-local-datetime]').forEach((element) => {
+                const timestamp = Date.parse(element.dataset.localDatetime || '');
+                if (!Number.isNaN(timestamp)) element.textContent = localDateTimeFormatter.format(timestamp);
+            });
 
             const openModeDialog = (nextMode) => {
                 mode = nextMode;
@@ -937,6 +987,7 @@
                     ensureAreaMap();
                     if (areaMap && window.google?.maps) window.setTimeout(() => google.maps.event.trigger(areaMap, 'resize'), 0);
                 }
+                if (mode === 'individual') ensureIndividualAutocomplete();
             };
 
             document.querySelectorAll('[data-mode-button]').forEach((button) => {
@@ -962,6 +1013,9 @@
             });
 
             const mapElement = document.getElementById('area-map');
+            const propertyAddressInput = document.getElementById('property_address');
+            const propertyAddressSuggestions = document.getElementById('property-address-suggestions');
+            const propertyAddressHelp = document.getElementById('property-address-help');
             const drawButton = document.getElementById('draw-area-button');
             const clearButton = document.getElementById('clear-area-button');
             const mapAddressInput = document.getElementById('map-address');
@@ -987,6 +1041,7 @@
                 west: document.getElementById('bounds_west'),
             };
             let googleMapsLoadPromise = null;
+            let individualAutocompletePromise = null;
 
             const currentSelectionType = () => document.querySelector('input[name="selection_type"]:checked')?.value || 'rectangle';
             const updateAreaMethodControls = () => {
@@ -1333,6 +1388,145 @@
                     if (selectionStatus) selectionStatus.textContent = 'Map unavailable';
                     googleMapsLoadPromise = null;
                 });
+            };
+
+            const closeAddressSuggestions = () => {
+                if (!propertyAddressSuggestions || !propertyAddressInput) return;
+                propertyAddressSuggestions.hidden = true;
+                propertyAddressSuggestions.replaceChildren();
+                propertyAddressInput.setAttribute('aria-expanded', 'false');
+                propertyAddressInput.removeAttribute('aria-activedescendant');
+            };
+
+            const initializeIndividualAutocomplete = async () => {
+                if (!propertyAddressInput || !propertyAddressSuggestions) return;
+                const {AutocompleteSuggestion, AutocompleteSessionToken} = await google.maps.importLibrary('places');
+                let sessionToken = new AutocompleteSessionToken();
+                let requestNumber = 0;
+                let debounceTimer = null;
+                let activeIndex = -1;
+
+                const chooseSuggestion = async (prediction) => {
+                    propertyAddressInput.value = prediction.description;
+                    closeAddressSuggestions();
+                    try {
+                        const place = prediction.placePrediction.toPlace();
+                        await place.fetchFields({fields: ['formattedAddress']});
+                        propertyAddressInput.value = place.formattedAddress || prediction.description;
+                    } catch (_) {
+                        // The displayed prediction is still a complete, usable address.
+                    }
+                    sessionToken = new AutocompleteSessionToken();
+                    propertyAddressInput.focus();
+                };
+                const setActiveSuggestion = (nextIndex) => {
+                    const options = Array.from(propertyAddressSuggestions.querySelectorAll('[role="option"]'));
+                    if (!options.length) return;
+                    activeIndex = (nextIndex + options.length) % options.length;
+                    options.forEach((option, index) => option.classList.toggle('active', index === activeIndex));
+                    propertyAddressInput.setAttribute('aria-activedescendant', options[activeIndex].id);
+                    options[activeIndex].scrollIntoView({block: 'nearest'});
+                };
+                const showPredictions = (predictions) => {
+                    propertyAddressSuggestions.replaceChildren();
+                    activeIndex = -1;
+                    predictions.forEach((prediction, index) => {
+                        const item = document.createElement('li');
+                        const button = document.createElement('button');
+                        const main = document.createElement('span');
+                        const secondary = document.createElement('span');
+                        button.type = 'button';
+                        button.className = 'address-suggestion';
+                        button.id = `property-address-option-${index}`;
+                        button.setAttribute('role', 'option');
+                        button.setAttribute('aria-selected', 'false');
+                        main.className = 'address-suggestion-main';
+                        main.textContent = prediction.mainText || prediction.description;
+                        secondary.className = 'address-suggestion-secondary';
+                        secondary.textContent = prediction.secondaryText;
+                        button.append(main);
+                        if (secondary.textContent) button.append(secondary);
+                        button.addEventListener('mousedown', (event) => event.preventDefault());
+                        button.addEventListener('click', () => chooseSuggestion(prediction));
+                        item.append(button);
+                        propertyAddressSuggestions.append(item);
+                    });
+                    propertyAddressSuggestions.hidden = predictions.length === 0;
+                    propertyAddressInput.setAttribute('aria-expanded', String(predictions.length > 0));
+                };
+                const requestPredictions = async () => {
+                    const input = propertyAddressInput.value.trim();
+                    const currentRequest = ++requestNumber;
+                    if (input.length < 3) {
+                        closeAddressSuggestions();
+                        return;
+                    }
+                    try {
+                        const {suggestions} = await AutocompleteSuggestion.fetchAutocompleteSuggestions({
+                            input,
+                            includedRegionCodes: ['us'],
+                            includedPrimaryTypes: ['street_address', 'premise', 'subpremise'],
+                            language: 'en-US',
+                            region: 'us',
+                            sessionToken,
+                        });
+                        if (currentRequest !== requestNumber) return;
+                        const predictions = suggestions
+                            .map((suggestion) => suggestion.placePrediction)
+                            .filter(Boolean)
+                            .map((placePrediction) => ({
+                                description: placePrediction.text?.text || '',
+                                mainText: placePrediction.mainText?.text || placePrediction.text?.text || '',
+                                secondaryText: placePrediction.secondaryText?.text || '',
+                                placePrediction,
+                            }));
+                        showPredictions(predictions.slice(0, 6));
+                    } catch (_) {
+                        if (currentRequest !== requestNumber) return;
+                        if (propertyAddressHelp) {
+                            propertyAddressHelp.textContent = 'Address suggestions are unavailable. Enable the Places API (New) for the saved Google Maps key, or enter the complete address manually.';
+                        }
+                        closeAddressSuggestions();
+                    }
+                };
+
+                propertyAddressInput.addEventListener('input', () => {
+                    window.clearTimeout(debounceTimer);
+                    debounceTimer = window.setTimeout(requestPredictions, 180);
+                });
+                propertyAddressInput.addEventListener('keydown', (event) => {
+                    const options = Array.from(propertyAddressSuggestions.querySelectorAll('[role="option"]'));
+                    if (propertyAddressSuggestions.hidden || !options.length) return;
+                    if (event.key === 'ArrowDown') {
+                        event.preventDefault();
+                        setActiveSuggestion(activeIndex + 1);
+                    } else if (event.key === 'ArrowUp') {
+                        event.preventDefault();
+                        setActiveSuggestion(activeIndex - 1);
+                    } else if (event.key === 'Enter' && activeIndex >= 0) {
+                        event.preventDefault();
+                        options[activeIndex].click();
+                    } else if (event.key === 'Escape') {
+                        closeAddressSuggestions();
+                    }
+                });
+                propertyAddressInput.addEventListener('blur', () => window.setTimeout(closeAddressSuggestions, 120));
+                if (propertyAddressInput.value.trim().length >= 3) requestPredictions();
+            };
+
+            ensureIndividualAutocomplete = () => {
+                if (!propertyAddressInput || individualAutocompletePromise) return individualAutocompletePromise;
+                if (propertyAddressHelp) propertyAddressHelp.textContent = 'Loading address suggestions…';
+                individualAutocompletePromise = loadGoogleMaps()
+                    .then(initializeIndividualAutocomplete)
+                    .then(() => {
+                        if (propertyAddressHelp) propertyAddressHelp.textContent = 'Start typing, then choose a suggested address to fill in the complete street address, city, state, and ZIP code.';
+                    })
+                    .catch(() => {
+                        if (propertyAddressHelp) propertyAddressHelp.textContent = 'Address suggestions are unavailable. Enter the complete street address, city, state, and five-digit ZIP code.';
+                        individualAutocompletePromise = null;
+                    });
+                return individualAutocompletePromise;
             };
 
             if (requestedMode && !workspace?.dataset.jobId) openModeDialog(mode);

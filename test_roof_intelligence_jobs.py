@@ -226,6 +226,36 @@ class RoofIntelligenceJobStoreTests(unittest.TestCase):
         self.assertEqual(history_count, 4)
         self.assertEqual(len(self.store.list_county_health()), 4)
         self.assertEqual(self.store.list_county_health()[0]["result"]["county"], "Denver")
+        self.assertEqual(self.store.list_county_health()[0]["status"], "healthy")
+
+    def test_degraded_health_creates_distinct_warning_and_can_recover(self):
+        degraded = {
+            "checked_at": "2026-07-17T10:00:00Z",
+            "results": [
+                {
+                    "county": "Denver",
+                    "status": "degraded",
+                    "error": "second address imagery unavailable",
+                    "sample_count": 2,
+                    "passed_count": 1,
+                    "failed_count": 1,
+                }
+            ],
+        }
+        healthy = {
+            "checked_at": "2026-07-17T11:00:00Z",
+            "results": [{"county": "Denver", "status": "healthy", "error": ""}],
+        }
+
+        self.store.record_county_health(degraded)
+        notifications = self.store.list_notifications()
+        self.assertEqual(len(notifications), 1)
+        self.assertIn("degraded", notifications[0]["title"].lower())
+
+        self.store.record_county_health(healthy)
+        notifications = self.store.list_notifications()
+        self.assertEqual(len(notifications), 2)
+        self.assertIn("recovered", " ".join(item["title"].lower() for item in notifications))
 
     def test_health_history_pruning_retains_recent_rows(self):
         payload = {
@@ -235,6 +265,36 @@ class RoofIntelligenceJobStoreTests(unittest.TestCase):
         self.store.record_county_health(payload)
 
         self.assertEqual(self.store.list_county_health(), [])
+
+    def test_latest_health_display_returns_one_result_per_county(self):
+        self.store.record_county_health(
+            {
+                "checked_at": "2026-07-17T10:00:00Z",
+                "results": [
+                    {"county": "Denver", "status": "failed", "error": "old failure"},
+                    {"county": "Adams County", "status": "healthy", "error": ""},
+                ],
+            }
+        )
+        self.store.record_county_health(
+            {
+                "checked_at": "2026-07-18T10:00:00Z",
+                "results": [
+                    {"county": "Denver", "status": "healthy", "error": ""},
+                    {"county": "Adams County", "status": "degraded", "error": "one sample failed"},
+                ],
+            }
+        )
+
+        latest = self.store.list_latest_county_health()
+
+        self.assertEqual(len(latest), 2)
+        self.assertEqual({item["county_key"] for item in latest}, {"DENVER", "ADAMS COUNTY"})
+        self.assertTrue(all(item["checked_at"] == "2026-07-18T10:00:00Z" for item in latest))
+        self.assertEqual(
+            next(item for item in latest if item["county_key"] == "DENVER")["status"],
+            "healthy",
+        )
 
     def test_assessor_warnings_create_user_notification(self):
         job = self.store.create_individual_job("65 N Yuma St, Denver, CO 80223")
@@ -866,6 +926,13 @@ class RoofIntelligenceRouteTests(unittest.TestCase):
         self.assertIn(b"center: {lat: 39.7392, lng: -104.9903}", page.data)
         self.assertIn(b"new google.maps.Map", page.data)
         self.assertIn(b'id="map-address"', page.data)
+        self.assertIn(b'id="property-address-suggestions"', page.data)
+        self.assertIn(b"google.maps.importLibrary('places')", page.data)
+        self.assertIn(b"AutocompleteSuggestion.fetchAutocompleteSuggestions", page.data)
+        self.assertIn(b"includedRegionCodes: ['us']", page.data)
+        self.assertIn(b"place.fetchFields({fields: ['formattedAddress']})", page.data)
+        self.assertIn(b"new Intl.DateTimeFormat(undefined", page.data)
+        self.assertIn(b"timeZoneName: 'short'", page.data)
         self.assertIn(b'id="center-map-address-button"', page.data)
         self.assertIn(b"google.maps.importLibrary('geocoding')", page.data)
         self.assertIn(b"new Geocoder", page.data)

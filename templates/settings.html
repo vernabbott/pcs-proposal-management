@@ -50,7 +50,7 @@
         <section class="panel">
             <div class="panel-head">
                 <h2>Google Maps</h2>
-                <p>Used by the Roof Intelligence Map Area Batch workflow.</p>
+                <p>Used by Roof Intelligence maps and individual-address suggestions.</p>
             </div>
             <div class="panel-body">
                 {% if google_maps_configured %}
@@ -73,7 +73,7 @@
                         <button class="secondary" type="submit"><i class="bi bi-trash3"></i>Remove Key</button>
                     </form>
                 {% endif %}
-                <div class="privacy"><strong>Stored locally:</strong> the key is written to PCS application-support data with owner-only file permissions. It is not stored in the source repository or included in Git commits. Google requires the browser to receive a restricted Maps JavaScript API key when the map is opened.</div>
+                <div class="privacy"><strong>Stored locally:</strong> the key is written to PCS application-support data with owner-only file permissions. It is not stored in the source repository or included in Git commits. Google requires the browser to receive a restricted key with the Maps JavaScript, Geocoding, and Places API (New) enabled when these tools are opened.</div>
             </div>
         </section>
     </main>
