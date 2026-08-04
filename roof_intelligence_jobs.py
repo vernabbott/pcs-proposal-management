@@ -25,7 +25,10 @@ from roof_report_naming import roof_report_pdf_filename
 
 APP_DIR = Path(__file__).resolve().parent
 LEGACY_DB_PATH = APP_DIR / "data" / "roof_intelligence_jobs.sqlite3"
-if sys.platform == "darwin":
+CONFIGURED_DATA_DIR = os.environ.get("PCS_DATA_DIR", "").strip()
+if CONFIGURED_DATA_DIR:
+    DEFAULT_DATA_DIR = Path(CONFIGURED_DATA_DIR).expanduser()
+elif sys.platform == "darwin":
     DEFAULT_DATA_DIR = Path.home() / "Library" / "Application Support" / "PCS Proposal Management"
 else:
     DEFAULT_DATA_DIR = APP_DIR / "data"

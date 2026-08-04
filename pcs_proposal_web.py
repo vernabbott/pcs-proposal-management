@@ -56,6 +56,9 @@ from proposal_tracking_store import (
 )
 
 APP_FOLDER = os.path.dirname(os.path.abspath(__file__))
+APP_VARIANT = os.environ.get("PCS_APP_ENV", "production").strip().lower() or "production"
+APP_IS_BETA = APP_VARIANT == "beta"
+APP_DISPLAY_NAME = os.environ.get("PCS_APP_DISPLAY_NAME", "PCS Proposal").strip() or "PCS Proposal"
 APP_ERROR_LOG = str(DEFAULT_DATA_DIR / "pcs_app_error.log")
 os.makedirs(os.path.dirname(APP_ERROR_LOG), exist_ok=True)
 ROOF_INTELLIGENCE_PROJECT_DIR = os.environ.get(
@@ -197,16 +200,16 @@ except Exception:
 import pathlib, traceback
 
 # Directory constants (editable in one place)
-PROPOSAL_TEMP_DIR = "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/Test Site/1. Open Proposals"
-CONTRACTS_DIR = "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/Test Site/2. Signed Contracts"
-COMPLETED_DIR = "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/Test Site/3. Finished Jobs"
-DEADFILE_DIR = "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/Test Site/4. Dead Proposals"
-TEMPLATE_DIR = "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/Test Site/Job Jacket Template"
+PROPOSAL_TEMP_DIR = os.environ.get("PCS_PROPOSAL_TEMP_DIR", "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/Test Site/1. Open Proposals")
+CONTRACTS_DIR = os.environ.get("PCS_CONTRACTS_DIR", "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/Test Site/2. Signed Contracts")
+COMPLETED_DIR = os.environ.get("PCS_COMPLETED_DIR", "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/Test Site/3. Finished Jobs")
+DEADFILE_DIR = os.environ.get("PCS_DEADFILE_DIR", "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/Test Site/4. Dead Proposals")
+TEMPLATE_DIR = os.environ.get("PCS_TEMPLATE_DIR", "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/Test Site/Job Jacket Template")
 LIBREOFFICE_PATH = "/Applications/LibreOffice.app/Contents/MacOS/soffice"
-PCS_PROPOSALS_DIR = "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/PCS/1 - Open Proposals"
-DAVIDS_PROPOSALS_DIR = "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/PCS/David's Accounts/1 - Open Proposals"
-LYDIAS_PROPOSALS_DIR = "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/PCS/Lydia's Accounts/1 - Open Proposals"
-RANDYS_PROPOSALS_DIR = "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/PCS/Randy's Accounts/1 - Open Proposals"
+PCS_PROPOSALS_DIR = os.environ.get("PCS_PROPOSALS_DIR", "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/PCS/1 - Open Proposals")
+DAVIDS_PROPOSALS_DIR = os.environ.get("PCS_DAVIDS_PROPOSALS_DIR", "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/PCS/David's Accounts/1 - Open Proposals")
+LYDIAS_PROPOSALS_DIR = os.environ.get("PCS_LYDIAS_PROPOSALS_DIR", "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/PCS/Lydia's Accounts/1 - Open Proposals")
+RANDYS_PROPOSALS_DIR = os.environ.get("PCS_RANDYS_PROPOSALS_DIR", "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/PCS/Randy's Accounts/1 - Open Proposals")
 OPEN_PROPOSAL_DIRS = (
     PCS_PROPOSALS_DIR,
     DAVIDS_PROPOSALS_DIR,
@@ -233,13 +236,13 @@ RANDYS_PROPOSALS_WEB_URL = os.environ.get(
     "RANDYS_PROPOSALS_WEB_URL",
     "https://procoatingsystems-my.sharepoint.com/personal/admin_procoatingsystems_onmicrosoft_com/Documents/PCS/Randy%27s%20Accounts/1%20-%20Open%20Proposals",
 ).strip()
-PROPOSAL_SUMMARY_TEMPLATE_PATH = "/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/1. Proposal Summary Template.emltpl"
+PROPOSAL_SUMMARY_TEMPLATE_PATH = os.environ.get("PCS_PROPOSAL_SUMMARY_TEMPLATE_PATH", "/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/1. Proposal Summary Template.emltpl")
 OUTLOOK_SENDER_EMAIL = "vern@procoatingsystems.com"
-EMAIL_TEMPLATE_DIR = "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/PCS/Marketing/Email Templates"
-EMAIL_LIST_DIR = "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/PCS/Marketing/Email Lists"
+EMAIL_TEMPLATE_DIR = os.environ.get("PCS_EMAIL_TEMPLATE_DIR", "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/PCS/Marketing/Email Templates")
+EMAIL_LIST_DIR = os.environ.get("PCS_EMAIL_LIST_DIR", "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/PCS/Marketing/Email Lists")
 REPAIR_COSTS_PROPOSAL_LANGUAGE = "*PCS will perform all necessary repairs to bring the roof to coating ready*"
 
-PROPOSAL_TRACKER = "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/PCS/1 - Open Proposals/Proposal Tracking.xlsx"
+PROPOSAL_TRACKER = os.environ.get("PCS_PROPOSAL_TRACKER", "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/PCS/1 - Open Proposals/Proposal Tracking.xlsx")
 TRACKER_IO_LOCK = threading.RLock()
 
 
@@ -1636,7 +1639,9 @@ def create_proposal_from_fields(customer_name,
 
     except Exception as e:
         # Log like before (re-use same Desktop log pattern)
-        _LOG_PATH = pathlib.Path.home() / "Desktop" / "pcs_xlwings.log"
+        _LOG_PATH = pathlib.Path(
+            os.environ.get("PCS_XLWINGS_LOG_PATH", str(DEFAULT_DATA_DIR / "pcs_xlwings.log"))
+        )
         try:
             with open(_LOG_PATH, "a", encoding="utf-8") as _f:
                 _f.write(f"\n[OPENPYXL ERROR] {e}\n\n")
@@ -1690,6 +1695,15 @@ if os.path.exists(_BUNDLED_PROPOSAL_SUMMARY_TEMPLATE_PATH):
 
 app = Flask(__name__, template_folder=TEMPLATE_PATH, static_folder=STATIC_PATH)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key")
+
+
+@app.context_processor
+def application_identity():
+    return {
+        "app_display_name": APP_DISPLAY_NAME,
+        "app_variant": APP_VARIANT,
+        "app_is_beta": APP_IS_BETA,
+    }
 
 DESKTOP_LIFECYCLE_ENABLED = os.environ.get("PCS_PROPOSAL_DESKTOP_LIFECYCLE", "0").strip().lower() in {
     "1",

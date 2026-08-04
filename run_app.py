@@ -9,7 +9,11 @@ import traceback
 import webbrowser
 
 
-APP_STATE_DIR = "/tmp/pcs_proposal_app"
+APP_VARIANT = os.environ.get("PCS_APP_ENV", "production").strip().lower() or "production"
+APP_DISPLAY_NAME = os.environ.get("PCS_APP_DISPLAY_NAME", "PCS Proposal").strip() or "PCS Proposal"
+DEFAULT_PORT = int(os.environ.get("PCS_DEFAULT_PORT", "5050"))
+APP_STATE_DIR = os.environ.get("PCS_APP_STATE_DIR", "/tmp/pcs_proposal_app")
+SERVER_STARTUP_TIMEOUT = float(os.environ.get("PCS_SERVER_STARTUP_TIMEOUT", "30"))
 APP_STARTUP_LOG_PATH = os.path.join(APP_STATE_DIR, "startup.log")
 SERVER_ONLY_ENV = "PCS_PROPOSAL_SERVER_ONLY"
 DESKTOP_LIFECYCLE_ENV = "PCS_PROPOSAL_DESKTOP_LIFECYCLE"
@@ -39,11 +43,11 @@ def _pick_port():
 
     with contextlib.closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
         try:
-            sock.bind(("127.0.0.1", 5050))
-            _log_startup("Using default port 5050")
-            return 5050
+            sock.bind(("127.0.0.1", DEFAULT_PORT))
+            _log_startup(f"Using default port {DEFAULT_PORT}")
+            return DEFAULT_PORT
         except OSError:
-            _log_startup("Default port 5050 is unavailable; selecting an ephemeral port")
+            _log_startup(f"Default port {DEFAULT_PORT} is unavailable; selecting an ephemeral port")
 
     with contextlib.closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
         sock.bind(("127.0.0.1", 0))
@@ -147,12 +151,12 @@ def _start_server_process(host, port):
 
 def main():
     host = "127.0.0.1"
-    _log_startup("PCS Proposal app launcher starting")
+    _log_startup(f"{APP_DISPLAY_NAME} app launcher starting ({APP_VARIANT})")
 
     try:
         if os.environ.get(SERVER_ONLY_ENV) == "1":
             server_host = os.environ.get("PCS_PROPOSAL_HOST", host)
-            server_port = int(os.environ.get("PORT", 5050))
+            server_port = int(os.environ.get("PORT", DEFAULT_PORT))
             _run_server(server_host, server_port)
             return
 
@@ -161,7 +165,7 @@ def main():
         process = _start_server_process(host, port)
 
         _log_startup(f"Waiting for Flask server at {url}")
-        if not _wait_for_server(host, port):
+        if not _wait_for_server(host, port, timeout=SERVER_STARTUP_TIMEOUT):
             if process.poll() is not None:
                 _log_startup(f"Server process exited early with code {process.returncode}")
             return
