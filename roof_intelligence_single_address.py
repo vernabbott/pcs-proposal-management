@@ -11,9 +11,16 @@ import os
 import re
 import sys
 import time
+import uuid
 from pathlib import Path
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
+
+from roof_intelligence_area_batch import (
+    COUNTY_BOUNDS_PADDING_DEGREES,
+    COUNTY_WGS84_BOUNDS,
+)
+from roof_report_naming import roof_report_pdf_filename
 
 
 DEFAULT_PROJECT_DIR = Path(
@@ -66,6 +73,29 @@ def address_zip(value: object) -> str:
 
 def score_address(query: str, candidate: str) -> float:
     if not query or not candidate:
+        return 0.0
+    query_tokens = query.split()
+    candidate_tokens = candidate.split()
+    if query_tokens[0].isdigit() and candidate_tokens[0].isdigit():
+        if query_tokens[0] != candidate_tokens[0]:
+            return 0.0
+    query_street_tokens = {
+        token for token in query_tokens[1:]
+        if token not in STREET_SEARCH_IGNORED and not token.isdigit()
+    }
+    candidate_street_tokens = {
+        token for token in candidate_tokens[1:]
+        if token not in STREET_SEARCH_IGNORED and not token.isdigit()
+    }
+    # Parcel queries use SQL LIKE expressions such as "%HIGH%", which also
+    # return unrelated streets such as HIGGINS. A fuzzy whole-string score is
+    # not sufficient evidence of a property match unless an actual street-name
+    # token agrees.
+    if (
+        query_street_tokens
+        and candidate_street_tokens
+        and query_street_tokens.isdisjoint(candidate_street_tokens)
+    ):
         return 0.0
     if query == candidate:
         return 1.0
@@ -123,11 +153,11 @@ def live_address_where_clauses(address: str, collector) -> list[str]:
 
 
 @lru_cache(maxsize=64)
-def geocode_address_point(address: str) -> tuple[float, float]:
+def geocode_address_location(address: str) -> dict:
     params = urlencode(
         {
             "SingleLine": address,
-            "outFields": "Match_addr,Addr_type",
+            "outFields": "Match_addr,Addr_type,Subregion,Postal,City,RegionAbbr",
             "maxLocations": 1,
             "f": "json",
         }
@@ -142,8 +172,66 @@ def geocode_address_point(address: str) -> tuple[float, float]:
     candidates = payload.get("candidates") or []
     if not candidates:
         raise RuntimeError(f"Unable to geocode address: {address}")
-    location = candidates[0].get("location") or {}
-    return float(location["x"]), float(location["y"])
+    candidate = candidates[0]
+    location = candidate.get("location") or {}
+    attributes = candidate.get("attributes") or {}
+    return {
+        "longitude": float(location["x"]),
+        "latitude": float(location["y"]),
+        "county": str(attributes.get("Subregion") or "").strip(),
+        "postal_code": str(attributes.get("Postal") or "").strip()[:5],
+        "city": str(attributes.get("City") or "").strip(),
+        "state": str(attributes.get("RegionAbbr") or "").strip(),
+    }
+
+
+def geocode_address_point(address: str) -> tuple[float, float]:
+    location = geocode_address_location(address)
+    return location["longitude"], location["latitude"]
+
+
+def normalized_county_key(value: object) -> str:
+    normalized = re.sub(r"\bCOUNTY\b", "", str(value or "").upper())
+    return "_".join(re.findall(r"[A-Z0-9]+", normalized)).lower()
+
+
+def profile_contains_point(profile, longitude: float, latitude: float) -> bool:
+    county_bounds = COUNTY_WGS84_BOUNDS.get(str(getattr(profile, "key", "")).strip().lower())
+    if county_bounds is None:
+        return False
+    west, south, east, north = county_bounds
+    padding = COUNTY_BOUNDS_PADDING_DEGREES
+    return (
+        west - padding <= longitude <= east + padding
+        and south - padding <= latitude <= north + padding
+    )
+
+
+def shortlist_county_profiles(address: str, profiles: dict) -> list:
+    """Prioritize counties supported by the full-address geocode and requested ZIP."""
+    requested_zip = address_zip(address)
+    if not requested_zip:
+        return []
+    try:
+        location = geocode_address_location(address)
+    except Exception:
+        return []
+
+    geocoded_zip = str(location.get("postal_code") or "")[:5]
+    if geocoded_zip and geocoded_zip != requested_zip:
+        return []
+
+    prioritized_keys: list[str] = []
+    geocoded_county = normalized_county_key(location.get("county"))
+    if geocoded_county in profiles:
+        prioritized_keys.append(geocoded_county)
+
+    longitude = float(location["longitude"])
+    latitude = float(location["latitude"])
+    for key, profile in profiles.items():
+        if key not in prioritized_keys and profile_contains_point(profile, longitude, latitude):
+            prioritized_keys.append(key)
+    return [profiles[key] for key in prioritized_keys]
 
 
 def collect_spatial_parcel_for_address(address: str, collector) -> list[dict]:
@@ -162,6 +250,22 @@ def collect_spatial_parcel_for_address(address: str, collector) -> list[dict]:
     }
     payload = collector.fetch_arcgis_json(collector.PARCELS_URL + "?" + urlencode(params))
     return list(payload.get("features") or [])
+
+
+def parcel_records_from_features(features: list[dict], collector) -> list[dict]:
+    parcels: list[dict] = []
+    seen: set[str] = set()
+    for feature in features:
+        attrs = feature.get("attributes", {}) or {}
+        attrs["parcel_shape_area"] = attrs.get("Shape__Area") or attrs.get("SHAPE__Area")
+        attrs["parcel_geometry"] = collector.geometry_to_wkt(feature.get("geometry"))
+        attrs["full_parcel_number"] = collector.parcel_join_key(attrs)
+        key = attrs.get("full_parcel_number") or json.dumps(attrs, sort_keys=True)
+        if key in seen:
+            continue
+        seen.add(key)
+        parcels.append(attrs)
+    return parcels
 
 
 def collect_live_parcels_for_address(address: str, collector) -> list[dict]:
@@ -188,15 +292,12 @@ def collect_live_parcels_for_address(address: str, collector) -> list[dict]:
         if parcels:
             break
     if not parcels:
-        for feature in collect_spatial_parcel_for_address(address, collector):
-            attrs = feature.get("attributes", {}) or {}
-            attrs["parcel_shape_area"] = attrs.get("Shape__Area") or attrs.get("SHAPE__Area")
-            attrs["parcel_geometry"] = collector.geometry_to_wkt(feature.get("geometry"))
-            attrs["full_parcel_number"] = collector.parcel_join_key(attrs)
-            key = attrs.get("full_parcel_number") or json.dumps(attrs, sort_keys=True)
-            if key not in seen:
-                seen.add(key)
-                parcels.append(attrs)
+        parcels.extend(
+            parcel_records_from_features(
+                collect_spatial_parcel_for_address(address, collector),
+                collector,
+            )
+        )
     return parcels
 
 
@@ -235,7 +336,13 @@ def collect_live_parcel_by_id(parcel_id: str, collector) -> dict | None:
     return None
 
 
-def find_parcel_for_address(address: str, parcels: list[dict], collector) -> tuple[dict, float, str]:
+def find_parcel_for_address(
+    address: str,
+    parcels: list[dict],
+    collector,
+    *,
+    allow_single_fallback: bool = True,
+) -> tuple[dict, float, str]:
     query = normalize_address(address)
     zip_code = address_zip(address)
     candidates = parcels
@@ -259,7 +366,11 @@ def find_parcel_for_address(address: str, parcels: list[dict], collector) -> tup
                 best_parcel = parcel
                 best_address = str(raw_candidate or "")
 
-    if (not best_parcel or best_score < 0.74) and len(candidates) == 1:
+    if (
+        allow_single_fallback
+        and (not best_parcel or best_score < 0.74)
+        and len(candidates) == 1
+    ):
         return candidates[0], 0.9, str(address).split(",", 1)[0].strip()
     if not best_parcel or best_score < 0.74:
         raise RuntimeError(f"No parcel match found for address: {address}")
@@ -271,7 +382,21 @@ def find_parcel_live(address: str, collector, county_name: str) -> tuple[dict, f
     live_parcels = collect_live_parcels_for_address(address, collector)
     if not live_parcels:
         raise RuntimeError(f"No live {county_name} parcel match found for address: {address}")
-    parcel, score, matched_address = find_parcel_for_address(address, live_parcels, collector)
+    try:
+        parcel, score, matched_address = find_parcel_for_address(
+            address,
+            live_parcels,
+            collector,
+            allow_single_fallback=False,
+        )
+    except RuntimeError as text_match_error:
+        spatial_parcels = parcel_records_from_features(
+            collect_spatial_parcel_for_address(address, collector),
+            collector,
+        )
+        if not spatial_parcels:
+            raise text_match_error
+        parcel, score, matched_address = find_parcel_for_address(address, spatial_parcels, collector)
     return parcel, score, matched_address, f"Live {county_name} parcel service"
 
 
@@ -303,20 +428,49 @@ def resolve_county_and_parcel(address: str, collector, profiles: dict) -> tuple[
 
     matches = []
     failures = []
-    for profile in profiles.values():
-        try:
-            configure_collector_for_county(collector, profile)
-            parcels = collect_live_parcels_for_address(address, collector)
-            if not parcels:
-                continue
-            parcel, score, matched_address = find_parcel_for_address(address, parcels, collector)
-            parcel_zip = collector.parcel_zip(parcel)
-            # Some supported county layers (notably Adams) leave the parcel
-            # ZIP blank even for an exact situs-address match.
-            if not parcel_zip or parcel_zip == zip_code:
-                matches.append((score, profile, parcel, matched_address))
-        except Exception as exc:
-            failures.append(f"{profile.display_name}: {exc}")
+
+    def query_profiles(selected_profiles) -> None:
+        for profile in selected_profiles:
+            try:
+                configure_collector_for_county(collector, profile)
+                parcels = collect_live_parcels_for_address(address, collector)
+                if not parcels:
+                    continue
+                try:
+                    parcel, score, matched_address = find_parcel_for_address(
+                        address,
+                        parcels,
+                        collector,
+                        allow_single_fallback=False,
+                    )
+                except RuntimeError as text_match_error:
+                    spatial_parcels = parcel_records_from_features(
+                        collect_spatial_parcel_for_address(address, collector),
+                        collector,
+                    )
+                    if not spatial_parcels:
+                        raise text_match_error
+                    parcel, score, matched_address = find_parcel_for_address(
+                        address,
+                        spatial_parcels,
+                        collector,
+                    )
+                parcel_zip = collector.parcel_zip(parcel)
+                # Some supported county layers (notably Adams) leave the parcel
+                # ZIP blank even for an exact situs-address match.
+                if not parcel_zip or parcel_zip == zip_code:
+                    matches.append((score, profile, parcel, matched_address))
+            except Exception as exc:
+                failures.append(f"{profile.display_name}: {exc}")
+
+    shortlist = shortlist_county_profiles(address, profiles)
+    query_profiles(shortlist)
+    if not matches:
+        shortlisted_keys = {profile.key for profile in shortlist}
+        query_profiles(
+            profile for profile in profiles.values()
+            if profile.key not in shortlisted_keys
+        )
 
     if not matches:
         detail = "; ".join(failures[-2:])
@@ -360,13 +514,12 @@ def select_building_for_address(records: list[dict], address: str, collector) ->
     return ranked[0][2]
 
 
-def safe_report_name(parcel: str, address: str) -> str:
-    safe_address = "".join(ch if ch.isalnum() else "-" for ch in address.lower()).strip("-")
-    return f"{parcel}-{safe_address or 'roof-report'}.pdf"
+def safe_report_name(address: str, city: str) -> str:
+    return roof_report_pdf_filename(address, city)
 
 
 def generate_roof_analysis(reports, row, aerial_path, cache_dir, args, ai_model):
-    """Run PilotPoint's production two-stage roof-reference workflow for PCS orders."""
+    """Run PilotPoint's production single-call roof-reference workflow for PCS orders."""
     return reports.load_or_create_analysis(
         row,
         aerial_path,
@@ -420,6 +573,12 @@ def parse_args() -> argparse.Namespace:
         help="Audited source resolution for a previously reported footprint discrepancy",
     )
     parser.add_argument("--footprint-override-reason", default="")
+    parser.add_argument(
+        "--roof-area-override",
+        type=float,
+        default=None,
+        help="Audited property-level square footage selected for future reports",
+    )
     parser.add_argument(
         "--allow-pending-footprint-review",
         action="store_true",
@@ -605,8 +764,11 @@ def main() -> int:
     collector.download_aerial_images(record, str(image_dir))
 
     row = report_row_from_record(record, collector)
-    if not str(row.get("Address") or "").strip():
-        row["Address"] = str(args.address).split(",", 1)[0].strip()
+    # A parcel can contain multiple addressed buildings and publish only its
+    # primary assessor situs (1704 High St is on the parcel whose assessor
+    # label is 1720 N High St). Individual reports must retain the requested
+    # building address after spatial parcel resolution.
+    row["Address"] = str(args.address).split(",", 1)[0].strip()
     if not str(row.get("Building ZIP") or "").strip():
         row["Building ZIP"] = address_zip(args.address)
     assessor_result = None
@@ -661,21 +823,93 @@ def main() -> int:
         # currently covers the nine surrounding counties.
         if "Unsupported assessor county" not in str(exc):
             raise
-    aerial_path = reports.resolve_path(project_dir, reports.normalize_text(row.get("Primary Aerial Image File")))
+    if args.roof_area_override is not None:
+        if args.roof_area_override < 0:
+            raise RuntimeError("The property square-footage override cannot be negative.")
+        row["Building Footprint Sq Ft"] = float(args.roof_area_override)
+        assessor_warnings.append(
+            "The approved PCS property-level square-footage override was applied to this fresh report."
+        )
+    aerial_path = reports.resolve_path(
+        project_dir,
+        reports.normalize_text(row.get("Primary Aerial Image File")),
+    )
+    analysis_aerial_path = reports.resolve_path(
+        project_dir,
+        reports.aerial_analysis_image_file_value(row),
+    )
+    if not analysis_aerial_path or not analysis_aerial_path.is_file():
+        raise RuntimeError(
+            "The footprint-masked target roof image could not be created; "
+            "roof analysis was stopped to prevent neighboring buildings from being included."
+        )
     ai_model = args.ai_model or reports.default_ai_model(args.ai_provider)
     cache_dir = Path(args.analysis_cache_dir)
     if not cache_dir.is_absolute():
         cache_dir = project_dir / cache_dir
-    analysis = generate_roof_analysis(reports, row, aerial_path, cache_dir, args, ai_model)
+    analysis = generate_roof_analysis(
+        reports,
+        row,
+        analysis_aerial_path,
+        cache_dir,
+        args,
+        ai_model,
+    )
     analysis = reports.apply_aerial_age_adjustment(row, analysis)
 
     output_dir = Path(args.output_dir)
     if not output_dir.is_absolute():
         output_dir = project_dir / output_dir
-    output_path = output_dir / safe_report_name(reports.normalize_text(row.get("Parcel Number")) or parcel_key, reports.normalize_text(row.get("Address")))
+    output_path = output_dir / safe_report_name(
+        reports.normalize_text(row.get("Address")),
+        reports.normalize_text(row.get("Building City")),
+    )
     reports.render_report(row, analysis, aerial_path, None, output_path)
 
+    report_id = None
+    report_snapshot = None
+    from roof_intelligence_cutover_flags import load_cutover_flags
+
+    if load_cutover_flags().editing_enabled:
+        from roof_intelligence_snapshot import create_initial_snapshot
+
+        report_id = str(uuid.uuid4())
+        canonical_key = f"{profile.display_name.upper()}:{str(row.get('Parcel Number') or parcel_key).upper()}"
+        report_snapshot = create_initial_snapshot(
+            report_id=report_id,
+            property_data={
+                "canonical_key": canonical_key,
+                "canonical_footprint_id": record.get("canonical_id"),
+                "address": row.get("Address") or matched_address,
+                "city": row.get("Building City"),
+                "state": row.get("Building State"),
+                "zip_code": row.get("Building ZIP"),
+                "county": profile.display_name,
+                "parcel_number": row.get("Parcel Number") or parcel_key,
+                "latitude": record.get("latitude"),
+                "longitude": record.get("longitude"),
+            },
+            report_fields=json.loads(json.dumps(row, default=str)) | {
+                "roof_area_sqft": row.get("Building Footprint Sq Ft") or 0,
+                "roof_squares": reports.roof_squares(row),
+            },
+            analysis=json.loads(json.dumps(analysis, default=str)),
+            imagery={
+                "source": str(row.get("Primary Aerial Source") or ""),
+                "capture_date": row.get("Primary Aerial Photo Date") or None,
+                "local_report_image_path": str(aerial_path) if aerial_path else "",
+                "local_analysis_image_path": str(analysis_aerial_path),
+                "target_mask_version": row.get("Primary Aerial Target Mask Version") or None,
+                "target_mask_coverage": row.get("Primary Aerial Target Mask Coverage") or None,
+                "limitations": list(assessor_warnings),
+            },
+            created_by=os.environ.get("ROOF_INTELLIGENCE_USER_KEY", "local-user"),
+            persistent_square_footage_override=args.roof_area_override is not None,
+        )
+
     result = {
+        "report_id": report_id,
+        "report_snapshot": report_snapshot,
         "address": row.get("Address") or matched_address,
         "city": row.get("Building City"),
         "state": row.get("Building State"),
@@ -687,14 +921,16 @@ def main() -> int:
         "lookup_source": lookup_source,
         "roof_squares": reports.roof_squares(row),
         "building_footprint_sqft": row.get("Building Footprint Sq Ft"),
+        "square_footage_override_applied": args.roof_area_override is not None,
         "year_built": row.get("Year Built"),
         "effective_year_built": row.get("Effective Year Built"),
         "roof_type": analysis.get("roof_type"),
-        "condition_score": analysis.get("condition_score"),
+        "condition_score": analysis.get("condition_score") or analysis.get("overall_score"),
         "risk_level": analysis.get("risk_level"),
         "imagery_source": row.get("Primary Aerial Source"),
         "imagery_capture_date": row.get("Primary Aerial Photo Date"),
         "aerial_image_file": str(aerial_path) if aerial_path else "",
+        "analysis_aerial_image_file": str(analysis_aerial_path),
         "analysis_source": reports.analysis_source_label(analysis),
         "assessor_record_count": len(assessor_result.records) if assessor_result else 0,
         "assessor_source_counts": assessor_result.source_counts if assessor_result else {},

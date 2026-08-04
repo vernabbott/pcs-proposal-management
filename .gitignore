@@ -70,3 +70,6 @@ data/*.sqlite3
 data/*.sqlite3-shm
 data/*.sqlite3-wal
 outputs/
+
+# Local evaluation and scratch artifacts
+/tmp/

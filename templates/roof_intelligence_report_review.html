@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Review Roof Intelligence Report</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root { --navy:#174c7d; --ink:#17202b; --muted:#667085; --line:#d9e1ea; --canvas:#f2f5f7; }
+        body { background:var(--canvas); color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+        .shell { width:min(1120px,100%); margin:0 auto; padding:28px 20px 48px; }
+        .topbar,.actions { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+        .panel { background:#fff; border:1px solid var(--line); border-radius:12px; padding:22px; margin-top:18px; }
+        .muted { color:var(--muted); }
+        .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+        .full { grid-column:1/-1; }
+        label { display:block; font-weight:700; margin-bottom:6px; }
+        input:not([type="checkbox"]),textarea { width:100%; border:1px solid #aeb8c4; border-radius:7px; padding:10px 11px; }
+        textarea { min-height:120px; resize:vertical; }
+        .button { border:1px solid var(--navy); border-radius:7px; background:var(--navy); color:#fff; padding:10px 15px; font-weight:700; text-decoration:none; }
+        .button.secondary { background:#fff; color:var(--ink); border-color:var(--line); }
+        .revision { display:flex; justify-content:space-between; gap:14px; padding:13px 0; border-top:1px solid var(--line); }
+        .revision:first-of-type { border-top:0; }
+        .flash { border-radius:8px; padding:11px 13px; margin-top:14px; background:#fff; border:1px solid var(--line); }
+        @media (max-width:700px) { .grid { grid-template-columns:1fr; } .full { grid-column:auto; } }
+    </style>
+</head>
+<body>
+<main class="shell">
+    <div class="topbar">
+        <div>
+            <h1 class="h3 mb-1">Review &amp; Edit Roof Report</h1>
+            <p class="muted mb-0">{{ report.address }}{% if report.county %} · {{ report.county }}{% endif %}</p>
+        </div>
+        <a class="button secondary" href="{{ url_for('roof_intelligence', job_id=report.job_id) }}">Back to Roof Intelligence</a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}<div class="flash">{{ message }}</div>{% endfor %}
+    {% endwith %}
+
+    {% if report.latest_revision %}
+        {% set latest = report.latest_revision %}
+        {% set snapshot = latest.snapshot %}
+        {% set analysis = snapshot.analysis %}
+        {% set fields = snapshot.report_fields %}
+        <section class="panel">
+            <div class="actions">
+                <div>
+                    <h2 class="h5 mb-1">Create Revision {{ latest.revision_number + 1 }}</h2>
+                    <p class="muted mb-0">Revision {{ latest.revision_number }} remains unchanged and accessible below.</p>
+                </div>
+                <a class="button secondary" href="{{ latest.view_url }}" target="_blank" rel="noopener">View Current PDF</a>
+            </div>
+            <form class="grid mt-4" method="post" action="{{ url_for('create_roof_intelligence_revision', report_id=report.id) }}">
+                <div>
+                    <label for="roof-area">Roof area (square feet)</label>
+                    <input id="roof-area" name="roof_area_sqft" type="number" min="0" step="0.01" required value="{{ fields.roof_area_sqft }}">
+                </div>
+                <div>
+                    <label for="condition-score">Roof condition score</label>
+                    <input id="condition-score" name="roof_condition_score" type="number" min="0" max="100" step="0.01" required value="{{ analysis.overall_score }}">
+                </div>
+                <div>
+                    <label for="roof-type">Roof type (roofing surface)</label>
+                    <input id="roof-type" name="roof_type" required value="{{ analysis.roof_type }}">
+                    <p class="muted mt-1 mb-0">Use Primary and, when applicable, Secondary roofing surfaces.</p>
+                </div>
+                <div>
+                    <label for="roof-system">Roof system (physical configuration)</label>
+                    <input id="roof-system" name="roof_system" required value="{{ analysis.roof_system }}">
+                    <p class="muted mt-1 mb-0">Describe roof sections, slopes, A/C units, solar panels, skylights, and similar physical features visible from above.</p>
+                </div>
+                <div class="full">
+                    <label for="report-summary">Report summary</label>
+                    <textarea id="report-summary" name="report_summary">{{ analysis.summary }}</textarea>
+                </div>
+                <div class="full">
+                    <label for="recommendation">Recommendation</label>
+                    <textarea id="recommendation" name="recommendation">{{ analysis.recommendation }}</textarea>
+                    <p class="muted mt-1 mb-0">If roof type, roof information, or condition changes and this text is left unchanged, PilotPoint automatically refreshes the recommendation. Any recommendation you enter here is preserved instead.</p>
+                </div>
+                <div class="full form-check">
+                    <input class="form-check-input" id="future-area" name="apply_square_footage_to_future" type="checkbox" value="1">
+                    <label class="form-check-label" for="future-area">Apply a revised square-footage value to future reports for this property</label>
+                </div>
+                <div class="full form-check">
+                    <input class="form-check-input" id="future-processing" name="submit_for_future_processing" type="checkbox" value="1">
+                    <label class="form-check-label" for="future-processing">Submit this correction for review to improve future roof reports</label>
+                    <p class="muted mt-1 mb-0">The correction and your reason will enter a review queue. It will not affect other reports until it is approved and added to the appropriate processing rules, reference library, and evaluation cases.</p>
+                </div>
+                <div class="full">
+                    <label for="change-reason">Reason for change</label>
+                    <textarea id="change-reason" name="change_reason" minlength="10" required placeholder="Describe why this revision is being created."></textarea>
+                </div>
+                <div class="full actions">
+                    <span class="muted">Pricing formulas remain fixed; affected calculations will be regenerated.</span>
+                    <button class="button" type="submit">Recalculate &amp; Generate Revision</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="panel">
+            <h2 class="h5">Revision History</h2>
+            {% for revision in report.revisions %}
+                <div class="revision">
+                    <div>
+                        <strong>Revision {{ revision.revision_number }}</strong>
+                        <div class="muted">{{ revision.revision_kind.replace('_',' ') }} · <time data-local-datetime="{{ revision.generated_at or revision.created_at }}">{{ revision.generated_at or revision.created_at }}</time></div>
+                        {% if revision.revision_note %}<div>{{ revision.revision_note }}</div>{% endif %}
+                    </div>
+                    <a class="button secondary" href="{{ revision.view_url }}" target="_blank" rel="noopener">View PDF</a>
+                </div>
+            {% endfor %}
+        </section>
+
+        {% if report.processing_feedback %}
+        <section class="panel">
+            <h2 class="h5">Future Processing Feedback</h2>
+            {% for feedback in report.processing_feedback %}
+                <div class="revision">
+                    <div>
+                        <strong>{{ feedback.status.replace('_', ' ')|title }}</strong>
+                        <div class="muted">Submitted from Revision {{ feedback.revision_number }} · <time data-local-datetime="{{ feedback.created_at }}">{{ feedback.created_at }}</time></div>
+                        <div>{{ feedback.comment }}</div>
+                    </div>
+                </div>
+            {% endfor %}
+        </section>
+        {% endif %}
+    {% else %}
+        <section class="panel">
+            <h2 class="h5">Snapshot unavailable</h2>
+            <p class="mb-0">This report was created before versioned editing was enabled. Run a fresh report after enabling the staging feature to create Revision 1.</p>
+        </section>
+    {% endif %}
+</main>
+<script>
+document.querySelectorAll('[data-local-datetime]').forEach((element) => {
+    const value = new Date(element.dataset.localDatetime || '');
+    if (!Number.isNaN(value.getTime())) element.textContent = value.toLocaleString();
+});
+</script>
+</body>
+</html>

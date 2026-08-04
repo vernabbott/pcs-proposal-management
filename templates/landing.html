@@ -23,6 +23,8 @@
             --red-soft: #fee4e2;
             --indigo: #4b4f9c;
             --indigo-soft: #eceefe;
+            --teal: #087a75;
+            --teal-soft: #e4f5f3;
         }
 
         body {
@@ -186,6 +188,11 @@
             color: var(--indigo);
         }
 
+        .work-card.contacts .work-icon {
+            background: var(--teal-soft);
+            color: var(--teal);
+        }
+
         .work-title {
             margin: 0;
             font-size: 19px;
@@ -295,6 +302,16 @@
                     <p class="work-copy">Fill missing tracker contact, email, proposal date, and follow-up date fields.</p>
                     <span class="work-action">
                         Update tracker
+                        <i class="bi bi-arrow-right"></i>
+                    </span>
+                </a>
+
+                <a href="{{ url_for('contact_management') }}" class="work-card contacts">
+                    <span class="work-icon" aria-hidden="true"><i class="bi bi-person-lines-fill"></i></span>
+                    <h2 class="work-title">Contact Management</h2>
+                    <p class="work-copy">View and maintain contacts, company affiliations, titles, email addresses, and phone numbers.</p>
+                    <span class="work-action">
+                        Manage contacts
                         <i class="bi bi-arrow-right"></i>
                     </span>
                 </a>

@@ -9,6 +9,7 @@ datas = [
     ('static', 'static'),
     ('roof_intelligence_single_address.py', '.'),
     ('roof_intelligence_area_batch.py', '.'),
+    ('roof_report_naming.py', '.'),
 ]
 try:
     with open(proposal_summary_template, 'rb'):
@@ -47,7 +48,10 @@ exe = EXE(
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
-    codesign_identity='Apple Development: vern.abbott@att.net (3SKXD554K7)',
+    # This Mac currently distributes PCS locally rather than through the App
+    # Store. Let PyInstaller apply one consistent ad-hoc signature to the
+    # executable and bundled Python framework.
+    codesign_identity=None,
     entitlements_file=None,
 )
 coll = COLLECT(

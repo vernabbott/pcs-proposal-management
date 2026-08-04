@@ -1,7 +1,10 @@
 import os
 from io import BytesIO
+import json
 from pathlib import Path
+import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
 from urllib.parse import parse_qs, urlsplit
@@ -10,6 +13,7 @@ import roof_intelligence_jobs
 import roof_intelligence_area_batch as area_batch
 import roof_intelligence_single_address as single_address
 from roof_intelligence_jobs import RoofIntelligenceJobStore, SUPPORTED_ROOF_TYPES
+from roof_report_naming import roof_report_pdf_filename
 
 
 class RoofIntelligenceJobStoreTests(unittest.TestCase):
@@ -20,6 +24,28 @@ class RoofIntelligenceJobStoreTests(unittest.TestCase):
 
     def tearDown(self):
         self.temp_dir.cleanup()
+
+    def test_report_pdf_filename_always_uses_only_street_and_city(self):
+        self.assertEqual(
+            roof_report_pdf_filename("2261 E CORNELL AVE", "ENGLEWOOD"),
+            "2261 E Cornell Ave Englewood.pdf",
+        )
+        self.assertEqual(
+            roof_report_pdf_filename(
+                "2261 E CORNELL AVE, Englewood, CO 80110",
+                "ENGLEWOOD",
+                revision_index=1,
+            ),
+            "2261 E Cornell Ave Englewood.pdf",
+        )
+        self.assertEqual(
+            roof_report_pdf_filename(
+                "2261 E CORNELL AVE STE 200",
+                "ENGLEWOOD",
+                revision_index=2,
+            ),
+            "2261 E Cornell Ave Englewood.pdf",
+        )
 
     def test_individual_job_requires_full_address_with_zip(self):
         with self.assertRaisesRegex(ValueError, "five-digit ZIP"):
@@ -159,6 +185,115 @@ class RoofIntelligenceJobStoreTests(unittest.TestCase):
         self.assertEqual(report_count, 2)
         self.assertEqual(current_squares, 126)
         self.assertEqual(len(self.store.list_notifications()), 2)
+
+    def test_versioned_report_preserves_initial_pdf_and_image_assets(self):
+        job = self.store.create_individual_job("65 N Yuma St, Denver, CO 80223")
+        self.store.start_job(job["id"])
+        source_pdf = Path(self.temp_dir.name) / "generated.pdf"
+        source_image = Path(self.temp_dir.name) / "aerial.jpg"
+        source_analysis_image = Path(self.temp_dir.name) / "aerial-target.png"
+        source_pdf.write_bytes(b"%PDF-1.4\n" + b"x" * 1200)
+        source_image.write_bytes(b"image-bytes")
+        source_analysis_image.write_bytes(b"analysis-image-bytes")
+        report_id = "report-versioned-1"
+        snapshot = {
+            "snapshot_id": "revision-versioned-1",
+            "report_id": report_id,
+            "revision": {
+                "number": 1,
+                "kind": "initial",
+                "created_at": "2026-07-22T12:00:00+00:00",
+                "created_by": "local-user",
+                "change_reason": "Fresh assessment",
+            },
+            "imagery": {
+                "local_report_image_path": str(source_image),
+                "local_analysis_image_path": str(source_analysis_image),
+            },
+        }
+        result = {
+            "report_id": report_id,
+            "report_snapshot": snapshot,
+            "address": "65 N Yuma St",
+            "city": "Denver",
+            "state": "CO",
+            "zip": "80223",
+            "county": "Denver",
+            "parcel": "0508500065000",
+            "report_path": str(source_pdf),
+            "aerial_image_file": str(source_image),
+            "analysis_aerial_image_file": str(source_analysis_image),
+        }
+
+        self.store.complete_individual_job(job["id"], result)
+
+        saved_report = self.store.get_report(report_id)
+        revision = self.store.get_report_revision("revision-versioned-1")
+        self.assertTrue(Path(saved_report["report_path"]).is_file())
+        self.assertNotEqual(Path(saved_report["report_path"]), source_pdf)
+        self.assertEqual(Path(saved_report["report_path"]).name, "65 N Yuma St Denver.pdf")
+        self.assertTrue(Path(revision["snapshot"]["imagery"]["local_report_image_path"]).is_file())
+        self.assertTrue(Path(revision["snapshot"]["imagery"]["local_analysis_image_path"]).is_file())
+        self.assertIn(
+            "analysis-mask",
+            Path(revision["snapshot"]["imagery"]["local_analysis_image_path"]).name,
+        )
+        self.assertEqual(result["aerial_image_file"], str(source_image))
+
+    def test_manual_revision_retains_history_and_sets_future_area_override(self):
+        job = self.store.create_individual_job("65 N Yuma St, Denver, CO 80223")
+        self.store.start_job(job["id"])
+        original_pdf = Path(self.temp_dir.name) / "original.pdf"
+        original_pdf.write_bytes(b"%PDF-1.4\n" + b"a" * 1200)
+        report_id = "report-history-1"
+        original = {
+            "schema_version": 1,
+            "snapshot_id": "snapshot-history-1",
+            "report_id": report_id,
+            "revision": {
+                "number": 1, "kind": "initial", "created_at": "2026-07-22T12:00:00+00:00",
+                "created_by": "local-user", "change_reason": "Fresh assessment",
+            },
+            "analysis": {"roof_type": "TPO", "overall_score": 75, "risk_level": "MODERATE"},
+            "calculations": {"roof_area_sqft": 10_000, "roof_squares": 100},
+            "imagery": {},
+        }
+        self.store.complete_individual_job(job["id"], {
+            "report_id": report_id, "report_snapshot": original,
+            "address": "65 N Yuma St", "city": "Denver", "state": "CO", "zip": "80223",
+            "county": "Denver", "parcel": "0508500065000", "report_path": str(original_pdf),
+        })
+        revised_pdf = Path(self.temp_dir.name) / "revised.pdf"
+        revised_pdf.write_bytes(b"%PDF-1.4\n" + b"b" * 1200)
+        revised = {
+            **original,
+            "snapshot_id": "snapshot-history-2",
+            "revision": {
+                "number": 2, "kind": "manual_edit", "parent_snapshot_id": "snapshot-history-1",
+                "created_at": "2026-07-23T12:00:00+00:00", "created_by": "local-user",
+                "change_reason": "Field measurement corrected area",
+            },
+            "analysis": {"roof_type": "TPO", "overall_score": 75, "risk_level": "MODERATE"},
+            "calculations": {"roof_area_sqft": 12_500, "roof_squares": 125},
+        }
+
+        self.store.save_ready_report_revision(
+            report_id, "snapshot-history-1", revised,
+            report_path=str(revised_pdf), pdf_size=revised_pdf.stat().st_size,
+            pdf_checksum="a" * 64, created_by="local-user",
+            change_reason="Field measurement corrected area",
+            edits={"roof_area_sqft": 12_500}, apply_square_footage_to_future=True,
+        )
+
+        revisions = self.store.list_report_revisions(report_id)
+        self.assertEqual([item["revision_number"] for item in revisions], [2, 1])
+        self.assertTrue(Path(revisions[1]["report_path"]).is_file())
+        self.assertEqual(self.store.get_report(report_id)["report_path"], str(revised_pdf))
+        override = self.store.get_active_square_footage_override(
+            address="65 N Yuma St, Denver, CO 80223"
+        )
+        self.assertEqual(override["numeric_value"], 12_500)
+        self.assertEqual(override["source_revision_id"], "snapshot-history-2")
 
     def test_failure_stores_concise_error_and_notification(self):
         job = self.store.create_individual_job("65 N Yuma St, Denver, CO 80223")
@@ -518,6 +653,85 @@ class AreaCandidateTests(unittest.TestCase):
         self.assertEqual(ring[0], ring[-1])
         self.assertEqual(len(ring), 73)
 
+    def test_englewood_radius_only_queries_intersecting_counties(self):
+        class Profile:
+            def __init__(self, key):
+                self.key = key
+
+        bounds = {
+            "north": 39.673783279218995,
+            "south": 39.659310120781,
+            "east": -105.00241246615624,
+            "west": -105.02121433384374,
+        }
+        profiles = [Profile(key) for key in area_batch.COUNTY_WGS84_BOUNDS]
+
+        applicable = area_batch.profiles_for_bounds(profiles, bounds)
+
+        self.assertEqual([profile.key for profile in applicable], ["arapahoe", "denver"])
+
+    def test_unknown_county_profile_remains_enabled(self):
+        profile = type("Profile", (), {"key": "future_county"})()
+        bounds = {"north": 39.7, "south": 39.6, "east": -104.9, "west": -105.0}
+
+        self.assertTrue(area_batch.profile_intersects_bounds(profile, bounds))
+
+    def test_discovery_defers_secondary_footprint_comparison_when_primary_matches(self):
+        profile = SimpleNamespace(key="denver", display_name="Denver")
+        secondary_lookup = Mock(return_value=[])
+        detailed_validation = Mock()
+        collector = SimpleNamespace(
+            REQUEST_TIMEOUT=120,
+            REQUEST_ATTEMPTS=4,
+            get_parcel_bounds_in_building_crs=Mock(return_value="selected-bounds"),
+            collect_buildings=Mock(return_value=[{
+                "parcel": "one",
+                "roof_area_est": 12_500,
+                "property_address": "100 Test St",
+                "property_city": "Denver",
+                "property_state": "CO",
+                "property_zip": "80202",
+            }]),
+            collect_secondary_buildings=secondary_lookup,
+            combine_data=lambda buildings, _parcels: buildings,
+            parcel_join_key=lambda record: record.get("parcel", ""),
+            add_output_fields=lambda _record: None,
+            address_from_record=lambda record: record.get("property_address", ""),
+            parcel_zip=lambda record: record.get("property_zip", ""),
+            validate_building_footprint_sources=detailed_validation,
+        )
+        county_config = SimpleNamespace(COUNTY_PROFILES={"denver": profile})
+        single_address = SimpleNamespace(
+            configure_collector_for_county=lambda _collector, _profile: None
+        )
+
+        with (
+            patch.dict(sys.modules, {
+                "collect_county_buildings_with_parcels": collector,
+                "county_config": county_config,
+                "roof_intelligence_single_address": single_address,
+            }),
+            patch.object(
+                area_batch,
+                "fetch_parcels_in_bounds",
+                return_value=[{"parcel": "one"}],
+            ),
+        ):
+            candidates, warnings = area_batch.discover_candidates(
+                Path("."),
+                {"north": 39.7, "south": 39.6, "east": -104.9, "west": -105.0},
+                10_000,
+                2_000,
+            )
+
+        self.assertEqual(len(candidates), 1)
+        self.assertEqual(
+            candidates[0]["footprint_validation"], {"status": "deferred_to_report"}
+        )
+        self.assertEqual(warnings, [])
+        secondary_lookup.assert_not_called()
+        detailed_validation.assert_not_called()
+
     def test_radius_arcgis_geometry_is_sent_in_post_body(self):
         class Collector:
             REQUEST_ATTEMPTS = 1
@@ -637,16 +851,102 @@ class CountyResolutionTests(unittest.TestCase):
             for key in ("denver", "adams", "arapahoe", "jefferson")
         }
 
-        profile, parcel, score, _, source = single_address.resolve_county_and_parcel(
-            "123 Main St, Aurora, CO 80012",
-            self.Collector,
-            profiles,
-        )
+        with patch.object(
+            single_address,
+            "geocode_address_location",
+            return_value={
+                "longitude": -104.82,
+                "latitude": 39.66,
+                "county": "Arapahoe County",
+                "postal_code": "80012",
+            },
+        ):
+            profile, parcel, score, _, source = single_address.resolve_county_and_parcel(
+                "123 Main St, Aurora, CO 80012",
+                self.Collector,
+                profiles,
+            )
 
         self.assertEqual(profile.key, "arapahoe")
         self.assertEqual(parcel["SCHEDNUM"], "A-1")
         self.assertEqual(score, 1.0)
         self.assertIn("Arapahoe", source)
+
+    def test_zip_validated_geocode_shortlists_target_and_boundary_counties(self):
+        profiles = {
+            key: self.Profile(key)
+            for key in ("denver", "adams", "arapahoe", "jefferson")
+        }
+
+        with patch.object(
+            single_address,
+            "geocode_address_location",
+            return_value={
+                "longitude": -105.01,
+                "latitude": 39.674,
+                "county": "Arapahoe County",
+                "postal_code": "80110",
+            },
+        ):
+            shortlisted = single_address.shortlist_county_profiles(
+                "1630 W Dartmouth Ave, Englewood, CO 80110",
+                profiles,
+            )
+
+        self.assertEqual([profile.key for profile in shortlisted], ["arapahoe", "denver"])
+
+    def test_mismatched_geocoder_zip_disables_shortlist(self):
+        profiles = {"arapahoe": self.Profile("arapahoe")}
+
+        with patch.object(
+            single_address,
+            "geocode_address_location",
+            return_value={
+                "longitude": -104.82,
+                "latitude": 39.66,
+                "county": "Arapahoe County",
+                "postal_code": "80013",
+            },
+        ):
+            shortlisted = single_address.shortlist_county_profiles(
+                "123 Main St, Aurora, CO 80012",
+                profiles,
+            )
+
+        self.assertEqual(shortlisted, [])
+
+    def test_county_resolution_falls_back_after_shortlist_misses(self):
+        profiles = {
+            key: self.Profile(key)
+            for key in ("denver", "arapahoe", "jefferson")
+        }
+        queried_urls = []
+        original_fetch_page = self.Collector.fetch_page
+
+        def tracked_fetch_page(url, where, offset, fields, return_geometry=True):
+            queried_urls.append(url)
+            return original_fetch_page(url, where, offset, fields, return_geometry)
+
+        with (
+            patch.object(
+                single_address,
+                "shortlist_county_profiles",
+                return_value=[profiles["denver"]],
+            ),
+            patch.object(self.Collector, "fetch_page", side_effect=tracked_fetch_page),
+        ):
+            profile, parcel, *_ = single_address.resolve_county_and_parcel(
+                "123 Main St, Aurora, CO 80012",
+                self.Collector,
+                profiles,
+            )
+
+        self.assertEqual(profile.key, "arapahoe")
+        self.assertEqual(parcel["SCHEDNUM"], "A-1")
+        self.assertEqual(
+            list(dict.fromkeys(queried_urls)),
+            ["denver-parcels", "arapahoe-parcels", "jefferson-parcels"],
+        )
 
     def test_explicit_county_uses_live_parcel_service_only(self):
         profile = self.Profile("arapahoe")
@@ -692,6 +992,43 @@ class CountyResolutionTests(unittest.TestCase):
 
         self.assertIn("4201%72ND%", clauses[0])
 
+    def test_fuzzy_score_rejects_different_street_name_with_same_prefix(self):
+        self.assertEqual(
+            single_address.score_address("1704 HIGH ST", "1704 HIGGINS ST"),
+            0.0,
+        )
+
+    @patch.object(single_address, "collect_spatial_parcel_for_address")
+    @patch.object(single_address, "collect_live_parcels_for_address")
+    def test_live_lookup_falls_back_to_spatial_parcel_after_bad_text_match(
+        self,
+        text_lookup_mock,
+        spatial_lookup_mock,
+    ):
+        text_lookup_mock.return_value = [{
+            "SITUS_ADDRESS_LINE1": "1704 HIGGINS ST",
+            "SITUS_ZIP": "",
+            "SCHEDNUM": "WRONG",
+        }]
+        spatial_lookup_mock.return_value = [{
+            "attributes": {
+                "SITUS_ADDRESS_LINE1": "1720 N HIGH ST",
+                "SITUS_ZIP": "80218",
+                "SCHEDNUM": "RIGHT",
+            },
+            "geometry": None,
+        }]
+
+        parcel, score, matched_address, _ = single_address.find_parcel_live(
+            "1704 High St, Denver, CO 80218",
+            self.Collector,
+            "Denver",
+        )
+
+        self.assertEqual(parcel["SCHEDNUM"], "RIGHT")
+        self.assertEqual(score, 0.9)
+        self.assertEqual(matched_address, "1704 High St")
+
     def test_single_spatial_parcel_is_accepted_without_situs_address(self):
         parcel = {"PIN": "195917222900", "full_parcel_number": "195917222900"}
 
@@ -723,6 +1060,8 @@ class RoofIntelligenceRouteTests(unittest.TestCase):
         os.environ["ROOF_INTELLIGENCE_DB_PATH"] = str(self.db_path)
         os.environ["ROOF_INTELLIGENCE_LOCAL_WORKER"] = "0"
         os.environ["PCS_SETTINGS_PATH"] = str(self.settings_path)
+        self.previous_health_process = self.web._county_health_process
+        self.web._county_health_process = None
         self.client = self.web.app.test_client()
 
     def tearDown(self):
@@ -738,6 +1077,7 @@ class RoofIntelligenceRouteTests(unittest.TestCase):
             os.environ.pop("PCS_SETTINGS_PATH", None)
         else:
             os.environ["PCS_SETTINGS_PATH"] = self.previous_settings
+        self.web._county_health_process = self.previous_health_process
         self.temp_dir.cleanup()
 
     def test_map_candidate_passes_exact_parcel_to_report_worker(self):
@@ -769,6 +1109,226 @@ class RoofIntelligenceRouteTests(unittest.TestCase):
         self.assertEqual(command[command.index("--parcel-id") + 1], "0172131300018")
         self.assertIn("--allow-pending-footprint-review", command)
         self.assertNotIn("--parcel-cache", command)
+
+    def _create_editable_report(self, report_id="route-edit-report"):
+        store = RoofIntelligenceJobStore(self.db_path)
+        job = store.create_individual_job("65 N Yuma St, Denver, CO 80223")
+        store.start_job(job["id"])
+        pdf_path = Path(self.temp_dir.name) / f"{report_id}.pdf"
+        pdf_path.write_bytes(b"%PDF-1.4\n" + b"x" * 1200)
+        snapshot = {
+            "schema_version": 1,
+            "snapshot_id": f"{report_id}-revision-1",
+            "report_id": report_id,
+            "revision": {
+                "number": 1, "kind": "initial", "parent_snapshot_id": None,
+                "created_at": "2026-07-22T12:00:00+00:00", "created_by": "local-user",
+                "change_reason": "Fresh assessment", "manual_edits": {},
+            },
+            "property": {"canonical_key": "DENVER:0508500065000", "address": "65 N Yuma St"},
+            "report_fields": {"roof_area_sqft": 10_000, "roof_squares": 100},
+            "analysis": {
+                "roof_type": "TPO", "roof_system": "Single-ply membrane", "overall_score": 75,
+                "condition_label": "FAIR", "risk_level": "MODERATE",
+                "summary": "Fresh summary", "recommendation": "Fresh recommendation",
+            },
+            "imagery": {"source": "Synthetic", "limitations": []},
+            "calculations": {
+                "roof_area_sqft": 10_000, "roof_squares": 100,
+                "roof_condition_score": 75, "condition_label": "FAIR", "risk_level": "MODERATE",
+            },
+            "provenance": {"manual_fields": [], "persistent_square_footage_override": False},
+        }
+        store.complete_individual_job(job["id"], {
+            "report_id": report_id, "report_snapshot": snapshot,
+            "address": "65 N Yuma St", "city": "Denver", "state": "CO", "zip": "80223",
+            "county": "Denver", "parcel": "0508500065000", "report_path": str(pdf_path),
+            "roof_type": "TPO", "condition_score": 75, "risk_level": "MODERATE",
+        })
+        return store, job, snapshot
+
+    def test_report_review_route_is_hidden_until_both_flags_are_enabled(self):
+        store, job, _ = self._create_editable_report()
+
+        disabled = self.client.get("/roof-intelligence/reports/route-edit-report/review")
+        self.assertEqual(disabled.status_code, 404)
+
+        with patch.dict(os.environ, {
+            "ROOF_INTELLIGENCE_SUPABASE_ENABLED": "1",
+            "ROOF_INTELLIGENCE_REPORT_EDITING_ENABLED": "1",
+        }):
+            enabled = self.client.get("/roof-intelligence/reports/route-edit-report/review")
+            workspace = self.client.get(f"/roof-intelligence?job_id={job['id']}")
+
+        self.assertEqual(enabled.status_code, 200)
+        self.assertIn(b"Review &amp; Edit Roof Report", enabled.data)
+        self.assertIn(b"Revision 1 remains unchanged", enabled.data)
+        self.assertIn(b"Roof type (roofing surface)", enabled.data)
+        self.assertIn(b"Roof system (physical configuration)", enabled.data)
+        self.assertIn(b"Submit this correction for review to improve future roof reports", enabled.data)
+        self.assertIn(b"Review &amp; Edit", workspace.data)
+        self.assertEqual(len(store.list_report_revisions("route-edit-report")), 1)
+
+    def test_completed_report_opens_from_application_support_data_root(self):
+        self._create_editable_report("application-support-report")
+
+        with patch.object(self.web, "DEFAULT_DATA_DIR", Path(self.temp_dir.name)):
+            response = self.client.get(
+                "/roof-intelligence/reports/application-support-report"
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.mimetype, "application/pdf")
+        response.close()
+
+    def test_county_health_panel_has_manual_run_button(self):
+        with patch.object(self.web, "_county_health_check_running", return_value=False):
+            page = self.client.get("/roof-intelligence")
+
+        self.assertEqual(page.status_code, 200)
+        self.assertIn(b'id="county-health-run"', page.data)
+        self.assertIn(b"/roof-intelligence/county-health/run", page.data)
+
+    def test_manual_county_health_route_starts_background_check(self):
+        with patch.object(
+            self.web,
+            "_start_manual_county_health_check",
+            return_value=True,
+        ) as start:
+            response = self.client.post("/roof-intelligence/county-health/run")
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["Location"], "/roof-intelligence")
+        start.assert_called_once_with()
+
+    def test_manual_county_health_uses_full_bounded_pilotpoint_check(self):
+        project_dir = Path(self.temp_dir.name) / "PilotPoint"
+        python_path = project_dir / ".venv" / "bin" / "python"
+        script_path = project_dir / "county_discovery_health.py"
+        python_path.parent.mkdir(parents=True)
+        python_path.write_text("", encoding="utf-8")
+        script_path.write_text("", encoding="utf-8")
+        process = Mock()
+        process.poll.return_value = None
+
+        with (
+            patch.dict(os.environ, {"ROOF_INTELLIGENCE_LOCAL_WORKER": "1"}),
+            patch.object(self.web, "ROOF_INTELLIGENCE_PROJECT_DIR", str(project_dir)),
+            patch.object(self.web, "DEFAULT_DATA_DIR", Path(self.temp_dir.name) / "data"),
+            patch.object(self.web, "_roof_worker_readiness_error", return_value=None),
+            patch.object(self.web.subprocess, "Popen", return_value=process) as popen,
+        ):
+            started = self.web._start_manual_county_health_check()
+
+        self.assertTrue(started)
+        command = popen.call_args.args[0]
+        self.assertEqual(command[:2], [str(python_path), str(script_path)])
+        self.assertIn("--all-samples", command)
+        self.assertIn("--strict-discrepancies", command)
+        self.assertIn("--notify-pcs", command)
+        self.assertIn("--output", command)
+        self.assertEqual(popen.call_args.kwargs["cwd"], str(project_dir))
+
+    def test_manual_county_health_status_reports_running_state(self):
+        with patch.object(self.web, "_county_health_check_running", return_value=True):
+            response = self.client.get("/api/roof-intelligence/county-health/status")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json(), {"running": True})
+
+    def test_edit_submission_creates_new_revision_and_recalculates(self):
+        store, _, parent = self._create_editable_report("route-revision-report")
+
+        def complete_revision(command, **kwargs):
+            parent_path = Path(command[2])
+            output_pdf = Path(command[4])
+            output_snapshot = Path(command[5])
+            submitted_parent = json.loads(parent_path.read_text(encoding="utf-8"))
+            self.assertEqual(submitted_parent["snapshot_id"], parent["snapshot_id"])
+            revised = json.loads(json.dumps(submitted_parent))
+            revised["snapshot_id"] = "route-revision-report-revision-2"
+            revised["revision"] = {
+                "number": 2, "kind": "manual_edit", "parent_snapshot_id": parent["snapshot_id"],
+                "created_at": "2026-07-23T12:00:00+00:00", "created_by": "local-user",
+                "change_reason": "Field measurement corrected area",
+                "manual_edits": {"roof_area_sqft": 12_500},
+            }
+            revised["report_fields"].update({"roof_area_sqft": 12_500, "roof_squares": 125})
+            revised["calculations"].update({"roof_area_sqft": 12_500, "roof_squares": 125})
+            output_pdf.parent.mkdir(parents=True, exist_ok=True)
+            output_pdf.write_bytes(b"%PDF-1.4\n" + b"y" * 1200)
+            output_snapshot.write_text(json.dumps(revised), encoding="utf-8")
+            self.assertIn("--submit-for-future-processing", command)
+            feedback_directory = Path(command[command.index("--feedback-directory") + 1])
+            feedback_directory.mkdir(parents=True, exist_ok=True)
+            feedback_path = feedback_directory / "feedback-route-1.json"
+            feedback_path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "feedback_id": "feedback-route-1",
+                        "status": "pending_review",
+                        "report_id": "route-revision-report",
+                        "parent_snapshot_id": parent["snapshot_id"],
+                        "revised_snapshot_id": revised["snapshot_id"],
+                        "requested_by": "local-user",
+                        "created_at": "2026-07-23T12:00:00+00:00",
+                        "comment": "Field measurement corrected area",
+                        "corrections": {"roof_area_sqft": {"before": 10000, "after": 12500}},
+                        "learning_scopes": ["property_measurement"],
+                        "property_identity": {"canonical_key": "DENVER:0508500065000"},
+                        "imagery_identity": {"source": "Synthetic"},
+                        "review": None,
+                        "application": None,
+                    }
+                ),
+                encoding="utf-8",
+            )
+            return type(
+                "Completed",
+                (),
+                {
+                    "returncode": 0,
+                    "stdout": json.dumps({"processing_feedback_path": str(feedback_path)}),
+                    "stderr": "",
+                },
+            )()
+
+        with patch.dict(os.environ, {
+            "ROOF_INTELLIGENCE_SUPABASE_ENABLED": "1",
+            "ROOF_INTELLIGENCE_REPORT_EDITING_ENABLED": "1",
+        }), patch.object(self.web, "DEFAULT_DATA_DIR", Path(self.temp_dir.name)), \
+             patch.object(self.web.subprocess, "run", side_effect=complete_revision):
+            response = self.client.post(
+                "/roof-intelligence/reports/route-revision-report/revisions",
+                data={
+                    "roof_area_sqft": "12500", "roof_condition_score": "75",
+                    "roof_type": "TPO", "roof_system": "Single-ply membrane",
+                    "report_summary": "Fresh summary", "recommendation": "Fresh recommendation",
+                    "change_reason": "Field measurement corrected area",
+                    "apply_square_footage_to_future": "1",
+                    "submit_for_future_processing": "1",
+                },
+                follow_redirects=False,
+            )
+
+        self.assertEqual(response.status_code, 302)
+        revisions = store.list_report_revisions("route-revision-report")
+        self.assertEqual([item["revision_number"] for item in revisions], [2, 1])
+        self.assertEqual(
+            Path(revisions[0]["report_path"]).name,
+            "65 N Yuma St Denver.pdf",
+        )
+        self.assertEqual(Path(revisions[0]["report_path"]).parent.name, "revision-2")
+        self.assertEqual(revisions[0]["snapshot"]["report_fields"]["roof_area_sqft"], 12_500)
+        self.assertEqual(
+            store.get_active_square_footage_override(address="65 N Yuma St")["numeric_value"],
+            12_500,
+        )
+        feedback = store.list_processing_feedback(report_id="route-revision-report")
+        self.assertEqual(len(feedback), 1)
+        self.assertEqual(feedback[0]["status"], "pending_review")
+        self.assertEqual(feedback[0]["feedback"]["comment"], "Field measurement corrected area")
 
     def test_canonical_review_queue_is_loaded_from_roof_project(self):
         completed = type("Completed", (), {
@@ -926,11 +1486,20 @@ class RoofIntelligenceRouteTests(unittest.TestCase):
         self.assertIn(b"center: {lat: 39.7392, lng: -104.9903}", page.data)
         self.assertIn(b"new google.maps.Map", page.data)
         self.assertIn(b'id="map-address"', page.data)
+        self.assertIn(b'id="map-address-suggestions"', page.data)
+        self.assertIn(b'id="map-address-help"', page.data)
+        self.assertIn(b'aria-controls="map-address-suggestions"', page.data)
         self.assertIn(b'id="property-address-suggestions"', page.data)
         self.assertIn(b"google.maps.importLibrary('places')", page.data)
         self.assertIn(b"AutocompleteSuggestion.fetchAutocompleteSuggestions", page.data)
         self.assertIn(b"includedRegionCodes: ['us']", page.data)
         self.assertIn(b"place.fetchFields({fields: ['formattedAddress']})", page.data)
+        self.assertIn(b"place.fetchFields({fields: ['formattedAddress', 'location']})", page.data)
+        self.assertIn(b"button.id = `map-address-option-${index}`", page.data)
+        self.assertIn(b"useSelectedPlace(place.location", page.data)
+        self.assertIn(b"event.defaultPrevented || event.key !== 'Enter'", page.data)
+        self.assertIn(b"options[activeIndex >= 0 ? activeIndex : 0].click()", page.data)
+        self.assertIn(b"Enter a complete address and choose Locate", page.data)
         self.assertIn(b"new Intl.DateTimeFormat(undefined", page.data)
         self.assertIn(b"timeZoneName: 'short'", page.data)
         self.assertIn(b'id="center-map-address-button"', page.data)

@@ -232,6 +232,13 @@
         }
 
         .panel-header { padding: 15px 17px 12px; border-bottom: 1px solid #edf0f4; }
+        .panel-header.with-action {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 14px;
+        }
+        .panel-header.with-action .button { min-height: 36px; white-space: nowrap; }
         .panel-title { margin: 0; font-size: 16px; font-weight: 850; }
         .panel-copy { margin: 5px 0 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
         .panel-body { padding: 17px; }
@@ -394,6 +401,7 @@
         .list-title { display: block; color: var(--ink); font-weight: 800; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .list-title:hover { color: var(--navy); }
         .list-meta { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
+        .list-edit-link { display: inline-block; margin-top: 5px; color: var(--navy); font-size: 11px; font-weight: 800; text-decoration: none; }
         .canonical-review-row { display: block; }
         .canonical-review-row .list-main { width: 100%; }
         .canonical-source-grid {
@@ -466,6 +474,7 @@
         }
         .map-tool.active { border-color: var(--navy); background: var(--blue-soft); color: var(--navy); }
         .map-address-search { display: flex; flex: 1 1 340px; min-width: 240px; }
+        .map-address-autocomplete { flex: 1 1 auto; min-width: 0; }
         .map-address-input {
             width: 100%;
             min-height: 36px;
@@ -607,11 +616,15 @@
                                 <button class="map-tool" id="clear-area-button" type="button"><i class="bi bi-x-lg"></i> Clear</button>
                                 <div class="map-address-search">
                                     <label class="visually-hidden" for="map-address">Center map on an address</label>
-                                    <input class="map-address-input" id="map-address" type="search" autocomplete="street-address" placeholder="Enter an address to center the map">
+                                    <div class="address-autocomplete map-address-autocomplete">
+                                        <input class="map-address-input" id="map-address" type="search" autocomplete="off" placeholder="Enter an address to center the map" role="combobox" aria-autocomplete="list" aria-controls="map-address-suggestions" aria-expanded="false" aria-describedby="map-address-help">
+                                        <ul class="address-suggestions" id="map-address-suggestions" role="listbox" hidden></ul>
+                                    </div>
                                     <button class="map-tool map-address-button" id="center-map-address-button" type="button" aria-label="Center map on address"><i class="bi bi-geo-alt"></i> Locate</button>
                                 </div>
                                 <span class="map-selection-status" id="map-selection-status" aria-live="polite">No area selected</span>
                             </div>
+                            <p class="field-help" id="map-address-help">Start typing, then choose a Google Maps address suggestion to center the map.</p>
                             <div id="area-map" role="application" aria-label="Map centered on downtown Denver for selecting a property search area"></div>
                             <p class="map-instructions" id="map-instructions">Drag the Google map to move around, scroll or pinch to zoom, and double-click to zoom in. When ready, choose Draw Rectangle, press at the first corner, drag to the opposite corner, and release. The completed rectangle can be moved or resized.</p>
                             {% if not google_maps_configured %}<p class="dev-note"><strong>Google Maps is not configured.</strong> <a href="{{ url_for('application_settings') }}">Open Local Settings</a> and save the restricted API key.</p>{% endif %}
@@ -769,6 +782,7 @@
                                             <div class="list-main">
                                                 <a class="list-title" href="{{ report.view_url }}" target="_blank" rel="noopener">{{ report.address or report.result.address or 'Roof Intelligence Report' }}</a>
                                                 <span class="list-meta">{{ report.county or report.result.county or 'County unavailable' }} · {{ report.roof_area_sqft or report.result.building_footprint_sqft or 'Roof area unavailable' }}{% if report.roof_area_sqft or report.result.building_footprint_sqft %} SF{% endif %}</span>
+                                                {% if report.review_url %}<a class="list-edit-link" href="{{ report.review_url }}">Review &amp; Edit</a>{% endif %}
                                             </div>
                                             <span class="mini-status">PDF</span>
                                         </li>
@@ -794,6 +808,7 @@
                             </div>
                             <div class="job-actions">
                                 <a class="button" href="{{ report.view_url }}" target="_blank" rel="noopener"><i class="bi bi-file-earmark-pdf"></i>View Report</a>
+                                {% if report.review_url %}<a class="button secondary" href="{{ report.review_url }}"><i class="bi bi-pencil-square"></i>Review &amp; Edit</a>{% endif %}
                                 <a class="button secondary" href="{{ url_for('roof_intelligence', mode='individual') }}"><i class="bi bi-plus-lg"></i>Create Another</a>
                             </div>
                         {% elif active_job.status == 'failed' %}
@@ -919,9 +934,17 @@
             </section>
 
             <section class="panel">
-                <div class="panel-header">
-                    <h2 class="panel-title">Current County Data Health</h2>
-                    <p class="panel-copy">The most recent parcel, footprint, assessor, and imagery check for each county.</p>
+                <div class="panel-header with-action">
+                    <div>
+                        <h2 class="panel-title">Current County Data Health</h2>
+                        <p class="panel-copy">The most recent parcel, footprint, assessor, and imagery check for each county.</p>
+                    </div>
+                    <form method="post" action="{{ url_for('run_roof_intelligence_county_health') }}">
+                        <button class="button secondary" id="county-health-run" type="submit"{% if county_health_running or not local_worker_enabled %} disabled{% endif %}>
+                            <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+                            {{ 'Running…' if county_health_running else 'Run' }}
+                        </button>
+                    </form>
                 </div>
                 <div class="panel-body py-1">
                     {% if county_health %}
@@ -949,7 +972,24 @@
         (() => {
             const params = new URLSearchParams(window.location.search);
             const workspace = document.getElementById('job-workspace');
+            const countyHealthRun = document.getElementById('county-health-run');
             const inferredMode = {{ ('area' if active_job and active_job.job_type == 'zip_batch' else 'individual' if active_job else none) | tojson }};
+            const countyHealthRunning = {{ county_health_running | tojson }};
+            if (countyHealthRun && countyHealthRunning) {
+                const statusUrl = {{ url_for('roof_intelligence_county_health_status') | tojson }};
+                const interval = window.setInterval(async () => {
+                    try {
+                        const response = await fetch(statusUrl, {cache: 'no-store'});
+                        const status = await response.json();
+                        if (!status.running) {
+                            window.clearInterval(interval);
+                            window.location.reload();
+                        }
+                    } catch (_) {
+                        // Leave the current results visible and retry on the next interval.
+                    }
+                }, 5000);
+            }
             const requestedMode = params.get('mode');
             let mode = requestedMode === 'area' || requestedMode === 'individual' ? requestedMode : inferredMode;
             let areaMap = null;
@@ -1019,6 +1059,8 @@
             const drawButton = document.getElementById('draw-area-button');
             const clearButton = document.getElementById('clear-area-button');
             const mapAddressInput = document.getElementById('map-address');
+            const mapAddressSuggestions = document.getElementById('map-address-suggestions');
+            const mapAddressHelp = document.getElementById('map-address-help');
             const centerAddressButton = document.getElementById('center-map-address-button');
             const selectionStatus = document.getElementById('map-selection-status');
             const mapInstructions = document.getElementById('map-instructions');
@@ -1285,6 +1327,146 @@
                     });
                 };
 
+                const initializeMapAddressAutocomplete = async () => {
+                    if (!mapAddressInput || !mapAddressSuggestions) return;
+                    const {AutocompleteSuggestion, AutocompleteSessionToken} = await google.maps.importLibrary('places');
+                    let sessionToken = new AutocompleteSessionToken();
+                    let requestNumber = 0;
+                    let debounceTimer = null;
+                    let activeIndex = -1;
+
+                    const closeSuggestions = () => {
+                        mapAddressSuggestions.hidden = true;
+                        mapAddressSuggestions.replaceChildren();
+                        mapAddressInput.setAttribute('aria-expanded', 'false');
+                        mapAddressInput.removeAttribute('aria-activedescendant');
+                        activeIndex = -1;
+                    };
+                    const useSelectedPlace = (location, formattedAddress) => {
+                        clearSelection();
+                        setDrawingEnabled(false);
+                        mapAddressInput.value = formattedAddress;
+                        areaMap.setCenter(location);
+                        if (currentSelectionType() === 'radius') {
+                            radiusCenter = location;
+                            locatedAddress = formattedAddress;
+                            saveRadius({fitMap: true});
+                        } else {
+                            areaMap.setZoom(18);
+                            if (selectionStatus) selectionStatus.textContent = `Map centered on ${formattedAddress} · no area selected`;
+                        }
+                    };
+                    const chooseSuggestion = async (prediction) => {
+                        mapAddressInput.value = prediction.description;
+                        closeSuggestions();
+                        try {
+                            const place = prediction.placePrediction.toPlace();
+                            await place.fetchFields({fields: ['formattedAddress', 'location']});
+                            if (!place.location) throw new Error('Selected address did not include a map location.');
+                            useSelectedPlace(place.location, place.formattedAddress || prediction.description);
+                        } catch (_) {
+                            centerMapOnAddress();
+                        }
+                        sessionToken = new AutocompleteSessionToken();
+                        mapAddressInput.focus();
+                    };
+                    const setActiveSuggestion = (nextIndex) => {
+                        const options = Array.from(mapAddressSuggestions.querySelectorAll('[role="option"]'));
+                        if (!options.length) return;
+                        activeIndex = (nextIndex + options.length) % options.length;
+                        options.forEach((option, index) => option.classList.toggle('active', index === activeIndex));
+                        mapAddressInput.setAttribute('aria-activedescendant', options[activeIndex].id);
+                        options[activeIndex].scrollIntoView({block: 'nearest'});
+                    };
+                    const showPredictions = (predictions) => {
+                        mapAddressSuggestions.replaceChildren();
+                        activeIndex = -1;
+                        predictions.forEach((prediction, index) => {
+                            const item = document.createElement('li');
+                            const button = document.createElement('button');
+                            const main = document.createElement('span');
+                            const secondary = document.createElement('span');
+                            button.type = 'button';
+                            button.className = 'address-suggestion';
+                            button.id = `map-address-option-${index}`;
+                            button.setAttribute('role', 'option');
+                            button.setAttribute('aria-selected', 'false');
+                            main.className = 'address-suggestion-main';
+                            main.textContent = prediction.mainText || prediction.description;
+                            secondary.className = 'address-suggestion-secondary';
+                            secondary.textContent = prediction.secondaryText;
+                            button.append(main);
+                            if (secondary.textContent) button.append(secondary);
+                            button.addEventListener('mousedown', (event) => event.preventDefault());
+                            button.addEventListener('click', () => chooseSuggestion(prediction));
+                            item.append(button);
+                            mapAddressSuggestions.append(item);
+                        });
+                        mapAddressSuggestions.hidden = predictions.length === 0;
+                        mapAddressInput.setAttribute('aria-expanded', String(predictions.length > 0));
+                    };
+                    const requestPredictions = async () => {
+                        const input = mapAddressInput.value.trim();
+                        const currentRequest = ++requestNumber;
+                        if (input.length < 3) {
+                            closeSuggestions();
+                            return;
+                        }
+                        try {
+                            const {suggestions} = await AutocompleteSuggestion.fetchAutocompleteSuggestions({
+                                input,
+                                includedRegionCodes: ['us'],
+                                includedPrimaryTypes: ['street_address', 'premise', 'subpremise'],
+                                language: 'en-US',
+                                region: 'us',
+                                sessionToken,
+                            });
+                            if (currentRequest !== requestNumber) return;
+                            const predictions = suggestions
+                                .map((suggestion) => suggestion.placePrediction)
+                                .filter(Boolean)
+                                .map((placePrediction) => ({
+                                    description: placePrediction.text?.text || '',
+                                    mainText: placePrediction.mainText?.text || placePrediction.text?.text || '',
+                                    secondaryText: placePrediction.secondaryText?.text || '',
+                                    placePrediction,
+                                }));
+                            showPredictions(predictions.slice(0, 6));
+                        } catch (_) {
+                            if (currentRequest !== requestNumber) return;
+                            if (mapAddressHelp) {
+                                mapAddressHelp.textContent = 'Address suggestions are unavailable. Use Locate after entering a complete address, or enable the Places API (New) for the saved Google Maps key.';
+                            }
+                            closeSuggestions();
+                        }
+                    };
+
+                    mapAddressInput.addEventListener('input', () => {
+                        window.clearTimeout(debounceTimer);
+                        debounceTimer = window.setTimeout(requestPredictions, 180);
+                    });
+                    mapAddressInput.addEventListener('keydown', (event) => {
+                        const options = Array.from(mapAddressSuggestions.querySelectorAll('[role="option"]'));
+                        if (mapAddressSuggestions.hidden || !options.length) return;
+                        if (event.key === 'ArrowDown') {
+                            event.preventDefault();
+                            setActiveSuggestion(activeIndex + 1);
+                        } else if (event.key === 'ArrowUp') {
+                            event.preventDefault();
+                            setActiveSuggestion(activeIndex - 1);
+                        } else if (event.key === 'Enter') {
+                            event.preventDefault();
+                            options[activeIndex >= 0 ? activeIndex : 0].click();
+                        } else if (event.key === 'Escape') {
+                            closeSuggestions();
+                        }
+                    });
+                    mapAddressInput.addEventListener('blur', () => window.setTimeout(closeSuggestions, 120));
+                    if (mapAddressHelp) {
+                        mapAddressHelp.textContent = 'Start typing, then choose a Google Maps address suggestion to center the map.';
+                    }
+                };
+
                 selectionTypeInputs.forEach((input) => input.addEventListener('change', () => {
                     clearSelection();
                     setDrawingEnabled(false);
@@ -1307,7 +1489,8 @@
                     if (currentSelectionType() === 'radius' && radiusCenter) clearSelection();
                 });
                 mapAddressInput?.addEventListener('keydown', (event) => {
-                    if (event.key !== 'Enter') return;
+                    if (event.defaultPrevented || event.key !== 'Enter') return;
+                    if (!mapAddressSuggestions?.hidden && mapAddressSuggestions?.querySelector('[role="option"]')) return;
                     event.preventDefault();
                     centerMapOnAddress();
                 });
@@ -1378,6 +1561,13 @@
                 }, true);
                 setDrawingEnabled(false);
                 if (selectionStatus) selectionStatus.textContent = 'No area selected';
+                try {
+                    await initializeMapAddressAutocomplete();
+                } catch (_) {
+                    if (mapAddressHelp) {
+                        mapAddressHelp.textContent = 'Google Maps address suggestions are unavailable. Enter a complete address and choose Locate.';
+                    }
+                }
             };
 
             ensureAreaMap = () => {
@@ -1633,6 +1823,13 @@
                     badge.textContent = 'PDF';
 
                     main.append(link, meta);
+                    if (report.review_url) {
+                        const editLink = document.createElement('a');
+                        editLink.className = 'list-edit-link';
+                        editLink.href = report.review_url;
+                        editLink.textContent = 'Review & Edit';
+                        main.append(editLink);
+                    }
                     row.append(main, badge);
                     batchReportList.append(row);
                     displayedReportIds.add(reportId);

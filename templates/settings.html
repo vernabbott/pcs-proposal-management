@@ -14,7 +14,7 @@
         h1 { margin:0; font-size:28px; }
         .subtitle { margin:7px 0 0; color:var(--muted); font-size:14px; }
         .home-link { display:inline-flex; align-items:center; gap:7px; color:var(--navy); font-size:13px; font-weight:800; text-decoration:none; }
-        .panel { overflow:hidden; border:1px solid var(--line); border-radius:9px; background:var(--panel); box-shadow:0 1px 2px rgba(16,24,40,.04); }
+        .panel { overflow:hidden; margin-bottom:16px; border:1px solid var(--line); border-radius:9px; background:var(--panel); box-shadow:0 1px 2px rgba(16,24,40,.04); }
         .panel-head { padding:18px 20px; border-bottom:1px solid var(--line); }
         .panel-head h2 { margin:0; font-size:18px; }
         .panel-head p { margin:6px 0 0; color:var(--muted); font-size:13px; }
@@ -74,6 +74,38 @@
                     </form>
                 {% endif %}
                 <div class="privacy"><strong>Stored locally:</strong> the key is written to PCS application-support data with owner-only file permissions. It is not stored in the source repository or included in Git commits. Google requires the browser to receive a restricted key with the Maps JavaScript, Geocoding, and Places API (New) enabled when these tools are opened.</div>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-head">
+                <h2>Supabase</h2>
+                <p>Used by Contact Management to read and update the PCS contact database.</p>
+            </div>
+            <div class="panel-body">
+                {% if supabase_configured %}
+                    <div class="status configured"><i class="bi bi-check-circle-fill"></i>Configured · key ending in {{ supabase_key_suffix }}</div>
+                {% else %}
+                    <div class="status"><i class="bi bi-exclamation-circle"></i>Not configured</div>
+                {% endif %}
+                <form method="post" action="{{ url_for('application_settings') }}" autocomplete="off">
+                    <input type="hidden" name="action" value="save_supabase_configuration">
+                    <label for="supabase_url">Supabase Project URL</label>
+                    <input id="supabase_url" name="supabase_url" type="url" required spellcheck="false" value="{{ supabase_url }}">
+                    <label for="supabase_service_role_key" style="margin-top:14px">Server Secret Key</label>
+                    <input id="supabase_service_role_key" name="supabase_service_role_key" type="password" required spellcheck="false" autocomplete="new-password" placeholder="sb_secret_…">
+                    <p class="help">Copy a secret key from Supabase Project Settings → API Keys. This must be a server secret, not a publishable key.</p>
+                    <div class="actions">
+                        <button type="submit"><i class="bi bi-database-check"></i>{{ 'Replace Configuration' if supabase_configured else 'Save Configuration' }}</button>
+                    </div>
+                </form>
+                {% if supabase_configured %}
+                    <form method="post" action="{{ url_for('application_settings') }}" style="margin-top:9px">
+                        <input type="hidden" name="action" value="remove_supabase_configuration">
+                        <button class="secondary" type="submit"><i class="bi bi-trash3"></i>Remove Configuration</button>
+                    </form>
+                {% endif %}
+                <div class="privacy"><strong>Server-side only:</strong> the secret is stored with owner-only file permissions and is never sent to the Contact Management webpage or included in Git. Keep this key private.</div>
             </div>
         </section>
     </main>

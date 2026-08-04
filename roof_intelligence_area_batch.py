@@ -7,6 +7,7 @@ import argparse
 from datetime import date
 import json
 import math
+import os
 from pathlib import Path
 import sys
 import time
@@ -18,6 +19,24 @@ from urllib.request import Request, urlopen
 DEFAULT_PROJECT_DIR = Path(
     "/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual Studio/PilotPoint IQ Roof Intelligence Report"
 )
+
+# WGS84 extents from the U.S. Census Bureau TIGERweb county layer.  These
+# conservative bounding boxes prevent a small map selection from initializing
+# every configured county service.  The small padding protects selections that
+# touch a county boundary and keeps unknown future profiles enabled by default.
+COUNTY_WGS84_BOUNDS = {
+    "adams": (-105.053339, 39.738002, -103.705695, 40.001478),
+    "arapahoe": (-105.054169, 39.563601, -103.706547, 39.740835),
+    "boulder": (-105.694362, 39.912886, -105.052774, 40.262785),
+    "broomfield": (-105.166056, 39.889212, -104.961071, 40.044144),
+    "clear_creek": (-105.927030, 39.564865, -105.397949, 39.851996),
+    "denver": (-105.109924, 39.614311, -104.599581, 39.914178),
+    "douglas": (-105.329445, 39.129479, -104.660584, 39.566193),
+    "jefferson": (-105.399150, 39.129474, -105.048597, 39.914386),
+    "larimer": (-106.195438, 40.257784, -104.943052, 40.998440),
+    "weld": (-105.056720, 40.000251, -103.573216, 41.001905),
+}
+COUNTY_BOUNDS_PADDING_DEGREES = 0.01
 
 
 def parse_args() -> argparse.Namespace:
@@ -159,6 +178,24 @@ def spatial_query(bounds: dict[str, float], selection: dict | None = None) -> tu
     return envelope, "esriGeometryEnvelope"
 
 
+def profile_intersects_bounds(profile, bounds: dict[str, float]) -> bool:
+    county_bounds = COUNTY_WGS84_BOUNDS.get(str(getattr(profile, "key", "")).strip().lower())
+    if county_bounds is None:
+        return True
+    west, south, east, north = county_bounds
+    padding = COUNTY_BOUNDS_PADDING_DEGREES
+    return not (
+        bounds["east"] < west - padding
+        or bounds["west"] > east + padding
+        or bounds["north"] < south - padding
+        or bounds["south"] > north + padding
+    )
+
+
+def profiles_for_bounds(profiles, bounds: dict[str, float]) -> list:
+    return [profile for profile in profiles if profile_intersects_bounds(profile, bounds)]
+
+
 def fetch_arcgis_post(collector, url: str, params: dict) -> dict:
     attempts = int(getattr(collector, "REQUEST_ATTEMPTS", 3))
     timeout = float(getattr(collector, "REQUEST_TIMEOUT", 60))
@@ -260,7 +297,17 @@ def discover_candidates(
     by_key: dict[str, dict] = {}
     warnings: list[str] = []
     discovered_parcel_count = 0
-    for profile in COUNTY_PROFILES.values():
+    # Area discovery runs as an isolated subprocess.  Keep a slow county
+    # service from consuming the entire worker allowance through the
+    # collector's longer report-generation retry defaults.
+    collector.REQUEST_TIMEOUT = float(
+        os.environ.get("ROOF_INTELLIGENCE_AREA_REQUEST_TIMEOUT", "45")
+    )
+    collector.REQUEST_ATTEMPTS = int(
+        os.environ.get("ROOF_INTELLIGENCE_AREA_REQUEST_ATTEMPTS", "2")
+    )
+    applicable_profiles = profiles_for_bounds(COUNTY_PROFILES.values(), bounds)
+    for profile in applicable_profiles:
         try:
             configure_collector_for_county(collector, profile)
             parcels = fetch_parcels_in_bounds(collector, bounds, selection=selection)
@@ -278,27 +325,38 @@ def discover_candidates(
             except Exception as exc:
                 buildings = []
                 primary_error = " ".join(str(exc).split())[:200]
-            try:
-                secondary_buildings = collector.collect_secondary_buildings(None, parcel_geometry)
-            except Exception as exc:
-                secondary_buildings = []
-                secondary_error = " ".join(str(exc).split())[:200]
             parcel_keys = {collector.parcel_join_key(parcel) for parcel in parcels}
             records = collector.combine_data(buildings, parcels) if buildings else []
             has_primary_matches = any(
                 collector.parcel_join_key(record) in parcel_keys for record in records
             )
-            if not has_primary_matches and secondary_buildings:
-                records = collector.combine_data(secondary_buildings, parcels)
-                buildings = []
-                warnings.append(
-                    f"{profile.display_name}: using county footprints because Supabase "
-                    + (f"failed ({primary_error})" if primary_error else "returned no selected footprints")
-                )
-            elif primary_error and not secondary_buildings:
-                warnings.append(f"{profile.display_name}: Supabase failed ({primary_error})")
-            if secondary_error:
-                warnings.append(f"{profile.display_name}: county footprint lookup failed ({secondary_error})")
+            secondary_buildings = []
+            if not has_primary_matches:
+                try:
+                    secondary_buildings = collector.collect_secondary_buildings(
+                        None, parcel_geometry
+                    )
+                except Exception as exc:
+                    secondary_error = " ".join(str(exc).split())[:200]
+                if secondary_buildings:
+                    records = collector.combine_data(secondary_buildings, parcels)
+                    buildings = []
+                    warnings.append(
+                        f"{profile.display_name}: using county footprints because Supabase "
+                        + (
+                            f"failed ({primary_error})"
+                            if primary_error
+                            else "returned no selected footprints"
+                        )
+                    )
+                elif primary_error:
+                    warnings.append(
+                        f"{profile.display_name}: Supabase failed ({primary_error})"
+                    )
+                if secondary_error:
+                    warnings.append(
+                        f"{profile.display_name}: county footprint lookup failed ({secondary_error})"
+                    )
             for record in records:
                 if collector.parcel_join_key(record) not in parcel_keys:
                     continue
@@ -311,9 +369,12 @@ def discover_candidates(
                         }
                     else:
                         record["footprint_source"] = "supabase"
-                        record["footprint_validation"] = collector.validate_building_footprint_sources(
-                            record, secondary_buildings
-                        )
+                        # Candidate discovery only needs a usable footprint and
+                        # roof area.  The selected property's report run
+                        # performs the detailed county-source comparison.
+                        record["footprint_validation"] = {
+                            "status": "deferred_to_report"
+                        }
                 else:
                     record["footprint_source"] = "county"
                     record["footprint_validation"] = {"status": "county_only"}

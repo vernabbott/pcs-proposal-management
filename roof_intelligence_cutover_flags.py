@@ -1,8 +1,7 @@
-"""Disabled-by-default flags for the future Supabase reporting cutover.
+"""Disabled-by-default flags for the staged reporting cutover.
 
-The current PCS routes do not import this module. Until the final integration
-work deliberately connects it, PCS continues using the local SQLite store and
-local PilotPoint worker exactly as it does today.
+PCS may inspect these flags, but all new behavior remains inactive unless the
+master flag and the corresponding capability flag are both explicitly enabled.
 """
 
 from __future__ import annotations
@@ -17,6 +16,7 @@ READ_FLAG = "ROOF_INTELLIGENCE_SUPABASE_READS_ENABLED"
 WRITE_FLAG = "ROOF_INTELLIGENCE_SUPABASE_WRITES_ENABLED"
 WORKER_FLAG = "ROOF_INTELLIGENCE_SUPABASE_WORKER_ENABLED"
 SHADOW_WRITE_FLAG = "ROOF_INTELLIGENCE_SUPABASE_SHADOW_WRITES_ENABLED"
+EDITING_FLAG = "ROOF_INTELLIGENCE_REPORT_EDITING_ENABLED"
 
 _TRUE_VALUES = {"1", "true", "yes", "on"}
 
@@ -32,6 +32,7 @@ class RoofIntelligenceCutoverFlags:
     writes_enabled: bool
     worker_enabled: bool
     shadow_writes_enabled: bool
+    editing_enabled: bool
 
     @property
     def local_reads_active(self) -> bool:
@@ -69,10 +70,12 @@ def load_cutover_flags(
         writes_enabled=master and _enabled(values, WRITE_FLAG),
         worker_enabled=master and _enabled(values, WORKER_FLAG),
         shadow_writes_enabled=master and _enabled(values, SHADOW_WRITE_FLAG),
+        editing_enabled=master and _enabled(values, EDITING_FLAG),
     )
 
 
 __all__ = [
+    "EDITING_FLAG",
     "MASTER_FLAG",
     "READ_FLAG",
     "SHADOW_WRITE_FLAG",

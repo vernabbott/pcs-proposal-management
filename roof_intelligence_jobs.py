@@ -15,9 +15,12 @@ import math
 import os
 from pathlib import Path
 import re
+import shutil
 import sqlite3
 import sys
 import uuid
+
+from roof_report_naming import roof_report_pdf_filename
 
 
 APP_DIR = Path(__file__).resolve().parent
@@ -323,6 +326,61 @@ class RoofIntelligenceJobStore:
                 CREATE INDEX IF NOT EXISTS idx_roof_reports_job
                     ON roof_intelligence_reports (job_id, created_at DESC);
 
+                CREATE TABLE IF NOT EXISTS roof_intelligence_report_revisions (
+                    id TEXT PRIMARY KEY,
+                    report_id TEXT NOT NULL REFERENCES roof_intelligence_reports(id),
+                    revision_number INTEGER NOT NULL,
+                    parent_revision_id TEXT REFERENCES roof_intelligence_report_revisions(id),
+                    revision_kind TEXT NOT NULL,
+                    generation_status TEXT NOT NULL,
+                    created_by TEXT,
+                    revision_note TEXT,
+                    edit_patch_json TEXT NOT NULL DEFAULT '{}',
+                    snapshot_json TEXT NOT NULL,
+                    report_path TEXT,
+                    pdf_size INTEGER,
+                    pdf_checksum TEXT,
+                    generated_at TEXT,
+                    created_at TEXT NOT NULL,
+                    UNIQUE (report_id, revision_number)
+                );
+                CREATE INDEX IF NOT EXISTS idx_roof_report_revisions_report
+                    ON roof_intelligence_report_revisions (report_id, revision_number DESC);
+
+                CREATE TABLE IF NOT EXISTS roof_intelligence_property_overrides (
+                    id TEXT PRIMARY KEY,
+                    property_id TEXT NOT NULL REFERENCES properties(id),
+                    field_name TEXT NOT NULL CHECK (field_name = 'roof_area_sqft'),
+                    numeric_value REAL NOT NULL,
+                    source_revision_id TEXT NOT NULL REFERENCES roof_intelligence_report_revisions(id),
+                    reason TEXT NOT NULL,
+                    created_by TEXT,
+                    effective_at TEXT NOT NULL,
+                    revoked_at TEXT
+                );
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_roof_property_override_active
+                    ON roof_intelligence_property_overrides (property_id, field_name)
+                    WHERE revoked_at IS NULL;
+
+                CREATE TABLE IF NOT EXISTS roof_intelligence_processing_feedback (
+                    id TEXT PRIMARY KEY,
+                    report_id TEXT NOT NULL REFERENCES roof_intelligence_reports(id),
+                    property_id TEXT NOT NULL REFERENCES properties(id),
+                    parent_revision_id TEXT NOT NULL REFERENCES roof_intelligence_report_revisions(id),
+                    completed_revision_id TEXT NOT NULL REFERENCES roof_intelligence_report_revisions(id),
+                    revision_number INTEGER NOT NULL,
+                    requested_by TEXT NOT NULL,
+                    comment TEXT NOT NULL,
+                    status TEXT NOT NULL CHECK (status IN ('pending_review', 'approved', 'rejected', 'applied')),
+                    feedback_json TEXT NOT NULL,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS idx_roof_processing_feedback_status
+                    ON roof_intelligence_processing_feedback (status, created_at);
+                CREATE INDEX IF NOT EXISTS idx_roof_processing_feedback_report
+                    ON roof_intelligence_processing_feedback (report_id, created_at DESC);
+
                 CREATE TABLE IF NOT EXISTS roof_intelligence_job_items (
                     id TEXT PRIMARY KEY,
                     job_id TEXT NOT NULL REFERENCES roof_intelligence_jobs(id),
@@ -401,6 +459,18 @@ class RoofIntelligenceJobStore:
             if "error_details_json" not in item_columns:
                 connection.execute(
                     "ALTER TABLE roof_intelligence_job_items ADD COLUMN error_details_json TEXT NOT NULL DEFAULT '{}'"
+                )
+            report_columns = {
+                row["name"]
+                for row in connection.execute("PRAGMA table_info(roof_intelligence_reports)").fetchall()
+            }
+            if "last_revision_at" not in report_columns:
+                connection.execute(
+                    "ALTER TABLE roof_intelligence_reports ADD COLUMN last_revision_at TEXT"
+                )
+            if "retention_expires_at" not in report_columns:
+                connection.execute(
+                    "ALTER TABLE roof_intelligence_reports ADD COLUMN retention_expires_at TEXT"
                 )
             connection.execute(
                 "CREATE INDEX IF NOT EXISTS idx_roof_job_items_job_status "
@@ -954,11 +1024,127 @@ class RoofIntelligenceJobStore:
             return f"{county}:{parcel}"
         return f"ADDRESS:{normalize_address(result.get('address') or fallback_address)}"
 
+    @staticmethod
+    def _retention_expiry(timestamp: str) -> str:
+        value = dt.datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+        return (value + dt.timedelta(days=90)).isoformat()
+
+    def _persist_initial_revision_assets(self, result: dict) -> None:
+        """Preserve Revision 1 inputs only when a versioned snapshot exists."""
+        snapshot = result.get("report_snapshot")
+        if not isinstance(snapshot, dict):
+            return
+        report_id = str(result.get("report_id") or snapshot.get("report_id") or "").strip()
+        if not report_id or str(snapshot.get("report_id") or "") != report_id:
+            raise ValueError("The initial report snapshot does not match its report ID.")
+
+        asset_dir = self.db_path.parent / "roof_intelligence_reports" / report_id
+        asset_dir.mkdir(parents=True, exist_ok=True)
+
+        def preserve(source_value: object, destination: Path) -> str:
+            source = Path(str(source_value or "")).expanduser()
+            if not source.is_file():
+                return ""
+            if source.resolve() != destination.resolve():
+                temporary = destination.with_name(f".{destination.name}.{uuid.uuid4().hex}.copying")
+                try:
+                    shutil.copy2(source, temporary)
+                    os.replace(temporary, destination)
+                finally:
+                    if temporary.exists():
+                        temporary.unlink()
+            return str(destination)
+
+        durable_pdf = preserve(
+            result.get("report_path"),
+            asset_dir
+            / roof_report_pdf_filename(result.get("address"), result.get("city")),
+        )
+        if durable_pdf:
+            result["report_path"] = durable_pdf
+
+        imagery = snapshot.get("imagery")
+        if isinstance(imagery, dict):
+            source_image = result.get("aerial_image_file") or imagery.get("local_report_image_path")
+            suffix = Path(str(source_image or "")).suffix.lower()
+            if suffix not in {".jpg", ".jpeg", ".png", ".webp"}:
+                suffix = ".jpg"
+            durable_image = preserve(source_image, asset_dir / f"revision-1-image{suffix}")
+            if durable_image:
+                imagery["local_report_image_path"] = durable_image
+            analysis_image = (
+                result.get("analysis_aerial_image_file")
+                or imagery.get("local_analysis_image_path")
+            )
+            analysis_suffix = Path(str(analysis_image or "")).suffix.lower()
+            if analysis_suffix not in {".jpg", ".jpeg", ".png", ".webp"}:
+                analysis_suffix = ".png"
+            durable_analysis_image = preserve(
+                analysis_image,
+                asset_dir / f"revision-1-analysis-mask{analysis_suffix}",
+            )
+            if durable_analysis_image:
+                imagery["local_analysis_image_path"] = durable_analysis_image
+
+    @classmethod
+    def _insert_initial_revision(
+        cls,
+        connection: sqlite3.Connection,
+        report_id: str,
+        result: dict,
+        report_path: str,
+        pdf_size: int | None,
+        pdf_checksum: str | None,
+        created_at: str,
+    ) -> None:
+        snapshot = result.get("report_snapshot")
+        if not isinstance(snapshot, dict):
+            return
+        if str(snapshot.get("report_id") or "") != report_id:
+            raise ValueError("The initial report snapshot does not match its report ID.")
+        revision = snapshot.get("revision") or {}
+        if revision.get("number") != 1 or revision.get("kind") != "initial":
+            raise ValueError("The initial report snapshot has invalid revision metadata.")
+        snapshot_id = str(snapshot.get("snapshot_id") or "").strip()
+        if not snapshot_id:
+            raise ValueError("The initial report snapshot is missing its snapshot ID.")
+        generated_at = str(revision.get("created_at") or created_at)
+        connection.execute(
+            """
+            INSERT OR IGNORE INTO roof_intelligence_report_revisions (
+                id, report_id, revision_number, parent_revision_id, revision_kind,
+                generation_status, created_by, revision_note, edit_patch_json,
+                snapshot_json, report_path, pdf_size, pdf_checksum, generated_at, created_at
+            ) VALUES (?, ?, 1, NULL, 'initial', 'ready', ?, ?, '{}', ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                snapshot_id,
+                report_id,
+                revision.get("created_by"),
+                revision.get("change_reason") or "Fresh assessment",
+                json.dumps(snapshot, default=str),
+                report_path,
+                pdf_size,
+                pdf_checksum,
+                generated_at,
+                created_at,
+            ),
+        )
+        connection.execute(
+            """
+            UPDATE roof_intelligence_reports
+            SET last_revision_at = ?, retention_expires_at = ?
+            WHERE id = ?
+            """,
+            (generated_at, cls._retention_expiry(generated_at), report_id),
+        )
+
     def complete_individual_job(self, job_id: str, result: dict) -> dict:
         job = self.get_job(job_id)
         if job is None:
             raise KeyError(job_id)
         fallback_address = job["input"].get("property_address", "")
+        self._persist_initial_revision_assets(result)
         canonical_key = self._canonical_property_key(result, fallback_address)
         now = utc_now()
         report_path = str(result.get("report_path") or "")
@@ -1028,7 +1214,11 @@ class RoofIntelligenceJobStore:
             existing_report = connection.execute(
                 "SELECT id FROM roof_intelligence_reports WHERE job_id = ?", (job_id,)
             ).fetchone()
-            report_id = existing_report["id"] if existing_report else str(uuid.uuid4())
+            report_id = (
+                existing_report["id"]
+                if existing_report
+                else str(result.get("report_id") or uuid.uuid4())
+            )
             if existing_report:
                 connection.execute(
                     """
@@ -1063,6 +1253,15 @@ class RoofIntelligenceJobStore:
                         result.get("workflow_version"), json.dumps(result, default=str), now,
                     ),
                 )
+            self._insert_initial_revision(
+                connection,
+                report_id,
+                result,
+                report_path,
+                pdf_size,
+                pdf_checksum,
+                now,
+            )
             connection.execute(
                 """
                 UPDATE roof_intelligence_jobs SET
@@ -1102,6 +1301,7 @@ class RoofIntelligenceJobStore:
         if item is None:
             raise KeyError(item_id)
         fallback_address = item["input"].get("address", "")
+        self._persist_initial_revision_assets(result)
         canonical_key = self._canonical_property_key(result, fallback_address)
         now = utc_now()
         report_path = str(result.get("report_path") or "")
@@ -1169,7 +1369,7 @@ class RoofIntelligenceJobStore:
                     (property_id, canonical_key, *property_values[:-1], now, now),
                 )
 
-            report_id = str(uuid.uuid4())
+            report_id = str(result.get("report_id") or uuid.uuid4())
             connection.execute(
                 """
                 INSERT INTO roof_intelligence_reports (
@@ -1185,6 +1385,15 @@ class RoofIntelligenceJobStore:
                     result.get("imagery_source"), result.get("imagery_capture_date"),
                     result.get("workflow_version"), json.dumps(result, default=str), now,
                 ),
+            )
+            self._insert_initial_revision(
+                connection,
+                report_id,
+                result,
+                report_path,
+                pdf_size,
+                pdf_checksum,
+                now,
             )
             connection.execute(
                 """
@@ -1325,6 +1534,293 @@ class RoofIntelligenceJobStore:
         result = dict(row)
         result["result"] = json.loads(result.pop("result_json") or "{}")
         return result
+
+    @staticmethod
+    def _revision_from_row(row: sqlite3.Row | None) -> dict | None:
+        if row is None:
+            return None
+        result = dict(row)
+        result["edit_patch"] = json.loads(result.pop("edit_patch_json") or "{}")
+        result["snapshot"] = json.loads(result.pop("snapshot_json") or "{}")
+        return result
+
+    def list_report_revisions(self, report_id: str) -> list[dict]:
+        with self.connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT * FROM roof_intelligence_report_revisions
+                WHERE report_id = ?
+                ORDER BY revision_number DESC
+                """,
+                (report_id,),
+            ).fetchall()
+        return [self._revision_from_row(row) for row in rows]
+
+    def get_report_revision(self, revision_id: str) -> dict | None:
+        with self.connect() as connection:
+            row = connection.execute(
+                "SELECT * FROM roof_intelligence_report_revisions WHERE id = ?",
+                (revision_id,),
+            ).fetchone()
+        return self._revision_from_row(row)
+
+    def get_report_review(self, report_id: str) -> dict | None:
+        with self.connect() as connection:
+            row = connection.execute(
+                """
+                SELECT r.*, p.address, p.city, p.state, p.zip_code, p.county,
+                       p.parcel_number, p.canonical_key
+                FROM roof_intelligence_reports r
+                JOIN properties p ON p.id = r.property_id
+                WHERE r.id = ?
+                """,
+                (report_id,),
+            ).fetchone()
+        if row is None:
+            return None
+        result = dict(row)
+        result["result"] = json.loads(result.pop("result_json") or "{}")
+        result["revisions"] = self.list_report_revisions(report_id)
+        result["latest_revision"] = result["revisions"][0] if result["revisions"] else None
+        result["processing_feedback"] = self.list_processing_feedback(report_id=report_id)
+        return result
+
+    def list_processing_feedback(
+        self,
+        *,
+        report_id: str | None = None,
+        status: str | None = None,
+    ) -> list[dict]:
+        conditions = []
+        parameters: list[object] = []
+        if report_id:
+            conditions.append("report_id = ?")
+            parameters.append(report_id)
+        if status:
+            conditions.append("status = ?")
+            parameters.append(status)
+        where = " WHERE " + " AND ".join(conditions) if conditions else ""
+        with self.connect() as connection:
+            rows = connection.execute(
+                "SELECT * FROM roof_intelligence_processing_feedback"
+                + where
+                + " ORDER BY created_at DESC, id",
+                parameters,
+            ).fetchall()
+        results = []
+        for row in rows:
+            item = dict(row)
+            item["feedback"] = json.loads(item.pop("feedback_json") or "{}")
+            results.append(item)
+        return results
+
+    def get_active_square_footage_override(
+        self,
+        *,
+        address: object = "",
+        county: object = "",
+        parcel_number: object = "",
+    ) -> dict | None:
+        county_key = normalize_address(county)
+        parcel_key = normalize_address(parcel_number)
+        canonical_key = f"{county_key}:{parcel_key}" if county_key and parcel_key else ""
+        street_key = normalize_address(str(address or "").split(",", 1)[0])
+        full_address_key = normalize_address(address)
+        with self.connect() as connection:
+            row = connection.execute(
+                """
+                SELECT o.*, p.canonical_key, p.address
+                FROM roof_intelligence_property_overrides o
+                JOIN properties p ON p.id = o.property_id
+                WHERE o.field_name = 'roof_area_sqft' AND o.revoked_at IS NULL
+                  AND (
+                    (? <> '' AND p.canonical_key = ?)
+                    OR (? <> '' AND p.normalized_address = ?)
+                    OR (? <> '' AND p.normalized_address = ?)
+                  )
+                ORDER BY CASE WHEN p.canonical_key = ? THEN 0 ELSE 1 END,
+                         o.effective_at DESC
+                LIMIT 1
+                """,
+                (
+                    canonical_key, canonical_key,
+                    street_key, street_key,
+                    full_address_key, full_address_key,
+                    canonical_key,
+                ),
+            ).fetchone()
+        return dict(row) if row is not None else None
+
+    def save_ready_report_revision(
+        self,
+        report_id: str,
+        parent_revision_id: str,
+        snapshot: dict,
+        *,
+        report_path: str,
+        pdf_size: int,
+        pdf_checksum: str,
+        created_by: str,
+        change_reason: str,
+        edits: dict,
+        apply_square_footage_to_future: bool = False,
+        processing_feedback: dict | None = None,
+    ) -> dict:
+        report = self.get_report(report_id)
+        parent = self.get_report_revision(parent_revision_id)
+        if report is None or parent is None or parent["report_id"] != report_id:
+            raise KeyError(report_id)
+        if parent["generation_status"] != "ready":
+            raise ValueError("Only a ready report revision can be edited.")
+        if str(snapshot.get("report_id") or "") != report_id:
+            raise ValueError("The revised snapshot does not belong to this report.")
+        revision = snapshot.get("revision") or {}
+        next_number = max(
+            (item["revision_number"] for item in self.list_report_revisions(report_id)),
+            default=0,
+        ) + 1
+        if revision.get("number") != next_number:
+            raise ValueError("The revised snapshot does not have the next revision number.")
+        if revision.get("parent_snapshot_id") != parent_revision_id:
+            raise ValueError("The revised snapshot parent does not match the selected revision.")
+        revision_id = str(snapshot.get("snapshot_id") or "").strip()
+        if not revision_id:
+            raise ValueError("The revised snapshot is missing its snapshot ID.")
+        generated_at = str(revision.get("created_at") or utc_now())
+        analysis = snapshot.get("analysis") or {}
+        calculations = snapshot.get("calculations") or {}
+        with self.connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO roof_intelligence_report_revisions (
+                    id, report_id, revision_number, parent_revision_id, revision_kind,
+                    generation_status, created_by, revision_note, edit_patch_json,
+                    snapshot_json, report_path, pdf_size, pdf_checksum, generated_at, created_at
+                ) VALUES (?, ?, ?, ?, 'manual_edit', 'ready', ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    revision_id,
+                    report_id,
+                    next_number,
+                    parent_revision_id,
+                    created_by,
+                    change_reason,
+                    json.dumps(edits, default=str),
+                    json.dumps(snapshot, default=str),
+                    report_path,
+                    int(pdf_size),
+                    pdf_checksum,
+                    generated_at,
+                    generated_at,
+                ),
+            )
+            current_result = dict(report.get("result") or {})
+            current_result.update(
+                {
+                    "report_path": report_path,
+                    "report_snapshot": snapshot,
+                    "roof_type": analysis.get("roof_type"),
+                    "condition_score": analysis.get("overall_score"),
+                    "risk_level": analysis.get("risk_level"),
+                    "building_footprint_sqft": calculations.get("roof_area_sqft"),
+                    "roof_squares": calculations.get("roof_squares"),
+                }
+            )
+            connection.execute(
+                """
+                UPDATE roof_intelligence_reports SET
+                    report_path = ?, pdf_size = ?, pdf_checksum = ?, roof_type = ?,
+                    condition_score = ?, risk_level = ?, result_json = ?,
+                    last_revision_at = ?, retention_expires_at = ?
+                WHERE id = ?
+                """,
+                (
+                    report_path,
+                    int(pdf_size),
+                    pdf_checksum,
+                    analysis.get("roof_type"),
+                    analysis.get("overall_score"),
+                    analysis.get("risk_level"),
+                    json.dumps(current_result, default=str),
+                    generated_at,
+                    self._retention_expiry(generated_at),
+                    report_id,
+                ),
+            )
+            if apply_square_footage_to_future:
+                if "roof_area_sqft" not in edits:
+                    raise ValueError("A future override requires a square-footage edit.")
+                connection.execute(
+                    """
+                    UPDATE roof_intelligence_property_overrides
+                    SET revoked_at = ?
+                    WHERE property_id = ? AND field_name = 'roof_area_sqft' AND revoked_at IS NULL
+                    """,
+                    (generated_at, report["property_id"]),
+                )
+                connection.execute(
+                    """
+                    INSERT INTO roof_intelligence_property_overrides (
+                        id, property_id, field_name, numeric_value, source_revision_id,
+                        reason, created_by, effective_at, revoked_at
+                    ) VALUES (?, ?, 'roof_area_sqft', ?, ?, ?, ?, ?, NULL)
+                    """,
+                    (
+                        str(uuid.uuid4()),
+                        report["property_id"],
+                        float(edits["roof_area_sqft"]),
+                        revision_id,
+                        change_reason,
+                        created_by,
+                        generated_at,
+                    ),
+                )
+            if processing_feedback is not None:
+                if str(processing_feedback.get("report_id") or "") != report_id:
+                    raise ValueError("Processing feedback does not belong to this report.")
+                if str(processing_feedback.get("parent_snapshot_id") or "") != parent_revision_id:
+                    raise ValueError("Processing feedback has the wrong parent revision.")
+                if str(processing_feedback.get("revised_snapshot_id") or "") != revision_id:
+                    raise ValueError("Processing feedback has the wrong completed revision.")
+                if processing_feedback.get("status") != "pending_review":
+                    raise ValueError("New processing feedback must be pending review.")
+                feedback_id = str(processing_feedback.get("feedback_id") or "").strip()
+                if not feedback_id:
+                    raise ValueError("Processing feedback is missing its ID.")
+                connection.execute(
+                    """
+                    INSERT INTO roof_intelligence_processing_feedback (
+                        id, report_id, property_id, parent_revision_id,
+                        completed_revision_id, revision_number, requested_by,
+                        comment, status, feedback_json, created_at, updated_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending_review', ?, ?, ?)
+                    """,
+                    (
+                        feedback_id,
+                        report_id,
+                        report["property_id"],
+                        parent_revision_id,
+                        revision_id,
+                        next_number,
+                        str(processing_feedback.get("requested_by") or created_by),
+                        str(processing_feedback.get("comment") or change_reason),
+                        json.dumps(processing_feedback, default=str),
+                        str(processing_feedback.get("created_at") or generated_at),
+                        generated_at,
+                    ),
+                )
+        self._create_notification(
+            created_by,
+            report.get("job_id"),
+            report_id,
+            f"report_revision_{revision_id}",
+            "Roof Intelligence revision ready",
+            f"Revision {next_number} is ready for review.",
+        )
+        saved = self.get_report_revision(revision_id)
+        if saved is None:
+            raise RuntimeError("The report revision was not saved.")
+        return saved
 
     def resolve_footprint_discrepancy(
         self,

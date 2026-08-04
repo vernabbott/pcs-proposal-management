@@ -6,6 +6,7 @@ import math
 import shutil
 import datetime
 import glob
+import hashlib
 import html
 from openpyxl import load_workbook
 from openpyxl import Workbook
@@ -16,6 +17,7 @@ from copy import copy as _copy_style
 from decimal import Decimal, ROUND_HALF_UP
 from email import policy
 from email.parser import BytesParser
+from email.utils import parseaddr
 from functools import lru_cache
 import base64
 import csv
@@ -36,10 +38,21 @@ from roof_intelligence_jobs import (
     SUPPORTED_ROOF_TYPES,
     get_job_store,
 )
+from roof_intelligence_cutover_flags import load_cutover_flags
+from proposal_tracking_cutover_flags import load_proposal_tracking_cutover_flags
+from roof_report_naming import roof_report_pdf_filename
 from pcs_local_settings import (
     google_maps_api_key,
     remove_google_maps_api_key,
+    remove_supabase_configuration,
     save_google_maps_api_key,
+    save_supabase_configuration,
+    supabase_configuration,
+)
+from contact_store import ContactConfigurationError, ContactStore, ContactStoreError, get_contact_store
+from proposal_tracking_store import (
+    ProposalTrackingStoreError,
+    get_proposal_tracking_store,
 )
 
 APP_FOLDER = os.path.dirname(os.path.abspath(__file__))
@@ -221,6 +234,7 @@ RANDYS_PROPOSALS_WEB_URL = os.environ.get(
     "https://procoatingsystems-my.sharepoint.com/personal/admin_procoatingsystems_onmicrosoft_com/Documents/PCS/Randy%27s%20Accounts/1%20-%20Open%20Proposals",
 ).strip()
 PROPOSAL_SUMMARY_TEMPLATE_PATH = "/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/1. Proposal Summary Template.emltpl"
+OUTLOOK_SENDER_EMAIL = "vern@procoatingsystems.com"
 EMAIL_TEMPLATE_DIR = "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/PCS/Marketing/Email Templates"
 EMAIL_LIST_DIR = "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/PCS/Marketing/Email Lists"
 REPAIR_COSTS_PROPOSAL_LANGUAGE = "*PCS will perform all necessary repairs to bring the roof to coating ready*"
@@ -332,7 +346,8 @@ def _append_to_proposal_tracking_xlwings(tracker_path,
                                          folder_name,
                                          total_squares,
                                          lead_value,
-                                         submitted_by):
+                                         submitted_by,
+                                         estimate_completed_date=""):
     app = None
     wb = None
     temp_path = None
@@ -352,8 +367,10 @@ def _append_to_proposal_tracking_xlwings(tracker_path,
             ws.name = "Tracking"
             # Minimal header row so row 1 is always header (adjust if your template has different headers)
             ws.range("A1:J1").value = [[
-                "Proposal Folder Name", "", "", "Lead", "Submitted By", "", "", "Vern", "", ""
+                "Proposal Folder Name", "", "", "Lead", "Submitted By", "", "", "Vern", "", "Estimate Dt"
             ]]
+        if not str(ws.range("J1").value or "").strip():
+            ws.range("J1").value = "Estimate Dt"
 
         # Calculate insertion point by scanning A2..last
         used = ws.used_range
@@ -385,7 +402,7 @@ def _append_to_proposal_tracking_xlwings(tracker_path,
             "",                 # G (was H)
             "Vern",             # H (was I)
             "",                 # I (was J)
-            "",                 # J (extra blank)
+            estimate_completed_date or "", # J
         ]
 
         if existing_row is not None:
@@ -433,6 +450,7 @@ def _append_to_proposal_tracking_openpyxl_simple(
     folder_name,
     lead_value,
     submitted_by,
+    estimate_completed_date="",
 ):
     source_path = _proposal_tracker_source_path(tracker_path)
     wb = None
@@ -448,7 +466,9 @@ def _append_to_proposal_tracking_openpyxl_simple(
             raise RuntimeError("Proposal tracker workbook does not have an active worksheet")
         if not source_path:
             ws.title = "Tracking"
-            ws.append(["Proposal Folder Name", "", "", "Lead", "Submitted By", "", "", "Vern", "", ""])
+            ws.append(["Proposal Folder Name", "", "", "Lead", "Submitted By", "", "", "Vern", "", "Estimate Dt"])
+        elif not str(ws.cell(row=1, column=10).value or "").strip():
+            ws.cell(row=1, column=10).value = "Estimate Dt"
 
         first_data_row = 2
         last_row = max(ws.max_row or 1, 1)
@@ -478,7 +498,7 @@ def _append_to_proposal_tracking_openpyxl_simple(
             "",
             "Vern",
             "",
-            "",
+            estimate_completed_date or "",
         ]
         for col_idx, value in enumerate(row_values, start=1):
             ws.cell(row=target_row, column=col_idx).value = value
@@ -535,6 +555,7 @@ def _append_to_proposal_tracking_unlocked(created_date,
             folder_name,
             lead_value,
             submitted_by,
+            created_date,
         )
         return
     except Exception as _simple_err:
@@ -553,6 +574,7 @@ def _append_to_proposal_tracking_unlocked(created_date,
                 total_squares,
                 lead_value,
                 submitted_by,
+                created_date,
             )
             return
         except Exception as _xw_err:
@@ -585,7 +607,7 @@ def _append_to_proposal_tracking_unlocked(created_date,
         new_ws.title = "Tracking"
         if prev_ws is None:
             new_ws.append([
-                "Proposal Folder Name", "", "", "Lead", "Submitted By", "", "", "Vern", "", ""
+                "Proposal Folder Name", "", "", "Lead", "Submitted By", "", "", "Vern", "", "Estimate Dt"
             ])
         # Preserve column widths, row heights, and freeze panes from previous sheet (if any)
         prev_freeze = None
@@ -691,6 +713,8 @@ def _append_to_proposal_tracking_unlocked(created_date,
             for r in range(1, max_row_prev + 1):
                 for c in range(1, max_col + 1):
                     _copy_cell(prev_ws.cell(row=r, column=c), new_ws.cell(row=r, column=c))
+        if not str(new_ws.cell(row=1, column=10).value or "").strip():
+            new_ws.cell(row=1, column=10).value = "Estimate Dt"
 
         # Compute the new row values for A..J (leave other columns untouched)
         vern_flag = "Vern"  # Always populate Column I with the literal string "Vern"
@@ -704,7 +728,7 @@ def _append_to_proposal_tracking_unlocked(created_date,
             "",            # G (was H)
             vern_flag,      # H (was I)
             "",            # I (was J)
-            "",            # J (extra blank)
+            created_date or "", # J (estimate completed date)
         ]
 
         # Determine insertion point by Column A (case-insensitive), preserving header at row 1
@@ -820,7 +844,7 @@ def _append_to_proposal_tracking_unlocked(created_date,
                 pass
 
 
-def append_to_proposal_tracking(created_date,
+def _append_to_proposal_tracking_spreadsheet(created_date,
                                 customer_name,
                                 street_address,
                                 city,
@@ -857,6 +881,65 @@ def append_to_proposal_tracking(created_date,
             tp20=tp20,
             lead_value=lead_value,
         )
+
+
+def append_to_proposal_tracking(created_date,
+                                customer_name,
+                                street_address,
+                                city,
+                                state,
+                                zip_code,
+                                product,
+                                roof_type,
+                                total_squares,
+                                warranty_incl,
+                                submitted_by,
+                                folder_name,
+                                proposal_folder,
+                                tp10,
+                                tp15,
+                                tp20,
+                                lead_value=""):
+    flags = load_proposal_tracking_cutover_flags()
+    supabase_error = None
+    if flags.writes_enabled:
+        try:
+            get_proposal_tracking_store().upsert_from_proposal_save(
+                created_date=created_date,
+                customer_name=customer_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_code=zip_code,
+                submitted_by=submitted_by,
+                folder_name=folder_name,
+                lead_value=lead_value,
+            )
+        except Exception as exc:
+            supabase_error = exc
+            _safe_debug(f"[ERROR] Supabase proposal tracking write failed: {exc}")
+    if flags.spreadsheet_writes_active:
+        _append_to_proposal_tracking_spreadsheet(
+            created_date=created_date,
+            customer_name=customer_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_code=zip_code,
+            product=product,
+            roof_type=roof_type,
+            total_squares=total_squares,
+            warranty_incl=warranty_incl,
+            submitted_by=submitted_by,
+            folder_name=folder_name,
+            proposal_folder=proposal_folder,
+            tp10=tp10,
+            tp15=tp15,
+            tp20=tp20,
+            lead_value=lead_value,
+        )
+    elif supabase_error is not None:
+        raise supabase_error
 
 def create_proposal_from_fields(customer_name,
                                 street_address,
@@ -3808,6 +3891,200 @@ def landing_page():
     return render_template('landing.html')
 
 
+CONTACT_ORGANIZATION_TYPES = (
+    "Property Management",
+    "Roofing Company",
+    "Roofing Contractor",
+    "Property Owner",
+    "General Contractor",
+    "Real Estate",
+    "Distributor",
+    "Manufacturer",
+    "Consultant",
+    "Vendor",
+    "Unknown",
+    "Other",
+)
+
+
+def _contact_form_values():
+    values = {
+        "first_name": request.form.get("first_name", "").strip(),
+        "last_name": request.form.get("last_name", "").strip(),
+        "business_email": request.form.get("business_email", "").strip(),
+        "business_phone": request.form.get("business_phone", "").strip(),
+        "mobile_phone": request.form.get("mobile_phone", "").strip(),
+        "main_office_address_line_1": request.form.get("main_office_address_line_1", "").strip(),
+        "main_office_address_line_2": request.form.get("main_office_address_line_2", "").strip(),
+        "main_office_city": request.form.get("main_office_city", "").strip(),
+        "main_office_state": request.form.get("main_office_state", "").strip(),
+        "main_office_zip_code": request.form.get("main_office_zip_code", "").strip(),
+        "branch_address_line_1": request.form.get("branch_address_line_1", "").strip(),
+        "branch_address_line_2": request.form.get("branch_address_line_2", "").strip(),
+        "branch_city": request.form.get("branch_city", "").strip(),
+        "branch_state": request.form.get("branch_state", "").strip(),
+        "branch_zip_code": request.form.get("branch_zip_code", "").strip(),
+        "title": request.form.get("title", "").strip(),
+        "linkedin_url": request.form.get("linkedin_url", "").strip(),
+        "contact_notes": request.form.get("contact_notes", "").strip(),
+        "relationship_notes": request.form.get("relationship_notes", "").strip(),
+        "do_not_contact": request.form.get("do_not_contact") == "on",
+        "organization_id": request.form.get("organization_id", "").strip(),
+        "organization_name": request.form.get("organization_name", "").strip(),
+        "organization_type": request.form.get("organization_type", "Other").strip(),
+    }
+    if not values["first_name"] and not values["last_name"]:
+        raise ValueError("Enter a first name or last name.")
+    email = values["business_email"]
+    if email and (parseaddr(email)[1] != email or "@" not in email):
+        raise ValueError("Enter a valid email address.")
+    for field, label in (
+        ("main_office_state", "Main office state"),
+        ("branch_state", "Branch state"),
+    ):
+        if values[field] and len(values[field]) != 2:
+            raise ValueError(f"{label} must use a two-letter abbreviation.")
+    return values
+
+
+def _resolve_contact_organization(store, values):
+    organization_id = values.get("organization_id", "").strip()
+    organization_name = values.get("organization_name", "").strip()
+    organization_type = values.get("organization_type", "Other").strip()
+    if organization_id:
+        if not organization_name:
+            raise ValueError("Enter an organization name.")
+        if organization_type not in CONTACT_ORGANIZATION_TYPES:
+            raise ValueError("Select a valid organization type.")
+        store.update_organization(organization_id, organization_name, organization_type, values)
+    elif organization_name:
+        if organization_type not in CONTACT_ORGANIZATION_TYPES:
+            raise ValueError("Select a valid organization type.")
+        existing = store.find_organization_by_name(organization_name)
+        if existing:
+            values["organization_id"] = existing["id"]
+            store.update_organization(
+                existing["id"], organization_name, organization_type, values
+            )
+        else:
+            values["organization_id"] = store.create_organization(
+                organization_name, organization_type, values
+            )
+    else:
+        values["organization_id"] = store.resolve_organization_from_email(
+            values.get("business_email", "")
+        )
+
+
+@app.get('/contacts')
+def contact_management():
+    search = request.args.get("q", "").strip()
+    status = request.args.get("status", "active").strip().lower()
+    if status not in {"active", "archived", "all"}:
+        status = "active"
+    edit_id = request.args.get("edit", "").strip()
+    contacts = []
+    organizations = []
+    selected_contact = None
+    configuration_error = ""
+    try:
+        store = get_contact_store()
+        contacts = store.list_contacts(search=search, status=status)
+        organizations = store.list_organizations()
+        if edit_id:
+            selected_contact = store.get_contact(edit_id)
+            if selected_contact is None:
+                flash("That contact could not be found.", "danger")
+    except (ContactConfigurationError, ContactStoreError) as exc:
+        configuration_error = str(exc)
+    return render_template(
+        'contact_management.html',
+        contacts=contacts,
+        organizations=organizations,
+        selected_contact=selected_contact,
+        search=search,
+        status=status,
+        configuration_error=configuration_error,
+        organization_types=CONTACT_ORGANIZATION_TYPES,
+    )
+
+
+@app.post('/contacts')
+def create_contact():
+    try:
+        store = get_contact_store()
+        values = _contact_form_values()
+        action = request.form.get("duplicate_action", "").strip().lower()
+        if action not in {"", "keep", "replace"}:
+            raise ValueError("Select a valid duplicate-contact action.")
+        if (
+            values["organization_name"]
+            and values["organization_type"] not in CONTACT_ORGANIZATION_TYPES
+        ):
+            raise ValueError("Select a valid organization type.")
+
+        duplicates = store.find_duplicate_contacts(values)
+        if duplicates and not action:
+            return render_template(
+                "contact_management.html",
+                contacts=store.list_contacts(status="active"),
+                organizations=store.list_organizations(),
+                selected_contact=None,
+                search="",
+                status="active",
+                configuration_error="",
+                organization_types=CONTACT_ORGANIZATION_TYPES,
+                duplicate_matches=duplicates,
+                pending_values=values,
+            )
+
+        if action == "replace":
+            duplicate_contact_id = request.form.get("duplicate_contact_id", "").strip()
+            valid_duplicate_ids = {
+                (row.get("contact") or {}).get("id")
+                for row in duplicates
+            }
+            if duplicate_contact_id not in valid_duplicate_ids:
+                raise ValueError("Select an existing duplicate contact to replace.")
+            _resolve_contact_organization(store, values)
+            store.update_contact(duplicate_contact_id, values)
+            flash("Existing contact replaced with the submitted information.", "success")
+            return redirect(url_for("contact_management", edit=duplicate_contact_id))
+
+        _resolve_contact_organization(store, values)
+        store.create_contact(values)
+    except (ValueError, ContactStoreError) as exc:
+        flash(str(exc), "danger")
+    else:
+        flash("Contact added." if action != "keep" else "Contact kept as a separate record.", "success")
+    return redirect(url_for("contact_management"))
+
+
+@app.post('/contacts/<uuid:contact_id>/edit')
+def edit_contact(contact_id):
+    try:
+        store = get_contact_store()
+        values = _contact_form_values()
+        _resolve_contact_organization(store, values)
+        store.update_contact(str(contact_id), values)
+    except (ValueError, ContactStoreError) as exc:
+        flash(str(exc), "danger")
+        return redirect(url_for("contact_management", edit=str(contact_id)))
+    flash("Contact updated.", "success")
+    return redirect(url_for("contact_management"))
+
+
+@app.post('/contacts/<uuid:contact_id>/delete')
+def delete_contact(contact_id):
+    try:
+        get_contact_store().archive_contact(str(contact_id))
+    except ContactStoreError as exc:
+        flash(str(exc), "danger")
+    else:
+        flash("Contact removed from the active list. Its history was preserved.", "success")
+    return redirect(url_for("contact_management"))
+
+
 @app.route('/proposals')
 def proposal_list():
     # Which tab is selected: 'open' (default) or 'under'
@@ -3836,6 +4113,10 @@ def blast_email_management():
 def _roof_local_worker_enabled():
     value = os.environ.get("ROOF_INTELLIGENCE_LOCAL_WORKER", "0").strip().lower()
     return value in {"1", "true", "yes", "on"}
+
+
+def _roof_report_editing_enabled():
+    return load_cutover_flags().editing_enabled
 
 
 def _roof_worker_readiness_error():
@@ -3963,6 +4244,12 @@ def _run_local_individual_roof_job(job_id):
                 "--footprint-source", str(override["selected_source"]),
                 "--footprint-override-reason", str(override.get("reason") or ""),
             ])
+        if _roof_report_editing_enabled():
+            area_override = store.get_active_square_footage_override(
+                address=job["input"]["property_address"]
+            )
+            if area_override:
+                command.extend(["--roof-area-override", str(area_override["numeric_value"])])
         completed = subprocess.run(
             command,
             cwd=ROOF_INTELLIGENCE_PROJECT_DIR,
@@ -4134,6 +4421,14 @@ def _run_local_candidate_report(candidate):
     ]
     if candidate.get("parcel"):
         command.extend(["--parcel-id", str(candidate["parcel"])])
+    if _roof_report_editing_enabled():
+        area_override = get_job_store().get_active_square_footage_override(
+            address=candidate.get("address"),
+            county=candidate.get("county"),
+            parcel_number=candidate.get("parcel"),
+        )
+        if area_override:
+            command.extend(["--roof-area-override", str(area_override["numeric_value"])])
     override = candidate.get("footprint_override") or {}
     if override.get("selected_source"):
         command.extend([
@@ -4253,6 +4548,66 @@ def _run_local_area_roof_job(job_id):
 _roof_worker_wake = threading.Event()
 _roof_worker_lock = threading.Lock()
 _roof_worker_thread = None
+_county_health_lock = threading.Lock()
+_county_health_process = None
+
+
+def _county_health_check_running():
+    global _county_health_process
+    with _county_health_lock:
+        if _county_health_process is None:
+            return False
+        if _county_health_process.poll() is None:
+            return True
+        _county_health_process = None
+        return False
+
+
+def _start_manual_county_health_check():
+    global _county_health_process
+    if not _roof_local_worker_enabled():
+        raise RuntimeError("Manual county health checks require the local PilotPoint worker.")
+    readiness_error = _roof_worker_readiness_error()
+    if readiness_error:
+        raise RuntimeError(readiness_error)
+
+    python_path = os.path.join(ROOF_INTELLIGENCE_PROJECT_DIR, ".venv", "bin", "python")
+    script_path = os.path.join(ROOF_INTELLIGENCE_PROJECT_DIR, "county_discovery_health.py")
+    if not os.path.isfile(script_path):
+        raise RuntimeError("The PilotPoint county health-check service is not available.")
+
+    output_path = os.path.join(
+        ROOF_INTELLIGENCE_PROJECT_DIR,
+        "data",
+        "health",
+        "county-discovery-latest.json",
+    )
+    command = [
+        python_path,
+        script_path,
+        "--strict-discrepancies",
+        "--all-samples",
+        "--notify-pcs",
+        "--output",
+        output_path,
+    ]
+    os.makedirs(DEFAULT_DATA_DIR, exist_ok=True)
+    log_path = os.path.join(str(DEFAULT_DATA_DIR), "county-health-manual.log")
+
+    with _county_health_lock:
+        if _county_health_process is not None and _county_health_process.poll() is None:
+            return False
+        with open(log_path, "a", encoding="utf-8") as log_handle:
+            _county_health_process = subprocess.Popen(
+                command,
+                cwd=ROOF_INTELLIGENCE_PROJECT_DIR,
+                stdin=subprocess.DEVNULL,
+                stdout=log_handle,
+                stderr=subprocess.STDOUT,
+                env=os.environ.copy(),
+                start_new_session=True,
+            )
+    return True
 
 
 def _roof_worker_loop():
@@ -4311,12 +4666,18 @@ def _roof_job_payload(store, job):
     report = store.get_report_for_job(job["id"])
     if report:
         report["view_url"] = url_for("download_roof_intelligence_report", report_id=report["id"])
+        if _roof_report_editing_enabled() and store.list_report_revisions(report["id"]):
+            report["review_url"] = url_for("review_roof_intelligence_report", report_id=report["id"])
         result["report"] = report
     else:
         result["report"] = None
     reports = store.get_reports_for_job(job["id"])
     for batch_report in reports:
         batch_report["view_url"] = url_for("download_roof_intelligence_report", report_id=batch_report["id"])
+        if _roof_report_editing_enabled() and store.list_report_revisions(batch_report["id"]):
+            batch_report["review_url"] = url_for(
+                "review_roof_intelligence_report", report_id=batch_report["id"]
+            )
     result["reports"] = reports
     items = store.list_area_items(job["id"]) if job.get("job_type") == "zip_batch" else []
     result["items"] = items
@@ -4342,11 +4703,35 @@ def roof_intelligence():
         recent_jobs=store.list_jobs(ROOF_INTELLIGENCE_USER_KEY, limit=12),
         notifications=selected_notifications,
         county_health=store.list_latest_county_health(limit=20),
+        county_health_running=_county_health_check_running(),
         canonical_reviews=_canonical_footprint_reviews(limit=20),
         supported_roof_types=SUPPORTED_ROOF_TYPES,
         local_worker_enabled=_roof_local_worker_enabled(),
         google_maps_configured=bool(google_maps_api_key()),
+        report_editing_enabled=_roof_report_editing_enabled(),
     )
+
+
+@app.post('/roof-intelligence/county-health/run')
+def run_roof_intelligence_county_health():
+    try:
+        started = _start_manual_county_health_check()
+    except (OSError, RuntimeError, ValueError) as exc:
+        flash(str(exc), "danger")
+    else:
+        if started:
+            flash(
+                "County health check started. Results will appear here when it finishes.",
+                "success",
+            )
+        else:
+            flash("A county health check is already running.", "success")
+    return redirect(url_for("roof_intelligence"))
+
+
+@app.get('/api/roof-intelligence/county-health/status')
+def roof_intelligence_county_health_status():
+    return jsonify({"running": _county_health_check_running()})
 
 
 @app.route('/settings', methods=['GET', 'POST'])
@@ -4357,18 +4742,33 @@ def application_settings():
             remove_google_maps_api_key()
             flash("The local Google Maps API key was removed.", "success")
             return redirect(url_for("application_settings"))
+        if action == "remove_supabase_configuration":
+            remove_supabase_configuration()
+            flash("The local Supabase configuration was removed.", "success")
+            return redirect(url_for("application_settings"))
         try:
-            save_google_maps_api_key(request.form.get("google_maps_api_key", ""))
-        except ValueError as exc:
+            if action == "save_supabase_configuration":
+                submitted_url = request.form.get("supabase_url", "").strip().rstrip("/")
+                submitted_key = request.form.get("supabase_service_role_key", "").strip()
+                ContactStore(submitted_url, submitted_key).test_connection()
+                save_supabase_configuration(submitted_url, submitted_key)
+                flash("Supabase is configured for Contact Management.", "success")
+            else:
+                save_google_maps_api_key(request.form.get("google_maps_api_key", ""))
+                flash("Google Maps is configured for Roof Intelligence.", "success")
+        except (ValueError, ContactStoreError) as exc:
             flash(str(exc), "danger")
         else:
-            flash("Google Maps is configured for Roof Intelligence.", "success")
             return redirect(url_for("application_settings"))
     key = google_maps_api_key()
+    supabase_url, supabase_key = supabase_configuration()
     return render_template(
         'settings.html',
         google_maps_configured=bool(key),
         google_maps_key_suffix=key[-4:] if key else "",
+        supabase_configured=bool(supabase_key),
+        supabase_url=supabase_url,
+        supabase_key_suffix=supabase_key[-4:] if supabase_key else "",
     )
 
 
@@ -4519,11 +4919,210 @@ def download_roof_intelligence_report(report_id):
     requested_path = os.path.realpath(report_path)
     allowed_roots = (
         os.path.realpath(ROOF_INTELLIGENCE_PROJECT_DIR),
-        os.path.realpath(os.path.join(APP_FOLDER, "data", "roof_intelligence_reports")),
+        os.path.realpath(os.path.join(str(DEFAULT_DATA_DIR), "roof_intelligence_reports")),
     )
     if not any(requested_path.startswith(root + os.sep) for root in allowed_roots):
         return "Report path is not allowed.", 403
     return send_file(requested_path, mimetype="application/pdf", as_attachment=False)
+
+
+@app.get('/roof-intelligence/reports/<report_id>/review')
+def review_roof_intelligence_report(report_id):
+    if not _roof_report_editing_enabled():
+        return "Report review and editing are not enabled.", 404
+    report = get_job_store().get_report_review(report_id)
+    if not report:
+        return "Report was not found.", 404
+    for revision in report["revisions"]:
+        revision["view_url"] = url_for(
+            "download_roof_intelligence_revision",
+            report_id=report_id,
+            revision_id=revision["id"],
+        )
+    return render_template("roof_intelligence_report_review.html", report=report)
+
+
+@app.post('/roof-intelligence/reports/<report_id>/revisions')
+def create_roof_intelligence_revision(report_id):
+    if not _roof_report_editing_enabled():
+        return "Report review and editing are not enabled.", 404
+    store = get_job_store()
+    report = store.get_report_review(report_id)
+    if not report or not report.get("latest_revision"):
+        flash("This report does not contain an editable revision snapshot.", "danger")
+        return redirect(url_for("roof_intelligence"))
+    parent = report["latest_revision"]
+    parent_snapshot = parent["snapshot"]
+    analysis = parent_snapshot.get("analysis") or {}
+    report_fields = parent_snapshot.get("report_fields") or {}
+    reason = " ".join(request.form.get("change_reason", "").split())
+    if len(reason) < 10:
+        flash("Enter a change reason of at least 10 characters.", "danger")
+        return redirect(url_for("review_roof_intelligence_report", report_id=report_id))
+
+    try:
+        roof_area = float(request.form.get("roof_area_sqft", ""))
+        condition_score = float(request.form.get("roof_condition_score", ""))
+    except ValueError:
+        flash("Roof area and condition score must be numeric.", "danger")
+        return redirect(url_for("review_roof_intelligence_report", report_id=report_id))
+    if not math.isfinite(roof_area) or not math.isfinite(condition_score) or roof_area < 0 or not 0 <= condition_score <= 100:
+        flash("Roof area must be nonnegative and condition score must be between 0 and 100.", "danger")
+        return redirect(url_for("review_roof_intelligence_report", report_id=report_id))
+
+    submitted = {
+        "roof_area_sqft": roof_area,
+        "roof_type": request.form.get("roof_type", "").strip(),
+        "roof_system": request.form.get("roof_system", "").strip(),
+        "roof_condition_score": condition_score,
+        "report_summary": request.form.get("report_summary", ""),
+        "recommendation": request.form.get("recommendation", ""),
+    }
+    if not submitted["roof_type"] or not submitted["roof_system"]:
+        flash("Roof type and roof information are required.", "danger")
+        return redirect(url_for("review_roof_intelligence_report", report_id=report_id))
+    current = {
+        "roof_area_sqft": float(report_fields.get("roof_area_sqft") or 0),
+        "roof_type": str(analysis.get("roof_type") or ""),
+        "roof_system": str(analysis.get("roof_system") or ""),
+        "roof_condition_score": float(analysis.get("overall_score") or 0),
+        "report_summary": str(analysis.get("summary") or ""),
+        "recommendation": str(analysis.get("recommendation") or ""),
+    }
+    edits = {key: value for key, value in submitted.items() if value != current[key]}
+    if not edits:
+        flash("Change at least one report field before creating a revision.", "danger")
+        return redirect(url_for("review_roof_intelligence_report", report_id=report_id))
+    apply_to_future = request.form.get("apply_square_footage_to_future") == "1"
+    submit_for_future_processing = request.form.get("submit_for_future_processing") == "1"
+    if apply_to_future and "roof_area_sqft" not in edits:
+        flash("The future-report option requires a square-footage change.", "danger")
+        return redirect(url_for("review_roof_intelligence_report", report_id=report_id))
+
+    python_path = os.path.join(ROOF_INTELLIGENCE_PROJECT_DIR, ".venv", "bin", "python")
+    revision_script = os.path.join(ROOF_INTELLIGENCE_PROJECT_DIR, "roof_intelligence_revision_service.py")
+    if not os.path.isfile(python_path) or not os.path.isfile(revision_script):
+        flash("The PilotPoint revision service is not available.", "danger")
+        return redirect(url_for("review_roof_intelligence_report", report_id=report_id))
+    revision_number = int(parent["revision_number"]) + 1
+    output_dir = os.path.join(
+        str(DEFAULT_DATA_DIR),
+        "roof_intelligence_reports",
+        report_id,
+        f"revision-{revision_number}",
+    )
+    os.makedirs(output_dir, exist_ok=True)
+    output_pdf = os.path.join(
+        output_dir,
+        roof_report_pdf_filename(
+            report.get("address"),
+            report.get("city"),
+        ),
+    )
+    image_path = str((parent_snapshot.get("imagery") or {}).get("local_report_image_path") or "")
+
+    try:
+        with tempfile.TemporaryDirectory(prefix="pcs-roof-revision-") as temporary_dir:
+            parent_path = os.path.join(temporary_dir, "parent.json")
+            edits_path = os.path.join(temporary_dir, "edits.json")
+            snapshot_path = os.path.join(temporary_dir, "revision.json")
+            with open(parent_path, "w", encoding="utf-8") as handle:
+                json.dump(parent_snapshot, handle)
+            with open(edits_path, "w", encoding="utf-8") as handle:
+                json.dump(edits, handle)
+            command = [
+                python_path,
+                revision_script,
+                parent_path,
+                edits_path,
+                output_pdf,
+                snapshot_path,
+                "--created-by",
+                ROOF_INTELLIGENCE_USER_KEY,
+                "--change-reason",
+                reason,
+            ]
+            if image_path and os.path.isfile(image_path):
+                command.extend(["--report-image", image_path])
+            if apply_to_future:
+                command.append("--apply-square-footage-to-future")
+            if submit_for_future_processing:
+                feedback_directory = os.path.join(
+                    str(DEFAULT_DATA_DIR),
+                    "roof_processing_feedback",
+                )
+                command.extend(
+                    [
+                        "--submit-for-future-processing",
+                        "--feedback-directory",
+                        feedback_directory,
+                    ]
+                )
+            completed = subprocess.run(
+                command,
+                cwd=ROOF_INTELLIGENCE_PROJECT_DIR,
+                capture_output=True,
+                text=True,
+                timeout=180,
+                check=False,
+            )
+            if completed.returncode != 0:
+                raise RuntimeError((completed.stderr or completed.stdout or "Revision generation failed.").strip())
+            service_result = json.loads(completed.stdout or "{}")
+            with open(snapshot_path, "r", encoding="utf-8") as handle:
+                revised_snapshot = json.load(handle)
+            processing_feedback = None
+            if submit_for_future_processing:
+                feedback_path = str(service_result.get("processing_feedback_path") or "")
+                if not feedback_path or not os.path.isfile(feedback_path):
+                    raise RuntimeError("The future-processing feedback record was not created.")
+                with open(feedback_path, "r", encoding="utf-8") as handle:
+                    processing_feedback = json.load(handle)
+        pdf_size = os.path.getsize(output_pdf)
+        digest = hashlib.sha256()
+        with open(output_pdf, "rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+        store.save_ready_report_revision(
+            report_id,
+            parent["id"],
+            revised_snapshot,
+            report_path=output_pdf,
+            pdf_size=pdf_size,
+            pdf_checksum=digest.hexdigest(),
+            created_by=ROOF_INTELLIGENCE_USER_KEY,
+            change_reason=reason,
+            edits=edits,
+            apply_square_footage_to_future=apply_to_future,
+            processing_feedback=processing_feedback,
+        )
+    except (OSError, RuntimeError, ValueError, KeyError, subprocess.SubprocessError) as exc:
+        flash(f"The revised report could not be generated: {' '.join(str(exc).split())[:400]}", "danger")
+        return redirect(url_for("review_roof_intelligence_report", report_id=report_id))
+    message = f"Revision {revision_number} is ready."
+    if submit_for_future_processing:
+        message += " Your correction was submitted for future-processing review."
+    flash(message, "success")
+    return redirect(url_for("review_roof_intelligence_report", report_id=report_id))
+
+
+@app.get('/roof-intelligence/reports/<report_id>/revisions/<revision_id>')
+def download_roof_intelligence_revision(report_id, revision_id):
+    if not _roof_report_editing_enabled():
+        return "Report review and editing are not enabled.", 404
+    revision = get_job_store().get_report_revision(revision_id)
+    if not revision or revision["report_id"] != report_id:
+        return "Report revision was not found.", 404
+    report_path = os.path.realpath(str(revision.get("report_path") or ""))
+    allowed_roots = (
+        os.path.realpath(os.path.join(str(DEFAULT_DATA_DIR), "roof_intelligence_reports")),
+        os.path.realpath(ROOF_INTELLIGENCE_PROJECT_DIR),
+    )
+    if not report_path or not os.path.isfile(report_path):
+        return "The report revision file is no longer available.", 404
+    if not any(report_path.startswith(root + os.sep) for root in allowed_roots):
+        return "Report revision path is not allowed.", 403
+    return send_file(report_path, mimetype="application/pdf", as_attachment=False)
 
 
 @app.route('/proposal-tracker')
@@ -4546,13 +5145,24 @@ def save_proposal_tracker():
     for row_number in request.form.getlist("row_number"):
         row_key = str(row_number or "").strip()
         if row_key.startswith("new_"):
-            customer = request.form.get(f"customer_{row_key}", "")
+            customer_name = request.form.get(f"customer_name_{row_key}", "")
+            project_street_address = request.form.get(
+                f"project_street_address_{row_key}", ""
+            )
+            customer = " - ".join(
+                value for value in (
+                    str(customer_name or "").strip(),
+                    str(project_street_address or "").strip(),
+                ) if value
+            )
             if not any([
                 str(customer or "").strip(),
                 request.form.get(f"contact_{row_key}", ""),
                 request.form.get(f"email_address_{row_key}", ""),
+                request.form.get(f"lead_source_{row_key}", ""),
                 request.form.get(f"submitted_by_{row_key}", ""),
                 request.form.get(f"estimated_by_{row_key}", ""),
+                request.form.get(f"estimate_date_{row_key}", ""),
                 request.form.get(f"proposal_date_{row_key}", ""),
                 request.form.get(f"follow_up_date_{row_key}", ""),
             ]):
@@ -4561,23 +5171,29 @@ def save_proposal_tracker():
                 "is_new": True,
                 "row_number": row_key,
                 "customer": customer,
+                "customer_name": customer_name,
+                "project_street_address": project_street_address,
                 "contact": request.form.get(f"contact_{row_key}", ""),
                 "email_address": request.form.get(f"email_address_{row_key}", ""),
+                "lead_source": request.form.get(f"lead_source_{row_key}", ""),
                 "submitted_by": request.form.get(f"submitted_by_{row_key}", ""),
                 "estimated_by": request.form.get(f"estimated_by_{row_key}", ""),
+                "estimate_date": request.form.get(f"estimate_date_{row_key}", ""),
                 "proposal_date": request.form.get(f"proposal_date_{row_key}", ""),
                 "follow_up_date": request.form.get(f"follow_up_date_{row_key}", ""),
             })
             continue
-        if not row_key.isdigit():
+        if not re.fullmatch(r"[A-Za-z0-9_-]+", row_key):
             continue
         entries.append({
             "is_new": False,
-            "row_number": int(row_key),
+            "row_number": row_key,
             "contact": request.form.get(f"contact_{row_key}", ""),
             "email_address": request.form.get(f"email_address_{row_key}", ""),
+            "lead_source": request.form.get(f"lead_source_{row_key}", ""),
             "submitted_by": request.form.get(f"submitted_by_{row_key}", ""),
             "estimated_by": request.form.get(f"estimated_by_{row_key}", ""),
+            "estimate_date": request.form.get(f"estimate_date_{row_key}", ""),
             "proposal_date": request.form.get(f"proposal_date_{row_key}", ""),
             "follow_up_date": request.form.get(f"follow_up_date_{row_key}", ""),
         })
@@ -4660,7 +5276,7 @@ def _tracker_cell_is_blank(value):
 def _copy_tracker_row_style(ws, source_row, target_row):
     if source_row < 1 or target_row < 1 or source_row == target_row:
         return
-    max_column = max(ws.max_column, 7)
+    max_column = max(ws.max_column, 10)
     for col_idx in range(1, max_column + 1):
         source_cell = ws.cell(row=source_row, column=col_idx)
         target_cell = ws.cell(row=target_row, column=col_idx)
@@ -4695,15 +5311,18 @@ def _write_tracker_entry_to_row(ws, row_number, entry):
     ws.cell(row=row_number, column=1).value = str(entry.get("customer") or "").strip()
     ws.cell(row=row_number, column=2).value = str(entry.get("contact") or "").strip()
     ws.cell(row=row_number, column=3).value = str(entry.get("email_address") or "").strip()
+    ws.cell(row=row_number, column=4).value = str(entry.get("lead_source") or "").strip()
     ws.cell(row=row_number, column=5).value = str(entry.get("submitted_by") or "").strip()
     ws.cell(row=row_number, column=6).number_format = "General"
     ws.cell(row=row_number, column=6).value = str(entry.get("proposal_date") or "").strip()
     ws.cell(row=row_number, column=7).number_format = "General"
     ws.cell(row=row_number, column=7).value = str(entry.get("follow_up_date") or "").strip()
     ws.cell(row=row_number, column=8).value = str(entry.get("estimated_by") or "").strip()
+    ws.cell(row=row_number, column=10).number_format = "General"
+    ws.cell(row=row_number, column=10).value = str(entry.get("estimate_date") or "").strip()
 
 
-def load_proposal_tracker_missing_entries(tracker_path=PROPOSAL_TRACKER):
+def _load_proposal_tracker_missing_entries_spreadsheet(tracker_path=PROPOSAL_TRACKER):
     entries = []
 
     try:
@@ -4723,6 +5342,7 @@ def load_proposal_tracker_missing_entries(tracker_path=PROPOSAL_TRACKER):
                     proposal_dt_raw = row[5] if len(row) > 5 else None
                     follow_up_raw = row[6] if len(row) > 6 else None
                     estimated_by = row[7] if len(row) > 7 else ""
+                    estimate_dt_raw = row[9] if len(row) > 9 else None
 
                     if not any([customer, contact, email_address, lead, submitted_by, proposal_dt_raw, follow_up_raw]):
                         continue
@@ -4738,8 +5358,10 @@ def load_proposal_tracker_missing_entries(tracker_path=PROPOSAL_TRACKER):
                         "customer": str(customer or "").strip(),
                         "contact": str(contact or "").strip(),
                         "email_address": str(email_address or "").strip(),
+                        "lead_source": str(lead or "").strip(),
                         "submitted_by": str(submitted_by or "").strip(),
                         "estimated_by": str(estimated_by or "").strip(),
+                        "estimate_date_input": _format_tracker_date_input(estimate_dt_raw),
                         "proposal_date_input": _format_tracker_date_input(proposal_dt_raw),
                         "follow_up_date_input": _format_tracker_date_input(follow_up_raw),
                     })
@@ -4753,7 +5375,17 @@ def load_proposal_tracker_missing_entries(tracker_path=PROPOSAL_TRACKER):
     return entries, None
 
 
-def update_proposal_tracker_missing_entries(entries, tracker_path=PROPOSAL_TRACKER):
+def load_proposal_tracker_missing_entries(tracker_path=PROPOSAL_TRACKER):
+    if load_proposal_tracking_cutover_flags().reads_enabled:
+        try:
+            return get_proposal_tracking_store().list_missing_entries(), None
+        except Exception as exc:
+            _safe_debug(f"[ERROR] Supabase proposal tracker read failed: {exc}")
+            return [], str(exc)
+    return _load_proposal_tracker_missing_entries_spreadsheet(tracker_path)
+
+
+def _update_proposal_tracker_missing_entries_spreadsheet(entries, tracker_path=PROPOSAL_TRACKER):
     if not entries:
         return 0
 
@@ -4781,12 +5413,15 @@ def update_proposal_tracker_missing_entries(entries, tracker_path=PROPOSAL_TRACK
 
                 ws.cell(row=row_number, column=2).value = str(entry.get("contact") or "").strip()
                 ws.cell(row=row_number, column=3).value = str(entry.get("email_address") or "").strip()
+                ws.cell(row=row_number, column=4).value = str(entry.get("lead_source") or "").strip()
                 ws.cell(row=row_number, column=5).value = str(entry.get("submitted_by") or "").strip()
                 ws.cell(row=row_number, column=6).number_format = "General"
                 ws.cell(row=row_number, column=6).value = str(entry.get("proposal_date") or "").strip()
                 ws.cell(row=row_number, column=7).number_format = "General"
                 ws.cell(row=row_number, column=7).value = str(entry.get("follow_up_date") or "").strip()
                 ws.cell(row=row_number, column=8).value = str(entry.get("estimated_by") or "").strip()
+                ws.cell(row=row_number, column=10).number_format = "General"
+                ws.cell(row=row_number, column=10).value = str(entry.get("estimate_date") or "").strip()
                 updated_count += 1
 
             for entry in sorted(new_entries, key=lambda item: str(item.get("customer") or "").casefold()):
@@ -4820,7 +5455,32 @@ def update_proposal_tracker_missing_entries(entries, tracker_path=PROPOSAL_TRACK
                 pass
 
 
-def load_weekly_follow_up_entries(tracker_path=PROPOSAL_TRACKER, cutoff_date=None):
+def update_proposal_tracker_missing_entries(entries, tracker_path=PROPOSAL_TRACKER):
+    flags = load_proposal_tracking_cutover_flags()
+    if flags.reads_enabled and not flags.writes_enabled:
+        raise RuntimeError(
+            "Supabase proposal-tracking reads require Supabase writes to be enabled."
+        )
+    supabase_error = None
+    updated_count = 0
+    if flags.writes_enabled:
+        try:
+            updated_count = get_proposal_tracking_store().update_entries(entries)
+        except Exception as exc:
+            supabase_error = exc
+            _safe_debug(f"[ERROR] Supabase proposal tracker save failed: {exc}")
+    if flags.spreadsheet_writes_active:
+        spreadsheet_count = _update_proposal_tracker_missing_entries_spreadsheet(
+            entries, tracker_path
+        )
+        if not flags.writes_enabled:
+            updated_count = spreadsheet_count
+    elif supabase_error is not None:
+        raise supabase_error
+    return updated_count
+
+
+def _load_weekly_follow_up_entries_spreadsheet(tracker_path=PROPOSAL_TRACKER, cutoff_date=None):
     cutoff_date = cutoff_date or _default_follow_up_cutoff_date()
     entries = []
 
@@ -4868,7 +5528,19 @@ def load_weekly_follow_up_entries(tracker_path=PROPOSAL_TRACKER, cutoff_date=Non
     return entries, cutoff_date, None
 
 
-def update_weekly_follow_up_dates(row_numbers, follow_up_date=None, tracker_path=PROPOSAL_TRACKER):
+def load_weekly_follow_up_entries(tracker_path=PROPOSAL_TRACKER, cutoff_date=None):
+    cutoff_date = cutoff_date or _default_follow_up_cutoff_date()
+    if load_proposal_tracking_cutover_flags().reads_enabled:
+        try:
+            entries = get_proposal_tracking_store().list_weekly_follow_ups(cutoff_date)
+            return entries, cutoff_date, None
+        except Exception as exc:
+            _safe_debug(f"[ERROR] Supabase weekly follow-up read failed: {exc}")
+            return [], cutoff_date, str(exc)
+    return _load_weekly_follow_up_entries_spreadsheet(tracker_path, cutoff_date)
+
+
+def _update_weekly_follow_up_dates_spreadsheet(row_numbers, follow_up_date=None, tracker_path=PROPOSAL_TRACKER):
     row_numbers = {
         int(row_number)
         for row_number in (row_numbers or [])
@@ -4915,6 +5587,34 @@ def update_weekly_follow_up_dates(row_numbers, follow_up_date=None, tracker_path
                 os.remove(temp_path)
             except Exception:
                 pass
+
+
+def update_weekly_follow_up_dates(row_numbers, follow_up_date=None, tracker_path=PROPOSAL_TRACKER):
+    flags = load_proposal_tracking_cutover_flags()
+    if flags.reads_enabled and not flags.writes_enabled:
+        raise RuntimeError(
+            "Supabase proposal-tracking reads require Supabase writes to be enabled."
+        )
+    follow_up_date = follow_up_date or datetime.date.today()
+    supabase_error = None
+    updated_count = 0
+    if flags.writes_enabled:
+        try:
+            updated_count = get_proposal_tracking_store().mark_follow_ups(
+                row_numbers, follow_up_date
+            )
+        except Exception as exc:
+            supabase_error = exc
+            _safe_debug(f"[ERROR] Supabase follow-up update failed: {exc}")
+    if flags.spreadsheet_writes_active:
+        spreadsheet_count = _update_weekly_follow_up_dates_spreadsheet(
+            row_numbers, follow_up_date, tracker_path
+        )
+        if not flags.writes_enabled:
+            updated_count = spreadsheet_count
+    elif supabase_error is not None:
+        raise supabase_error
+    return updated_count
 
 
 def _build_weekly_follow_up_email_bodies(submitter, follow_ups, cutoff_date):
@@ -4989,7 +5689,7 @@ def get_weekly_follow_up_bcc_recipients():
 
 
 def get_weekly_follow_up_sender_email():
-    return "vern@procoatingsystems.com"
+    return OUTLOOK_SENDER_EMAIL
 
 
 def _open_outlook_html_draft_for_submitter(subject_text, plain_text_body, html_body, submitted_by, recipients=None):
@@ -5178,21 +5878,21 @@ def generate_weekly_follow_up_emails():
         _default_follow_up_cutoff_date(),
     )
     selected_rows = {
-        int(row_number)
+        str(row_number).strip()
         for row_number in (data.get("selected_rows") or [])
-        if str(row_number).strip().isdigit()
+        if re.fullmatch(r"[A-Za-z0-9_-]+", str(row_number).strip())
     }
     if not selected_rows:
         return jsonify({"error": "Select at least one follow-up row."}), 400
 
     follow_ups, cutoff_date, tracker_error = load_weekly_follow_up_entries(cutoff_date=cutoff_date)
     if tracker_error:
-        return jsonify({"error": f"Unable to read Proposal Tracking.xlsx: {tracker_error}"}), 500
+        return jsonify({"error": f"Unable to read proposal tracking data: {tracker_error}"}), 500
 
     selected_follow_ups = [
         item
         for item in follow_ups
-        if int(item.get("row_number") or 0) in selected_rows
+        if str(item.get("row_number") or "").strip() in selected_rows
     ]
     if not selected_follow_ups:
         return jsonify({"error": "No selected follow-up rows are available for the current date filter."}), 400
@@ -5233,7 +5933,7 @@ def generate_weekly_follow_up_emails():
     except Exception as exc:
         return jsonify({
             "error": (
-                "Outlook draft email(s) were created, but Proposal Tracking.xlsx "
+                "Outlook draft email(s) were created, but proposal tracking data "
                 f"could not be updated: {exc}"
             )
         }), 500
@@ -5496,6 +6196,7 @@ def _open_blast_email_template_draft(template_path, bcc_recipients, batch_number
     except Exception as exc:
         raise RuntimeError(f"Unable to read email template: {exc}") from exc
 
+    _stamp_and_verify_new_outlook_sender(message, OUTLOOK_SENDER_EMAIL)
     _replace_message_header(message, "Bcc", ", ".join(bcc_recipients))
     for stale_header in ("To", "Cc", "Date", "Message-ID", "Thread-Index", "X-MS-TNEF-Correlator"):
         if stale_header in message:
@@ -5689,14 +6390,7 @@ def get_email_recipients_for_submitter(submitted_by):
     return recipients
 
 def get_sender_email_for_submitter(submitted_by):
-    submitter = str(submitted_by or "").strip()
-    sender_by_submitter = {
-        "David": "david@procoatingsystems.com",
-        "Lydia": "lydia@procoatingsystems.com",
-        "Mark": "mark@procoatingsystems.com",
-        "Vern": "vern@procoatingsystems.com",
-    }
-    return sender_by_submitter.get(submitter, "vern@procoatingsystems.com")
+    return OUTLOOK_SENDER_EMAIL
 
 def get_copy_destination_web_url_for_submitter(submitted_by):
     submitter = str(submitted_by or "").strip()
@@ -5948,6 +6642,29 @@ def _set_text_message_part(part, body_text, subtype):
         part["Content-Transfer-Encoding"] = "base64"
     part.set_payload(payload)
 
+def _stamp_and_verify_new_outlook_sender(message, sender_email):
+    sender = str(sender_email or "").strip().lower()
+    if not sender:
+        return
+
+    # New Outlook can inherit stale MAPI identity metadata from an .emltpl file
+    # even after its visible From header is replaced. Remove that metadata and
+    # stamp every standard identity header before the draft is opened.
+    for header_name in list(message.keys()):
+        lowered = header_name.lower()
+        if lowered.startswith("x-ms-exchange-") or lowered == "x-ms-tnef-correlator":
+            del message[header_name]
+    for header_name in ("From", "Sender", "Reply-To"):
+        _replace_message_header(message, header_name, sender)
+    _replace_message_header(message, "X-Unsent", "1")
+
+    for header_name in ("From", "Sender", "Reply-To"):
+        actual = parseaddr(str(message.get(header_name) or ""))[1].strip().lower()
+        if actual != sender:
+            raise RuntimeError(
+                f"Outlook draft sender verification failed for {header_name}: expected {sender}."
+            )
+
 def _open_new_outlook_template_draft(
     subject_text,
     plain_text_body,
@@ -5974,7 +6691,7 @@ def _open_new_outlook_template_draft(
 
     _replace_message_header(message, "To", recipient_text)
     if sender_email:
-        _replace_message_header(message, "From", str(sender_email).strip())
+        _stamp_and_verify_new_outlook_sender(message, sender_email)
     if bcc_recipient_text:
         _replace_message_header(message, "Bcc", bcc_recipient_text)
     _replace_message_header(message, "Subject", str(subject_text or "").strip())
@@ -6093,7 +6810,7 @@ def create_outlook_proposal_summary_draft(customer_name,
     recipients_blob = "||".join(recipients)
 
     sender_email = get_sender_email_for_submitter(submitted_by)
-    submitter_label = str(submitted_by or "").strip()
+    sender_label = "Vern"
     if _is_running_new_outlook():
         plain_text_body = build_proposal_summary_email_text(
             customer_name=customer_name,
@@ -6112,6 +6829,7 @@ def create_outlook_proposal_summary_draft(customer_name,
             plain_text_body,
             html_body,
             recipients,
+            sender_email=sender_email,
         )
         return _build_outlook_draft_warning(status, sender_email)
 
@@ -6230,7 +6948,7 @@ def create_outlook_proposal_summary_draft(customer_name,
         html_body,
         sender_email,
         recipients_blob,
-        submitter_label,
+        sender_label,
         account_match_enabled,
     ]
     try:
@@ -6423,7 +7141,13 @@ def copy_proposal_to_submitter_destination(
     dest_folder = os.path.join(destination_root, folder_name)
     _sync_directory_contents(source_folder, dest_folder)
 
-def update_existing_tracker_row(folder_name, lead_value, submitted_by, tracker_path=PROPOSAL_TRACKER):
+def update_existing_tracker_row(
+    folder_name,
+    lead_value,
+    submitted_by,
+    estimate_completed_date=None,
+    tracker_path=PROPOSAL_TRACKER,
+):
     with TRACKER_IO_LOCK:
         source_path = _proposal_tracker_source_path(tracker_path)
         if not tracker_path or not source_path:
@@ -6446,6 +7170,13 @@ def update_existing_tracker_row(folder_name, lead_value, submitted_by, tracker_p
                 ws.cell(row=row, column=4).value = lead_value or ""
                 ws.cell(row=row, column=5).value = submitted_by or ""
                 ws.cell(row=row, column=8).value = "Vern"
+                if not str(ws.cell(row=row, column=10).value or "").strip():
+                    ws.cell(row=row, column=10).value = (
+                        estimate_completed_date or datetime.date.today()
+                    )
+                    ws.cell(row=row, column=10).number_format = "m/d/yyyy"
+                if not str(ws.cell(row=1, column=10).value or "").strip():
+                    ws.cell(row=1, column=10).value = "Estimate Dt"
                 temp_path = _proposal_tracker_temp_path(tracker_path)
                 wb.save(temp_path)
                 wb.close()
@@ -6466,7 +7197,7 @@ def update_existing_tracker_row(folder_name, lead_value, submitted_by, tracker_p
                 except Exception:
                     pass
 
-def update_tracking_after_save(folder_name,
+def _update_tracking_after_save_spreadsheet(folder_name,
                                customer_name,
                                street_address,
                                city,
@@ -6483,7 +7214,12 @@ def update_tracking_after_save(folder_name,
                                tp20,
                                lead_value):
     with TRACKER_IO_LOCK:
-        if update_existing_tracker_row(folder_name, lead_value, submitted_by):
+        if update_existing_tracker_row(
+            folder_name,
+            lead_value,
+            submitted_by,
+            datetime.date.today(),
+        ):
             return
 
         _append_to_proposal_tracking_unlocked(
@@ -6505,6 +7241,63 @@ def update_tracking_after_save(folder_name,
             tp20=tp20,
             lead_value=lead_value,
         )
+
+
+def update_tracking_after_save(folder_name,
+                               customer_name,
+                               street_address,
+                               city,
+                               state,
+                               zip_code,
+                               product,
+                               roof_type,
+                               total_squares,
+                               warranty_incl,
+                               submitted_by,
+                               proposal_folder,
+                               tp10,
+                               tp15,
+                               tp20,
+                               lead_value):
+    flags = load_proposal_tracking_cutover_flags()
+    supabase_error = None
+    if flags.writes_enabled:
+        try:
+            get_proposal_tracking_store().upsert_from_proposal_save(
+                created_date=datetime.date.today(),
+                customer_name=customer_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_code=zip_code,
+                submitted_by=submitted_by,
+                folder_name=folder_name,
+                lead_value=lead_value,
+            )
+        except Exception as exc:
+            supabase_error = exc
+            _safe_debug(f"[ERROR] Supabase tracker refresh failed for {folder_name}: {exc}")
+    if flags.spreadsheet_writes_active:
+        _update_tracking_after_save_spreadsheet(
+            folder_name=folder_name,
+            customer_name=customer_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_code=zip_code,
+            product=product,
+            roof_type=roof_type,
+            total_squares=total_squares,
+            warranty_incl=warranty_incl,
+            submitted_by=submitted_by,
+            proposal_folder=proposal_folder,
+            tp10=tp10,
+            tp15=tp15,
+            tp20=tp20,
+            lead_value=lead_value,
+        )
+    elif supabase_error is not None:
+        raise supabase_error
 
 def find_profit_summary_file(folder_path):
     # Safely handle missing/non-existent folder

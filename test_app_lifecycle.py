@@ -1,4 +1,5 @@
 import unittest
+from email.message import EmailMessage
 from unittest.mock import patch
 
 import pcs_proposal_web
@@ -67,6 +68,24 @@ class WeeklyFollowUpEmailTests(unittest.TestCase):
             pcs_proposal_web.get_weekly_follow_up_sender_email(),
             "vern@procoatingsystems.com",
         )
+
+    def test_new_outlook_sender_stamp_removes_stale_identity_metadata(self):
+        message = EmailMessage()
+        message["From"] = "richard@procoatingsystems.com"
+        message["X-MS-Exchange-MessageSentRepresentingType"] = "1"
+        message["X-MS-TNEF-Correlator"] = "stale"
+
+        pcs_proposal_web._stamp_and_verify_new_outlook_sender(
+            message,
+            "vern@procoatingsystems.com",
+        )
+
+        self.assertEqual(message["From"], "vern@procoatingsystems.com")
+        self.assertEqual(message["Sender"], "vern@procoatingsystems.com")
+        self.assertEqual(message["Reply-To"], "vern@procoatingsystems.com")
+        self.assertEqual(message["X-Unsent"], "1")
+        self.assertNotIn("X-MS-Exchange-MessageSentRepresentingType", message)
+        self.assertNotIn("X-MS-TNEF-Correlator", message)
 
     def test_follow_up_bcc_recipients_include_mark(self):
         self.assertEqual(
@@ -137,6 +156,49 @@ class WeeklyFollowUpEmailTests(unittest.TestCase):
             ],
         )
         self.assertEqual(command[-1], "mark@procoatingsystems.com")
+
+    def test_all_proposal_summary_senders_are_vern(self):
+        for submitter in ("David", "Lydia", "Mark", "Richard", "Randy", "Vern", ""):
+            with self.subTest(submitter=submitter):
+                self.assertEqual(
+                    pcs_proposal_web.get_sender_email_for_submitter(submitter),
+                    "vern@procoatingsystems.com",
+                )
+
+    @patch("pcs_proposal_web.build_proposal_summary_email_text", return_value="Plain body")
+    @patch("pcs_proposal_web.build_proposal_summary_email_html", return_value="<p>HTML body</p>")
+    @patch("pcs_proposal_web.build_proposal_folder_link", return_value="https://example.test/folder")
+    @patch("pcs_proposal_web._open_new_outlook_template_draft")
+    @patch("pcs_proposal_web._is_running_new_outlook", return_value=True)
+    @patch("pcs_proposal_web.sys.platform", "darwin")
+    def test_new_outlook_proposal_summary_explicitly_uses_vern(
+        self,
+        _new_outlook_mock,
+        open_draft_mock,
+        _folder_link_mock,
+        _html_mock,
+        _text_mock,
+    ):
+        open_draft_mock.return_value = "fallback:new-outlook-template"
+
+        pcs_proposal_web.create_outlook_proposal_summary_draft(
+            "Test Customer",
+            "123 Test St",
+            "David",
+            10,
+            1,
+            0,
+            "Metal",
+            1000,
+            "",
+            "",
+            "Test Folder",
+        )
+
+        self.assertEqual(
+            open_draft_mock.call_args.kwargs["sender_email"],
+            "vern@procoatingsystems.com",
+        )
 
 
 if __name__ == "__main__":

@@ -2,6 +2,7 @@ import unittest
 from pathlib import Path
 
 from roof_intelligence_cutover_flags import (
+    EDITING_FLAG,
     MASTER_FLAG,
     READ_FLAG,
     SHADOW_WRITE_FLAG,
@@ -20,6 +21,7 @@ class RoofIntelligenceCutoverFlagTests(unittest.TestCase):
         self.assertFalse(flags.writes_enabled)
         self.assertFalse(flags.worker_enabled)
         self.assertFalse(flags.shadow_writes_enabled)
+        self.assertFalse(flags.editing_enabled)
         self.assertTrue(flags.local_reads_active)
         self.assertTrue(flags.local_writes_active)
         self.assertTrue(flags.local_worker_active)
@@ -32,6 +34,7 @@ class RoofIntelligenceCutoverFlagTests(unittest.TestCase):
                 WRITE_FLAG: "1",
                 WORKER_FLAG: "1",
                 SHADOW_WRITE_FLAG: "1",
+                EDITING_FLAG: "1",
             }
         )
         self.assertTrue(flags.local_workflow_active)
@@ -39,6 +42,7 @@ class RoofIntelligenceCutoverFlagTests(unittest.TestCase):
         self.assertFalse(flags.writes_enabled)
         self.assertFalse(flags.worker_enabled)
         self.assertFalse(flags.shadow_writes_enabled)
+        self.assertFalse(flags.editing_enabled)
 
     def test_master_supports_staged_activation(self):
         flags = load_cutover_flags(
@@ -76,9 +80,16 @@ class RoofIntelligenceCutoverFlagTests(unittest.TestCase):
         self.assertTrue(flags.fully_cut_over)
         self.assertFalse(flags.local_workflow_active)
 
-    def test_current_pcs_entry_points_do_not_import_cutover_flags(self):
+    def test_editing_requires_both_master_and_editing_flags(self):
+        flags = load_cutover_flags({EDITING_FLAG: "1"})
+        self.assertFalse(flags.editing_enabled)
+
+        flags = load_cutover_flags({MASTER_FLAG: "1", EDITING_FLAG: "1"})
+        self.assertTrue(flags.editing_enabled)
+
+    def test_current_pcs_entry_points_do_not_enable_flags_by_default(self):
         project_dir = Path(__file__).resolve().parent
-        for file_name in ("pcs_proposal_web.py", "run_app.py", "roof_intelligence_jobs.py"):
+        for file_name in ("run_app.py", "roof_intelligence_jobs.py"):
             source = (project_dir / file_name).read_text(encoding="utf-8")
             self.assertNotIn("roof_intelligence_cutover_flags", source)
 

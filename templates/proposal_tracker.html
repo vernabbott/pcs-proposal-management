@@ -185,12 +185,13 @@
             background: var(--pcs-panel);
             border: 1px solid var(--pcs-border);
             border-radius: 8px;
-            overflow: hidden;
+            overflow-x: auto;
         }
 
         .tracker-row {
             display: grid;
-            grid-template-columns: minmax(220px, 1.2fr) minmax(150px, 0.8fr) minmax(220px, 1fr) 128px 128px 128px 128px;
+            grid-template-columns: 220px 140px 210px 145px 105px 105px 110px 110px 110px;
+            min-width: 1335px;
             align-items: center;
             min-height: 54px;
             padding: 9px 12px;
@@ -228,6 +229,12 @@
 
         .new-row {
             background: #fbfdff;
+        }
+
+        .new-customer-fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
         }
 
         .tracker-row input {
@@ -269,6 +276,7 @@
             .tracker-row,
             .tracker-row.table-head {
                 grid-template-columns: 1fr;
+                min-width: 0;
                 row-gap: 7px;
             }
 
@@ -299,10 +307,10 @@
             <div class="status-message success">{{ saved_count }} tracker row{% if saved_count != '1' %}s{% endif %} saved.</div>
         {% endif %}
         {% if save_error %}
-            <div class="status-message error">Unable to save Proposal Tracking.xlsx: {{ save_error }}</div>
+            <div class="status-message error">Unable to save proposal tracking data: {{ save_error }}</div>
         {% endif %}
         {% if tracker_error %}
-            <div class="status-message error">Unable to read Proposal Tracking.xlsx: {{ tracker_error }}</div>
+            <div class="status-message error">Unable to read proposal tracking data: {{ tracker_error }}</div>
         {% endif %}
 
         <section class="toolbar" aria-label="Tracker controls">
@@ -327,8 +335,10 @@
                         <div>Customer</div>
                         <div>Contact</div>
                         <div>Email Address</div>
+                        <div>Lead Source</div>
                         <div>Submitted By</div>
                         <div>Estimated By</div>
+                        <div>Estimate Dt</div>
                         <div>Proposal Dt</div>
                         <div>Follow-Up Dt</div>
                     </div>
@@ -339,9 +349,11 @@
                             <div class="customer-name" title="{{ entry.customer }}">{{ entry.customer }}</div>
                             <input type="hidden" name="row_number" value="{{ entry.row_number }}">
                             <input type="text" name="contact_{{ entry.row_number }}" value="{{ entry.contact }}" aria-label="Contact for {{ entry.customer }}">
-                            <input type="email" name="email_address_{{ entry.row_number }}" value="{{ entry.email_address }}" aria-label="Email address for {{ entry.customer }}">
+                            <input type="text" name="email_address_{{ entry.row_number }}" value="{{ entry.email_address }}" aria-label="Email address for {{ entry.customer }}">
+                            <input type="text" name="lead_source_{{ entry.row_number }}" value="{{ entry.lead_source }}" aria-label="Lead source for {{ entry.customer }}">
                             <input type="text" name="submitted_by_{{ entry.row_number }}" value="{{ entry.submitted_by }}" aria-label="Submitted by for {{ entry.customer }}">
                             <input type="text" name="estimated_by_{{ entry.row_number }}" value="{{ entry.estimated_by }}" aria-label="Estimated by for {{ entry.customer }}">
+                            <input type="text" name="estimate_date_{{ entry.row_number }}" value="{{ entry.estimate_date_input }}" aria-label="Estimate date for {{ entry.customer }}">
                             <input type="text" name="proposal_date_{{ entry.row_number }}" value="{{ entry.proposal_date_input }}" aria-label="Proposal date for {{ entry.customer }}">
                             <input type="text" name="follow_up_date_{{ entry.row_number }}" value="{{ entry.follow_up_date_input }}" aria-label="Follow-up date for {{ entry.customer }}">
                         </div>
@@ -350,7 +362,7 @@
                 </section>
             </form>
             <div class="empty-state" id="emptyState" {% if entries %}style="display: none;"{% endif %}>
-                All Proposal Tracking rows have Contact, Email Address, Proposal Dt, and Follow-Up Dt filled in.
+                All proposal tracking rows have Contact, Email Address, Estimate Dt, and Proposal Dt filled in.
             </div>
         {% endif %}
     </main>
@@ -399,16 +411,21 @@
                     row.setAttribute('data-customer', '');
                     row.setAttribute('data-new-row', '1');
                     row.innerHTML = `
-                        <input type="text" name="customer_${rowKey}" placeholder="Customer" aria-label="Customer" required>
+                        <div class="new-customer-fields">
+                            <input type="text" name="customer_name_${rowKey}" placeholder="Customer" aria-label="Customer" required>
+                            <input type="text" name="project_street_address_${rowKey}" placeholder="Street address" aria-label="Project street address">
+                        </div>
                         <input type="hidden" name="row_number" value="${rowKey}">
                         <input type="text" name="contact_${rowKey}" aria-label="Contact">
-                        <input type="email" name="email_address_${rowKey}" aria-label="Email address">
+                        <input type="text" name="email_address_${rowKey}" aria-label="Email address">
+                        <input type="text" name="lead_source_${rowKey}" aria-label="Lead source">
                         <input type="text" name="submitted_by_${rowKey}" aria-label="Submitted by">
                         <input type="text" name="estimated_by_${rowKey}" aria-label="Estimated by">
+                        <input type="text" name="estimate_date_${rowKey}" aria-label="Estimate date">
                         <input type="text" name="proposal_date_${rowKey}" aria-label="Proposal date">
                         <input type="text" name="follow_up_date_${rowKey}" aria-label="Follow-up date">
                     `;
-                    const customerInput = row.querySelector(`[name="customer_${rowKey}"]`);
+                    const customerInput = row.querySelector(`[name="customer_name_${rowKey}"]`);
                     customerInput.addEventListener('input', function () {
                         row.setAttribute('data-customer', (customerInput.value || '').trim().toLowerCase());
                         applySearch();
