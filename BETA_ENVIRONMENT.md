@@ -16,6 +16,32 @@ runs independently from `/Applications/PCS_Proposal.app`.
   production Supabase credentials. Dedicated beta credentials can be supplied
   with `PCS_BETA_SUPABASE_URL` and `PCS_BETA_SUPABASE_SERVICE_ROLE_KEY`.
 
+## Local Supabase
+
+The shared local beta database is managed from the PilotPoint beta repository.
+It applies the Roof Intelligence, contact, organization, and proposal-tracking
+migrations, then loads only a small synthetic seed. It does not copy the large
+production footprint dataset, production contacts, reports, or imagery.
+
+```sh
+cd "/Users/vernabbott/Library/CloudStorage/OneDrive-Personal/Visual Studio/PilotPoint IQ Roof Intelligence Report Beta"
+colima start
+npm run supabase:start
+npm run supabase:status
+```
+
+Use `http://127.0.0.1:54321` and the local service-role key shown by the status
+command in the beta Settings screen. Keep all proposal cutover flags off until
+the database connection is verified; then enable and test shadow writes first.
+The production application rejects this loopback URL and remains isolated.
+
+When local work is finished:
+
+```sh
+npm run supabase:stop
+colima stop
+```
+
 ## Test and build
 
 ```sh

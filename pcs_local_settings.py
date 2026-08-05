@@ -81,8 +81,16 @@ def supabase_configuration() -> tuple[str, str]:
 def save_supabase_configuration(url_value: object, key_value: object) -> None:
     url = str(url_value or "").strip().rstrip("/")
     key = str(key_value or "").strip()
-    if not re.fullmatch(r"https://[a-z0-9-]+\.supabase\.co", url):
-        raise ValueError("Enter a valid Supabase project URL ending in .supabase.co.")
+    hosted_url = re.fullmatch(r"https://[a-z0-9-]+\.supabase\.co", url)
+    local_beta_url = (
+        os.environ.get("PCS_APP_ENV", "").strip().lower() == "beta"
+        and re.fullmatch(r"http://(?:127\.0\.0\.1|localhost):54321", url)
+    )
+    if not (hosted_url or local_beta_url):
+        raise ValueError(
+            "Enter a valid hosted Supabase URL, or the local beta URL "
+            "http://127.0.0.1:54321."
+        )
     if not (key.startswith("sb_secret_") or key.startswith("eyJ")) or len(key) < 32:
         raise ValueError("Enter a valid Supabase secret or legacy service-role key.")
     data = _read_settings()
