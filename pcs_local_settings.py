@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import re
 import tempfile
+import secrets
 
 from roof_intelligence_jobs import DEFAULT_DATA_DIR
 
@@ -52,8 +53,12 @@ def remove_google_maps_api_key() -> None:
     _write_settings(data)
 
 
-# Beta intentionally has no default production Supabase project.
+# Beta intentionally has no default hosted Supabase project. The publishable
+# key below belongs only to the standard local Supabase development stack and
+# is safe to embed in a client application.
 DEFAULT_SUPABASE_URL = ""
+DEFAULT_LOCAL_SUPABASE_URL = "http://127.0.0.1:54321"
+DEFAULT_LOCAL_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH"
 
 _PROPOSAL_TRACKING_CUTOVER_KEYS = (
     "PROPOSAL_TRACKING_SUPABASE_ENABLED",
@@ -64,16 +69,21 @@ _PROPOSAL_TRACKING_CUTOVER_KEYS = (
 
 
 def supabase_configuration() -> tuple[str, str]:
-    """Return the server-side Supabase URL and secret without exposing it to templates."""
+    """Return the Supabase URL and publishable key used with a user's JWT."""
     data = _read_settings()
     url = (
         os.environ.get("PCS_SUPABASE_URL", "").strip()
         or str(data.get("supabase_url") or "").strip()
-        or DEFAULT_SUPABASE_URL
+        or (DEFAULT_LOCAL_SUPABASE_URL if os.environ.get("PCS_APP_ENV", "").strip().lower() == "beta" else DEFAULT_SUPABASE_URL)
     )
     key = (
-        os.environ.get("PCS_SUPABASE_SERVICE_ROLE_KEY", "").strip()
-        or str(data.get("supabase_service_role_key") or "").strip()
+        os.environ.get("PCS_SUPABASE_PUBLISHABLE_KEY", "").strip()
+        or str(data.get("supabase_publishable_key") or "").strip()
+        or (
+            DEFAULT_LOCAL_SUPABASE_PUBLISHABLE_KEY
+            if url in {DEFAULT_LOCAL_SUPABASE_URL, "http://localhost:54321"}
+            else ""
+        )
     )
     return url.rstrip("/"), key
 
@@ -91,19 +101,58 @@ def save_supabase_configuration(url_value: object, key_value: object) -> None:
             "Enter a valid hosted Supabase URL, or the local beta URL "
             "http://127.0.0.1:54321."
         )
-    if not (key.startswith("sb_secret_") or key.startswith("eyJ")) or len(key) < 32:
-        raise ValueError("Enter a valid Supabase secret or legacy service-role key.")
+    if not (key.startswith("sb_publishable_") or key.startswith("eyJ")) or len(key) < 32:
+        raise ValueError("Enter a valid Supabase publishable or legacy anon key.")
+    if key.startswith("sb_secret_"):
+        raise ValueError("Do not store a Supabase secret key in the desktop application.")
     data = _read_settings()
     data["supabase_url"] = url
-    data["supabase_service_role_key"] = key
+    data["supabase_publishable_key"] = key
+    data.pop("supabase_service_role_key", None)
     _write_settings(data)
 
 
 def remove_supabase_configuration() -> None:
     data = _read_settings()
     data.pop("supabase_url", None)
+    data.pop("supabase_publishable_key", None)
     data.pop("supabase_service_role_key", None)
     _write_settings(data)
+
+
+def flask_secret_key() -> str:
+    """Return a durable per-installation secret for signing local sessions."""
+    environment_value = os.environ.get("PCS_FLASK_SECRET_KEY", "").strip()
+    if environment_value:
+        return environment_value
+    data = _read_settings()
+    value = str(data.get("flask_secret_key") or "").strip()
+    if value:
+        return value
+    value = secrets.token_urlsafe(48)
+    data["flask_secret_key"] = value
+    _write_settings(data)
+    return value
+
+
+def report_export_directory() -> str:
+    return str(_read_settings().get("report_export_directory") or "").strip()
+
+
+def save_report_export_directory(value: object) -> str:
+    raw_path = str(value or "").strip()
+    if not raw_path:
+        raise ValueError("Choose a local folder for exported reports.")
+    path = Path(raw_path).expanduser()
+    if not path.is_absolute():
+        raise ValueError("Enter the full path to the local report folder.")
+    path.mkdir(parents=True, exist_ok=True)
+    if not path.is_dir() or not os.access(path, os.W_OK):
+        raise ValueError("The selected report folder is not writable.")
+    data = _read_settings()
+    data["report_export_directory"] = str(path)
+    _write_settings(data)
+    return str(path)
 
 
 def proposal_tracking_cutover_environment() -> dict[str, str]:

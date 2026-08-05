@@ -26,19 +26,22 @@ class BetaRuntimeIsolationTests(unittest.TestCase):
         environment = {
             "PCS_SUPABASE_URL": "https://production.supabase.co",
             "PCS_SUPABASE_SERVICE_ROLE_KEY": "production-secret",
+            "PCS_SUPABASE_PUBLISHABLE_KEY": "production-publishable",
         }
         apply_beta_environment(environment)
         self.assertNotIn("PCS_SUPABASE_URL", environment)
         self.assertNotIn("PCS_SUPABASE_SERVICE_ROLE_KEY", environment)
+        self.assertNotIn("PCS_SUPABASE_PUBLISHABLE_KEY", environment)
 
     def test_explicit_beta_supabase_credentials_are_mapped(self):
         environment = {
             "PCS_BETA_SUPABASE_URL": "https://beta.supabase.co",
-            "PCS_BETA_SUPABASE_SERVICE_ROLE_KEY": "beta-secret",
+            "PCS_BETA_SUPABASE_PUBLISHABLE_KEY": "beta-publishable",
         }
         apply_beta_environment(environment)
         self.assertEqual(environment["PCS_SUPABASE_URL"], "https://beta.supabase.co")
-        self.assertEqual(environment["PCS_SUPABASE_SERVICE_ROLE_KEY"], "beta-secret")
+        self.assertEqual(environment["PCS_SUPABASE_PUBLISHABLE_KEY"], "beta-publishable")
+        self.assertNotIn("PCS_SUPABASE_SERVICE_ROLE_KEY", environment)
 
     def test_beta_settings_have_no_default_supabase_project(self):
         with tempfile.TemporaryDirectory() as temporary_directory:

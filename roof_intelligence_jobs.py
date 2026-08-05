@@ -475,6 +475,23 @@ class RoofIntelligenceJobStore:
                 connection.execute(
                     "ALTER TABLE roof_intelligence_reports ADD COLUMN retention_expires_at TEXT"
                 )
+            override_columns = {
+                row["name"]
+                for row in connection.execute(
+                    "PRAGMA table_info(roof_intelligence_property_overrides)"
+                ).fetchall()
+            }
+            if "user_key" not in override_columns:
+                connection.execute(
+                    "ALTER TABLE roof_intelligence_property_overrides "
+                    "ADD COLUMN user_key TEXT NOT NULL DEFAULT 'local-user'"
+                )
+            connection.execute("DROP INDEX IF EXISTS idx_roof_property_override_active")
+            connection.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS idx_roof_property_override_active "
+                "ON roof_intelligence_property_overrides (user_key, property_id, field_name) "
+                "WHERE revoked_at IS NULL"
+            )
             connection.execute(
                 "CREATE INDEX IF NOT EXISTS idx_roof_job_items_job_status "
                 "ON roof_intelligence_job_items (job_id, status, created_at)"
@@ -1527,11 +1544,21 @@ class RoofIntelligenceJobStore:
             reports.append(result)
         return reports
 
-    def get_report(self, report_id: str) -> dict | None:
+    def get_report(self, report_id: str, user_key: str | None = None) -> dict | None:
         with self.connect() as connection:
-            row = connection.execute(
-                "SELECT * FROM roof_intelligence_reports WHERE id = ?", (report_id,)
-            ).fetchone()
+            if user_key is None:
+                row = connection.execute(
+                    "SELECT * FROM roof_intelligence_reports WHERE id = ?", (report_id,)
+                ).fetchone()
+            else:
+                row = connection.execute(
+                    """
+                    SELECT r.* FROM roof_intelligence_reports r
+                    JOIN roof_intelligence_jobs j ON j.id = r.job_id
+                    WHERE r.id = ? AND j.user_key = ?
+                    """,
+                    (report_id, user_key),
+                ).fetchone()
         if row is None:
             return None
         result = dict(row)
@@ -1547,27 +1574,34 @@ class RoofIntelligenceJobStore:
         result["snapshot"] = json.loads(result.pop("snapshot_json") or "{}")
         return result
 
-    def list_report_revisions(self, report_id: str) -> list[dict]:
+    def list_report_revisions(self, report_id: str, user_key: str | None = None) -> list[dict]:
         with self.connect() as connection:
             rows = connection.execute(
                 """
-                SELECT * FROM roof_intelligence_report_revisions
-                WHERE report_id = ?
-                ORDER BY revision_number DESC
+                SELECT revision.* FROM roof_intelligence_report_revisions revision
+                JOIN roof_intelligence_reports report ON report.id = revision.report_id
+                JOIN roof_intelligence_jobs job ON job.id = report.job_id
+                WHERE revision.report_id = ? AND (? IS NULL OR job.user_key = ?)
+                ORDER BY revision.revision_number DESC
                 """,
-                (report_id,),
+                (report_id, user_key, user_key),
             ).fetchall()
         return [self._revision_from_row(row) for row in rows]
 
-    def get_report_revision(self, revision_id: str) -> dict | None:
+    def get_report_revision(self, revision_id: str, user_key: str | None = None) -> dict | None:
         with self.connect() as connection:
             row = connection.execute(
-                "SELECT * FROM roof_intelligence_report_revisions WHERE id = ?",
-                (revision_id,),
+                """
+                SELECT revision.* FROM roof_intelligence_report_revisions revision
+                JOIN roof_intelligence_reports report ON report.id = revision.report_id
+                JOIN roof_intelligence_jobs job ON job.id = report.job_id
+                WHERE revision.id = ? AND (? IS NULL OR job.user_key = ?)
+                """,
+                (revision_id, user_key, user_key),
             ).fetchone()
         return self._revision_from_row(row)
 
-    def get_report_review(self, report_id: str) -> dict | None:
+    def get_report_review(self, report_id: str, user_key: str | None = None) -> dict | None:
         with self.connect() as connection:
             row = connection.execute(
                 """
@@ -1575,17 +1609,18 @@ class RoofIntelligenceJobStore:
                        p.parcel_number, p.canonical_key
                 FROM roof_intelligence_reports r
                 JOIN properties p ON p.id = r.property_id
-                WHERE r.id = ?
+                JOIN roof_intelligence_jobs j ON j.id = r.job_id
+                WHERE r.id = ? AND (? IS NULL OR j.user_key = ?)
                 """,
-                (report_id,),
+                (report_id, user_key, user_key),
             ).fetchone()
         if row is None:
             return None
         result = dict(row)
         result["result"] = json.loads(result.pop("result_json") or "{}")
-        result["revisions"] = self.list_report_revisions(report_id)
+        result["revisions"] = self.list_report_revisions(report_id, user_key)
         result["latest_revision"] = result["revisions"][0] if result["revisions"] else None
-        result["processing_feedback"] = self.list_processing_feedback(report_id=report_id)
+        result["processing_feedback"] = self.list_processing_feedback(report_id=report_id, user_key=user_key)
         return result
 
     def list_processing_feedback(
@@ -1593,21 +1628,27 @@ class RoofIntelligenceJobStore:
         *,
         report_id: str | None = None,
         status: str | None = None,
+        user_key: str | None = None,
     ) -> list[dict]:
         conditions = []
         parameters: list[object] = []
         if report_id:
-            conditions.append("report_id = ?")
+            conditions.append("feedback.report_id = ?")
             parameters.append(report_id)
         if status:
-            conditions.append("status = ?")
+            conditions.append("feedback.status = ?")
             parameters.append(status)
+        if user_key:
+            conditions.append("job.user_key = ?")
+            parameters.append(user_key)
         where = " WHERE " + " AND ".join(conditions) if conditions else ""
         with self.connect() as connection:
             rows = connection.execute(
-                "SELECT * FROM roof_intelligence_processing_feedback"
+                "SELECT feedback.* FROM roof_intelligence_processing_feedback feedback "
+                "JOIN roof_intelligence_reports report ON report.id = feedback.report_id "
+                "JOIN roof_intelligence_jobs job ON job.id = report.job_id"
                 + where
-                + " ORDER BY created_at DESC, id",
+                + " ORDER BY feedback.created_at DESC, feedback.id",
                 parameters,
             ).fetchall()
         results = []
@@ -1623,6 +1664,7 @@ class RoofIntelligenceJobStore:
         address: object = "",
         county: object = "",
         parcel_number: object = "",
+        user_key: str | None = None,
     ) -> dict | None:
         county_key = normalize_address(county)
         parcel_key = normalize_address(parcel_number)
@@ -1636,6 +1678,7 @@ class RoofIntelligenceJobStore:
                 FROM roof_intelligence_property_overrides o
                 JOIN properties p ON p.id = o.property_id
                 WHERE o.field_name = 'roof_area_sqft' AND o.revoked_at IS NULL
+                  AND (? IS NULL OR o.user_key = ?)
                   AND (
                     (? <> '' AND p.canonical_key = ?)
                     OR (? <> '' AND p.normalized_address = ?)
@@ -1646,6 +1689,7 @@ class RoofIntelligenceJobStore:
                 LIMIT 1
                 """,
                 (
+                    user_key, user_key,
                     canonical_key, canonical_key,
                     street_key, street_key,
                     full_address_key, full_address_key,
@@ -1668,9 +1712,10 @@ class RoofIntelligenceJobStore:
         edits: dict,
         apply_square_footage_to_future: bool = False,
         processing_feedback: dict | None = None,
+        user_key: str | None = None,
     ) -> dict:
-        report = self.get_report(report_id)
-        parent = self.get_report_revision(parent_revision_id)
+        report = self.get_report(report_id, user_key)
+        parent = self.get_report_revision(parent_revision_id, user_key)
         if report is None or parent is None or parent["report_id"] != report_id:
             raise KeyError(report_id)
         if parent["generation_status"] != "ready":
@@ -1679,7 +1724,7 @@ class RoofIntelligenceJobStore:
             raise ValueError("The revised snapshot does not belong to this report.")
         revision = snapshot.get("revision") or {}
         next_number = max(
-            (item["revision_number"] for item in self.list_report_revisions(report_id)),
+            (item["revision_number"] for item in self.list_report_revisions(report_id, user_key)),
             default=0,
         ) + 1
         if revision.get("number") != next_number:
@@ -1757,19 +1802,21 @@ class RoofIntelligenceJobStore:
                     """
                     UPDATE roof_intelligence_property_overrides
                     SET revoked_at = ?
-                    WHERE property_id = ? AND field_name = 'roof_area_sqft' AND revoked_at IS NULL
+                    WHERE user_key = ? AND property_id = ?
+                      AND field_name = 'roof_area_sqft' AND revoked_at IS NULL
                     """,
-                    (generated_at, report["property_id"]),
+                    (generated_at, user_key or created_by, report["property_id"]),
                 )
                 connection.execute(
                     """
                     INSERT INTO roof_intelligence_property_overrides (
-                        id, property_id, field_name, numeric_value, source_revision_id,
+                        id, user_key, property_id, field_name, numeric_value, source_revision_id,
                         reason, created_by, effective_at, revoked_at
-                    ) VALUES (?, ?, 'roof_area_sqft', ?, ?, ?, ?, ?, NULL)
+                    ) VALUES (?, ?, ?, 'roof_area_sqft', ?, ?, ?, ?, ?, NULL)
                     """,
                     (
                         str(uuid.uuid4()),
+                        user_key or created_by,
                         report["property_id"],
                         float(edits["roof_area_sqft"]),
                         revision_id,
@@ -1820,7 +1867,7 @@ class RoofIntelligenceJobStore:
             "Roof Intelligence revision ready",
             f"Revision {next_number} is ready for review.",
         )
-        saved = self.get_report_revision(revision_id)
+        saved = self.get_report_revision(revision_id, user_key)
         if saved is None:
             raise RuntimeError("The report revision was not saved.")
         return saved

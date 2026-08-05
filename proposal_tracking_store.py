@@ -7,6 +7,7 @@ import re
 
 from contact_store import ContactStore, ContactStoreError
 from pcs_local_settings import supabase_configuration
+from tenant_context import current_tenant_context
 
 
 _EMAIL_PATTERN = re.compile(r"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}", re.I)
@@ -33,7 +34,9 @@ class ProposalTrackingStore(ContactStore):
 
     @classmethod
     def from_local_settings(cls) -> "ProposalTrackingStore":
-        return cls(*supabase_configuration())
+        project_url, api_key = supabase_configuration()
+        context = current_tenant_context()
+        return cls(project_url, api_key, context.access_token, context.tenant_id)
 
     def test_connection(self) -> None:
         self._request("proposal", params={"select": "id", "limit": "1"})

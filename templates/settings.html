@@ -22,7 +22,7 @@
         .status { display:inline-flex; align-items:center; gap:7px; margin-bottom:18px; padding:7px 10px; border-radius:999px; background:#f2f4f7; color:#475467; font-size:12px; font-weight:800; }
         .status.configured { background:#e7f4ee; color:#237a57; }
         label { display:block; margin-bottom:7px; font-size:13px; font-weight:800; }
-        input { width:100%; min-height:44px; padding:9px 11px; border:1px solid #bfc9d5; border-radius:7px; font:inherit; }
+        input,select { width:100%; min-height:44px; padding:9px 11px; border:1px solid #bfc9d5; border-radius:7px; background:#fff; font:inherit; }
         input:focus { outline:3px solid rgba(33,90,156,.14); border-color:var(--navy); }
         .help { margin:7px 0 16px; color:var(--muted); font-size:12px; line-height:1.5; }
         .actions { display:flex; flex-wrap:wrap; gap:9px; }
@@ -40,7 +40,10 @@
                 <h1>Local Settings</h1>
                 <p class="subtitle">Configure services used by this copy of PCS Proposal Management.</p>
             </div>
-            <a class="home-link" href="{{ url_for('landing_page') }}"><i class="bi bi-arrow-left"></i>Home</a>
+            <div>
+                {% if tenant %}<span class="status configured">{{ tenant.tenant_name }} · {{ tenant.role }}</span>{% endif %}
+                <a class="home-link" href="{{ url_for('landing_page') }}"><i class="bi bi-arrow-left"></i>Home</a>
+            </div>
         </header>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -80,7 +83,7 @@
         <section class="panel">
             <div class="panel-head">
                 <h2>Supabase</h2>
-                <p>Used by Contact Management to read and update the PCS contact database.</p>
+                <p>Authentication and protected company data for PCS and PilotPoint IQ.</p>
             </div>
             <div class="panel-body">
                 {% if supabase_configured %}
@@ -92,9 +95,9 @@
                     <input type="hidden" name="action" value="save_supabase_configuration">
                     <label for="supabase_url">Supabase Project URL</label>
                     <input id="supabase_url" name="supabase_url" type="url" required spellcheck="false" value="{{ supabase_url }}">
-                    <label for="supabase_service_role_key" style="margin-top:14px">Server Secret Key</label>
-                    <input id="supabase_service_role_key" name="supabase_service_role_key" type="password" required spellcheck="false" autocomplete="new-password" placeholder="sb_secret_…">
-                    <p class="help">Copy a secret key from Supabase Project Settings → API Keys. This must be a server secret, not a publishable key.</p>
+                    <label for="supabase_publishable_key" style="margin-top:14px">Publishable Key</label>
+                    <input id="supabase_publishable_key" name="supabase_publishable_key" type="password" required spellcheck="false" autocomplete="new-password" placeholder="sb_publishable_…">
+                    <p class="help">Use the project's publishable key. A secret or service-role key must never be stored in a licensed desktop copy.</p>
                     <div class="actions">
                         <button type="submit"><i class="bi bi-database-check"></i>{{ 'Replace Configuration' if supabase_configured else 'Save Configuration' }}</button>
                     </div>
@@ -105,7 +108,55 @@
                         <button class="secondary" type="submit"><i class="bi bi-trash3"></i>Remove Configuration</button>
                     </form>
                 {% endif %}
-                <div class="privacy"><strong>Server-side only:</strong> the secret is stored with owner-only file permissions and is never sent to the Contact Management webpage or included in Git. Keep this key private.</div>
+                <div class="privacy"><strong>Tenant security:</strong> the publishable key identifies the Supabase project but grants no company access by itself. Supabase Auth and row-level security authorize every signed-in request.</div>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-head">
+                <h2>Report destinations</h2>
+                <p>Protected cloud organization and the optional local folder used for downloaded copies.</p>
+            </div>
+            <div class="panel-body">
+                {% if tenant %}
+                    {% if tenant.role in ['owner', 'admin'] %}
+                    <form method="post" action="{{ url_for('application_settings') }}">
+                        <input type="hidden" name="action" value="set_default_report_folder">
+                        <label for="default_report_folder_id">Default protected folder for {{ tenant.tenant_name }}</label>
+                        <select id="default_report_folder_id" name="default_report_folder_id" required>
+                            {% for folder in report_folders if not folder.is_archived %}
+                                <option value="{{ folder.id }}" {% if tenant_settings.default_report_folder_id == folder.id %}selected{% endif %}>{{ folder.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="actions" style="margin-top:12px"><button type="submit">Save protected folder</button></div>
+                    </form>
+                    <form method="post" action="{{ url_for('application_settings') }}" style="margin-top:20px">
+                        <input type="hidden" name="action" value="create_report_folder">
+                        <label for="report_folder_name">Create another protected folder</label>
+                        <input id="report_folder_name" name="report_folder_name" required placeholder="Example: Commercial Roof Reports">
+                        <div class="actions" style="margin-top:12px"><button type="submit">Create folder</button></div>
+                    </form>
+                    {% else %}
+                    <p class="help">The default protected folder is managed by a company owner or administrator.</p>
+                    {% endif %}
+                {% else %}
+                    <p class="help">Sign in before selecting or creating protected report folders.</p>
+                    <a class="button" href="{{ url_for('tenant_login') }}">Sign in</a>
+                {% endif %}
+
+                <form method="post" action="{{ url_for('application_settings') }}" style="margin-top:24px">
+                    <input type="hidden" name="action" value="save_report_export_directory">
+                    <label for="report_export_directory">Local export folder on this Mac</label>
+                    <input id="report_export_directory" name="report_export_directory" required value="{{ report_export_directory }}" placeholder="/Users/your-name/Documents/Roof Reports">
+                    <p class="help">PCS will create the final folder if needed. This path controls downloaded copies only; Supabase objects always remain inside the protected tenant path.</p>
+                    <div class="actions"><button type="submit">Save local folder</button></div>
+                </form>
+
+                {% if tenant %}
+                <form method="post" action="{{ url_for('tenant_logout') }}" style="margin-top:20px">
+                    <button class="secondary" type="submit">Sign out of {{ tenant.tenant_name }}</button>
+                </form>
+                {% endif %}
             </div>
         </section>
     </main>

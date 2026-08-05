@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, send_file, redirect, url_for, flash, has_request_context, jsonify
+from flask import Flask, render_template, request, send_file, redirect, url_for, flash, has_request_context, jsonify, session
 from docx2pdf import convert
 from docx import Document
 import os
@@ -43,9 +43,12 @@ from proposal_tracking_cutover_flags import load_proposal_tracking_cutover_flags
 from roof_report_naming import roof_report_pdf_filename
 from pcs_local_settings import (
     google_maps_api_key,
+    flask_secret_key,
+    report_export_directory,
     remove_google_maps_api_key,
     remove_supabase_configuration,
     save_google_maps_api_key,
+    save_report_export_directory,
     save_supabase_configuration,
     supabase_configuration,
 )
@@ -54,6 +57,13 @@ from proposal_tracking_store import (
     ProposalTrackingStoreError,
     get_proposal_tracking_store,
 )
+from tenant_context import (
+    TenantAuthenticationError,
+    current_tenant_context,
+    sign_in as tenant_sign_in,
+    sign_out as tenant_sign_out,
+)
+from tenant_settings_store import TenantSettingsStore
 
 APP_FOLDER = os.path.dirname(os.path.abspath(__file__))
 APP_VARIANT = os.environ.get("PCS_APP_ENV", "production").strip().lower() or "production"
@@ -70,6 +80,27 @@ ROOF_INTELLIGENCE_AREA_SCRIPT = os.path.join(APP_FOLDER, "roof_intelligence_area
 ROOF_INTELLIGENCE_USER_KEY = os.environ.get("ROOF_INTELLIGENCE_USER_KEY", "local-user")
 HAS_XLWINGS = None
 xw = None
+
+
+def _roof_intelligence_user_key() -> str:
+    """Namespace compatibility SQLite records by trusted tenant and user."""
+    if not APP_IS_BETA:
+        return ROOF_INTELLIGENCE_USER_KEY
+    context = current_tenant_context()
+    return f"{context.tenant_id}:{context.user_id}"
+
+
+def _tenant_report_output_paths(user_key: str) -> tuple[str, str]:
+    tenant_id = str(user_key or "local").split(":", 1)[0]
+    if not re.fullmatch(r"[0-9a-fA-F-]{36}", tenant_id):
+        tenant_id = "local"
+    configured_root = report_export_directory()
+    root = configured_root or str(DEFAULT_DATA_DIR)
+    tenant_root = os.path.join(root, "tenants", tenant_id)
+    return (
+        os.path.join(tenant_root, "roof-intelligence-reports"),
+        os.path.join(tenant_root, "roof-intelligence-images"),
+    )
 
 def _safe_debug(message: str):
     try:
@@ -1694,16 +1725,62 @@ if os.path.exists(_BUNDLED_PROPOSAL_SUMMARY_TEMPLATE_PATH):
     PROPOSAL_SUMMARY_TEMPLATE_PATH = _BUNDLED_PROPOSAL_SUMMARY_TEMPLATE_PATH
 
 app = Flask(__name__, template_folder=TEMPLATE_PATH, static_folder=STATIC_PATH)
-app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key")
+app.secret_key = flask_secret_key()
 
 
 @app.context_processor
 def application_identity():
+    tenant = None
+    if APP_IS_BETA:
+        try:
+            tenant = current_tenant_context()
+        except TenantAuthenticationError:
+            pass
     return {
         "app_display_name": APP_DISPLAY_NAME,
         "app_variant": APP_VARIANT,
         "app_is_beta": APP_IS_BETA,
+        "active_tenant": tenant,
     }
+
+
+_AUTHENTICATION_EXEMPT_ENDPOINTS = {
+    "static", "tenant_login", "desktop_session_heartbeat", "desktop_session_closed",
+    "application_settings",
+}
+
+
+@app.before_request
+def require_beta_tenant_session():
+    if not APP_IS_BETA or request.endpoint in _AUTHENTICATION_EXEMPT_ENDPOINTS:
+        return None
+    try:
+        current_tenant_context()
+    except TenantAuthenticationError:
+        return redirect(url_for("tenant_login", next=request.full_path.rstrip("?")))
+    return None
+
+
+@app.route("/sign-in", methods=["GET", "POST"])
+def tenant_login():
+    if request.method == "POST":
+        try:
+            context = tenant_sign_in(request.form.get("email"), request.form.get("password"))
+        except TenantAuthenticationError as exc:
+            flash(str(exc), "danger")
+        else:
+            flash(f"Signed in to {context.tenant_name}.", "success")
+            destination = str(request.form.get("next") or "")
+            if not destination.startswith("/") or destination.startswith("//"):
+                destination = url_for("landing_page")
+            return redirect(destination)
+    return render_template("tenant_login.html", next=request.args.get("next", ""))
+
+
+@app.post("/sign-out")
+def tenant_logout():
+    tenant_sign_out()
+    return redirect(url_for("tenant_login"))
 
 DESKTOP_LIFECYCLE_ENABLED = os.environ.get("PCS_PROPOSAL_DESKTOP_LIFECYCLE", "0").strip().lower() in {
     "1",
@@ -4226,10 +4303,12 @@ def _footprint_error_context(payload, fallback_address=""):
     return context
 
 
-def _run_local_individual_roof_job(job_id):
+def _run_local_individual_roof_job(job_id, user_key=None):
     """Process an individual job that was atomically claimed by the local worker."""
     store = get_job_store()
-    job = store.get_job(job_id, ROOF_INTELLIGENCE_USER_KEY)
+    claimed = store.get_job(job_id)
+    trusted_user_key = user_key or (claimed or {}).get("user_key")
+    job = store.get_job(job_id, trusted_user_key) if trusted_user_key else None
     if not job or job.get("job_type") != "individual_address" or job.get("status") != "running":
         return
 
@@ -4252,6 +4331,8 @@ def _run_local_individual_roof_job(job_id):
             "--use-ai",
             "--allow-ai-fallback",
         ]
+        report_output_dir, image_output_dir = _tenant_report_output_paths(trusted_user_key)
+        command.extend(["--output-dir", report_output_dir, "--image-dir", image_output_dir])
         override = job["input"].get("footprint_override") or {}
         if override.get("selected_source"):
             command.extend([
@@ -4260,7 +4341,8 @@ def _run_local_individual_roof_job(job_id):
             ])
         if _roof_report_editing_enabled():
             area_override = store.get_active_square_footage_override(
-                address=job["input"]["property_address"]
+                address=job["input"]["property_address"],
+                user_key=trusted_user_key,
             )
             if area_override:
                 command.extend(["--roof-area-override", str(area_override["numeric_value"])])
@@ -4350,7 +4432,7 @@ def _resolve_canonical_footprint(canonical_id, selected_source, reason):
         os.path.join(ROOF_INTELLIGENCE_PROJECT_DIR, ".venv", "bin", "python"),
         os.path.join(ROOF_INTELLIGENCE_PROJECT_DIR, "scripts", "review_canonical_footprints.py"),
         "--resolve", str(int(canonical_id)), "--source", source,
-        "--reason", str(reason), "--reviewer", ROOF_INTELLIGENCE_USER_KEY,
+        "--reason", str(reason), "--reviewer", _roof_intelligence_user_key(),
     ]
     completed = subprocess.run(
         command, cwd=ROOF_INTELLIGENCE_PROJECT_DIR, capture_output=True,
@@ -4422,6 +4504,7 @@ def _discover_local_area_candidates(job):
 
 
 def _run_local_candidate_report(candidate):
+    user_key = str(candidate.get("_tenant_user_key") or "local-user")
     python_path = os.path.join(ROOF_INTELLIGENCE_PROJECT_DIR, ".venv", "bin", "python")
     command = [
         python_path,
@@ -4433,6 +4516,8 @@ def _run_local_candidate_report(candidate):
         "--use-ai",
         "--allow-ai-fallback",
     ]
+    report_output_dir, image_output_dir = _tenant_report_output_paths(user_key)
+    command.extend(["--output-dir", report_output_dir, "--image-dir", image_output_dir])
     if candidate.get("parcel"):
         command.extend(["--parcel-id", str(candidate["parcel"])])
     if _roof_report_editing_enabled():
@@ -4440,6 +4525,7 @@ def _run_local_candidate_report(candidate):
             address=candidate.get("address"),
             county=candidate.get("county"),
             parcel_number=candidate.get("parcel"),
+            user_key=user_key,
         )
         if area_override:
             command.extend(["--roof-area-override", str(area_override["numeric_value"])])
@@ -4499,9 +4585,11 @@ def _remove_area_temporary_files(result, *, remove_report=False):
                 pass
 
 
-def _run_local_area_roof_job(job_id):
+def _run_local_area_roof_job(job_id, user_key=None):
     store = get_job_store()
-    job = store.get_job(job_id, ROOF_INTELLIGENCE_USER_KEY)
+    claimed = store.get_job(job_id)
+    trusted_user_key = user_key or (claimed or {}).get("user_key")
+    job = store.get_job(job_id, trusted_user_key) if trusted_user_key else None
     if not job or job.get("job_type") != "zip_batch" or job.get("status") != "running":
         return
     try:
@@ -4517,14 +4605,16 @@ def _run_local_area_roof_job(job_id):
             items = store.prepare_area_candidates(job_id, candidates)
 
         while True:
-            current = store.get_job(job_id, ROOF_INTELLIGENCE_USER_KEY)
+            current = store.get_job(job_id, trusted_user_key)
             if not current or current.get("status") == "cancelled":
                 return
             item = store.claim_next_area_item(job_id)
             if not item:
                 break
             try:
-                result = _run_local_candidate_report(item["input"])
+                candidate_input = dict(item["input"])
+                candidate_input["_tenant_user_key"] = trusted_user_key
+                result = _run_local_candidate_report(candidate_input)
                 if not _roof_type_matches_selection(result, current.get("roof_types") or []):
                     _remove_area_temporary_files(result, remove_report=True)
                     store.skip_area_item(
@@ -4632,13 +4722,13 @@ def _roof_worker_loop():
         job = store.claim_next_individual_job()
         if job:
             DESKTOP_BACKGROUND_WORK_ACTIVE.set()
-            _run_local_individual_roof_job(job["id"])
+            _run_local_individual_roof_job(job["id"], job.get("user_key"))
             continue
 
         job = store.claim_next_area_job()
         if job:
             DESKTOP_BACKGROUND_WORK_ACTIVE.set()
-            _run_local_area_roof_job(job["id"])
+            _run_local_area_roof_job(job["id"], job.get("user_key"))
             continue
 
         DESKTOP_BACKGROUND_WORK_ACTIVE.clear()
@@ -4680,7 +4770,7 @@ def _roof_job_payload(store, job):
     report = store.get_report_for_job(job["id"])
     if report:
         report["view_url"] = url_for("download_roof_intelligence_report", report_id=report["id"])
-        if _roof_report_editing_enabled() and store.list_report_revisions(report["id"]):
+        if _roof_report_editing_enabled() and store.list_report_revisions(report["id"], job.get("user_key")):
             report["review_url"] = url_for("review_roof_intelligence_report", report_id=report["id"])
         result["report"] = report
     else:
@@ -4688,7 +4778,7 @@ def _roof_job_payload(store, job):
     reports = store.get_reports_for_job(job["id"])
     for batch_report in reports:
         batch_report["view_url"] = url_for("download_roof_intelligence_report", report_id=batch_report["id"])
-        if _roof_report_editing_enabled() and store.list_report_revisions(batch_report["id"]):
+        if _roof_report_editing_enabled() and store.list_report_revisions(batch_report["id"], job.get("user_key")):
             batch_report["review_url"] = url_for(
                 "review_roof_intelligence_report", report_id=batch_report["id"]
             )
@@ -4705,8 +4795,8 @@ def _roof_job_payload(store, job):
 def roof_intelligence():
     store = get_job_store()
     requested_job_id = request.args.get("job_id", "").strip()
-    active_job = store.get_job(requested_job_id, ROOF_INTELLIGENCE_USER_KEY) if requested_job_id else None
-    recent_notifications = store.list_notifications(ROOF_INTELLIGENCE_USER_KEY, limit=30)
+    active_job = store.get_job(requested_job_id, _roof_intelligence_user_key()) if requested_job_id else None
+    recent_notifications = store.list_notifications(_roof_intelligence_user_key(), limit=30)
     selected_notifications = [
         item for item in recent_notifications
         if not active_job or item.get("job_id") in {None, active_job["id"]}
@@ -4714,7 +4804,7 @@ def roof_intelligence():
     return render_template(
         'roof_intelligence.html',
         active_job=_roof_job_payload(store, active_job),
-        recent_jobs=store.list_jobs(ROOF_INTELLIGENCE_USER_KEY, limit=12),
+        recent_jobs=store.list_jobs(_roof_intelligence_user_key(), limit=12),
         notifications=selected_notifications,
         county_health=store.list_latest_county_health(limit=20),
         county_health_running=_county_health_check_running(),
@@ -4758,24 +4848,52 @@ def application_settings():
             return redirect(url_for("application_settings"))
         if action == "remove_supabase_configuration":
             remove_supabase_configuration()
+            tenant_sign_out()
             flash("The local Supabase configuration was removed.", "success")
             return redirect(url_for("application_settings"))
         try:
             if action == "save_supabase_configuration":
                 submitted_url = request.form.get("supabase_url", "").strip().rstrip("/")
-                submitted_key = request.form.get("supabase_service_role_key", "").strip()
-                ContactStore(submitted_url, submitted_key).test_connection()
+                submitted_key = request.form.get("supabase_publishable_key", "").strip()
                 save_supabase_configuration(submitted_url, submitted_key)
-                flash("Supabase is configured for Contact Management.", "success")
+                tenant_sign_out()
+                flash("Supabase is configured. Sign in with your company account.", "success")
+            elif action == "save_report_export_directory":
+                saved_path = save_report_export_directory(
+                    request.form.get("report_export_directory", "")
+                )
+                flash(f"Local report exports will be saved in {saved_path}.", "success")
+            elif action == "create_report_folder":
+                current_tenant_context()
+                folder = TenantSettingsStore.from_current_session().create_report_folder(
+                    request.form.get("report_folder_name", "")
+                )
+                flash(f"Created the protected report folder {folder['name']}.", "success")
+            elif action == "set_default_report_folder":
+                current_tenant_context()
+                TenantSettingsStore.from_current_session().set_default_report_folder(
+                    request.form.get("default_report_folder_id", "")
+                )
+                flash("The default protected report folder was updated.", "success")
             else:
                 save_google_maps_api_key(request.form.get("google_maps_api_key", ""))
                 flash("Google Maps is configured for Roof Intelligence.", "success")
-        except (ValueError, ContactStoreError) as exc:
+        except (ValueError, ContactStoreError, TenantAuthenticationError) as exc:
             flash(str(exc), "danger")
         else:
             return redirect(url_for("application_settings"))
     key = google_maps_api_key()
     supabase_url, supabase_key = supabase_configuration()
+    tenant = None
+    report_folders = []
+    tenant_settings = {}
+    try:
+        tenant = current_tenant_context()
+        settings_store = TenantSettingsStore.from_current_session()
+        report_folders = settings_store.list_report_folders()
+        tenant_settings = settings_store.get_settings()
+    except (TenantAuthenticationError, ContactStoreError):
+        pass
     return render_template(
         'settings.html',
         google_maps_configured=bool(key),
@@ -4783,6 +4901,10 @@ def application_settings():
         supabase_configured=bool(supabase_key),
         supabase_url=supabase_url,
         supabase_key_suffix=supabase_key[-4:] if supabase_key else "",
+        tenant=tenant,
+        report_folders=report_folders,
+        tenant_settings=tenant_settings,
+        report_export_directory=report_export_directory(),
     )
 
 
@@ -4808,7 +4930,7 @@ def create_individual_roof_intelligence_job():
                 raise ValueError(readiness_error)
         job = store.create_individual_job(
             address,
-            user_key=ROOF_INTELLIGENCE_USER_KEY,
+            user_key=_roof_intelligence_user_key(),
         )
     except ValueError as exc:
         flash(str(exc), "danger")
@@ -4831,7 +4953,7 @@ def create_area_roof_intelligence_job():
             request.form.get("bounds_west", ""),
             minimum_roof_squares=request.form.get("minimum_roof_squares", "100"),
             roof_types=request.form.getlist("roof_types"),
-            user_key=ROOF_INTELLIGENCE_USER_KEY,
+            user_key=_roof_intelligence_user_key(),
             selection_type=request.form.get("selection_type", "rectangle"),
             center_lat=request.form.get("center_lat", ""),
             center_lng=request.form.get("center_lng", ""),
@@ -4850,7 +4972,7 @@ def create_area_roof_intelligence_job():
 @app.get('/api/roof-intelligence/jobs/<job_id>')
 def roof_intelligence_job_status(job_id):
     store = get_job_store()
-    job = store.get_job(job_id, ROOF_INTELLIGENCE_USER_KEY)
+    job = store.get_job(job_id, _roof_intelligence_user_key())
     if not job:
         return jsonify({"error": "Roof Intelligence job not found."}), 404
     return jsonify(_roof_job_payload(store, job))
@@ -4859,7 +4981,7 @@ def roof_intelligence_job_status(job_id):
 @app.post('/roof-intelligence/jobs/<job_id>/cancel')
 def cancel_roof_intelligence_job(job_id):
     store = get_job_store()
-    job = store.cancel_job(job_id, ROOF_INTELLIGENCE_USER_KEY)
+    job = store.cancel_job(job_id, _roof_intelligence_user_key())
     if not job:
         flash("Roof Intelligence job not found.", "danger")
         return redirect(url_for("roof_intelligence"))
@@ -4876,7 +4998,7 @@ def resolve_roof_footprint_discrepancy(job_id):
             job_id,
             request.form.get("selected_source", ""),
             request.form.get("reason", ""),
-            user_key=ROOF_INTELLIGENCE_USER_KEY,
+            user_key=_roof_intelligence_user_key(),
             item_id=request.form.get("item_id", "").strip() or None,
         )
     except (ValueError, KeyError) as exc:
@@ -4915,7 +5037,7 @@ def resolve_canonical_footprint_review(canonical_id):
 @app.post('/roof-intelligence/notifications/<notification_id>/read')
 def mark_roof_intelligence_notification_read(notification_id):
     store = get_job_store()
-    store.mark_notification_read(notification_id, ROOF_INTELLIGENCE_USER_KEY)
+    store.mark_notification_read(notification_id, _roof_intelligence_user_key())
     job_id = request.form.get("job_id", "").strip()
     return redirect(url_for("roof_intelligence", job_id=job_id) if job_id else url_for("roof_intelligence"))
 
@@ -4923,7 +5045,8 @@ def mark_roof_intelligence_notification_read(notification_id):
 @app.route('/roof-intelligence/reports/<report_id>')
 def download_roof_intelligence_report(report_id):
     store = get_job_store()
-    report = store.get_report(report_id)
+    user_key = _roof_intelligence_user_key()
+    report = store.get_report(report_id, user_key)
     if not report:
         return "Report was not found.", 404
     report_path = str(report.get("report_path") or "")
@@ -4931,8 +5054,10 @@ def download_roof_intelligence_report(report_id):
         return "The local report file is no longer available.", 404
 
     requested_path = os.path.realpath(report_path)
+    tenant_report_root, _ = _tenant_report_output_paths(user_key)
     allowed_roots = (
         os.path.realpath(ROOF_INTELLIGENCE_PROJECT_DIR),
+        os.path.realpath(tenant_report_root),
         os.path.realpath(os.path.join(str(DEFAULT_DATA_DIR), "roof_intelligence_reports")),
     )
     if not any(requested_path.startswith(root + os.sep) for root in allowed_roots):
@@ -4944,7 +5069,7 @@ def download_roof_intelligence_report(report_id):
 def review_roof_intelligence_report(report_id):
     if not _roof_report_editing_enabled():
         return "Report review and editing are not enabled.", 404
-    report = get_job_store().get_report_review(report_id)
+    report = get_job_store().get_report_review(report_id, _roof_intelligence_user_key())
     if not report:
         return "Report was not found.", 404
     for revision in report["revisions"]:
@@ -4961,7 +5086,8 @@ def create_roof_intelligence_revision(report_id):
     if not _roof_report_editing_enabled():
         return "Report review and editing are not enabled.", 404
     store = get_job_store()
-    report = store.get_report_review(report_id)
+    user_key = _roof_intelligence_user_key()
+    report = store.get_report_review(report_id, user_key)
     if not report or not report.get("latest_revision"):
         flash("This report does not contain an editable revision snapshot.", "danger")
         return redirect(url_for("roof_intelligence"))
@@ -5019,9 +5145,9 @@ def create_roof_intelligence_revision(report_id):
         flash("The PilotPoint revision service is not available.", "danger")
         return redirect(url_for("review_roof_intelligence_report", report_id=report_id))
     revision_number = int(parent["revision_number"]) + 1
+    tenant_report_root, _ = _tenant_report_output_paths(_roof_intelligence_user_key())
     output_dir = os.path.join(
-        str(DEFAULT_DATA_DIR),
-        "roof_intelligence_reports",
+        tenant_report_root,
         report_id,
         f"revision-{revision_number}",
     )
@@ -5052,7 +5178,7 @@ def create_roof_intelligence_revision(report_id):
                 output_pdf,
                 snapshot_path,
                 "--created-by",
-                ROOF_INTELLIGENCE_USER_KEY,
+                _roof_intelligence_user_key(),
                 "--change-reason",
                 reason,
             ]
@@ -5062,7 +5188,7 @@ def create_roof_intelligence_revision(report_id):
                 command.append("--apply-square-footage-to-future")
             if submit_for_future_processing:
                 feedback_directory = os.path.join(
-                    str(DEFAULT_DATA_DIR),
+                    os.path.dirname(tenant_report_root),
                     "roof_processing_feedback",
                 )
                 command.extend(
@@ -5104,11 +5230,12 @@ def create_roof_intelligence_revision(report_id):
             report_path=output_pdf,
             pdf_size=pdf_size,
             pdf_checksum=digest.hexdigest(),
-            created_by=ROOF_INTELLIGENCE_USER_KEY,
+            created_by=_roof_intelligence_user_key(),
             change_reason=reason,
             edits=edits,
             apply_square_footage_to_future=apply_to_future,
             processing_feedback=processing_feedback,
+            user_key=user_key,
         )
     except (OSError, RuntimeError, ValueError, KeyError, subprocess.SubprocessError) as exc:
         flash(f"The revised report could not be generated: {' '.join(str(exc).split())[:400]}", "danger")
@@ -5124,11 +5251,14 @@ def create_roof_intelligence_revision(report_id):
 def download_roof_intelligence_revision(report_id, revision_id):
     if not _roof_report_editing_enabled():
         return "Report review and editing are not enabled.", 404
-    revision = get_job_store().get_report_revision(revision_id)
+    user_key = _roof_intelligence_user_key()
+    revision = get_job_store().get_report_revision(revision_id, user_key)
     if not revision or revision["report_id"] != report_id:
         return "Report revision was not found.", 404
     report_path = os.path.realpath(str(revision.get("report_path") or ""))
+    tenant_report_root, _ = _tenant_report_output_paths(user_key)
     allowed_roots = (
+        os.path.realpath(tenant_report_root),
         os.path.realpath(os.path.join(str(DEFAULT_DATA_DIR), "roof_intelligence_reports")),
         os.path.realpath(ROOF_INTELLIGENCE_PROJECT_DIR),
     )

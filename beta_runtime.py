@@ -54,7 +54,6 @@ def beta_environment(
         "PROPOSAL_TRACKING_SUPABASE_READS_ENABLED": "0",
         "PROPOSAL_TRACKING_SUPABASE_WRITES_ENABLED": "0",
         "PROPOSAL_TRACKING_SUPABASE_SHADOW_WRITES_ENABLED": "0",
-        "SECRET_KEY": "pcs-proposal-beta-local-session",
     }
 
 
@@ -68,11 +67,13 @@ def apply_beta_environment(environ: MutableMapping[str, str] | None = None) -> d
         environ[key] = value
 
     beta_url = environ.get("PCS_BETA_SUPABASE_URL", "").strip()
-    beta_key = environ.get("PCS_BETA_SUPABASE_SERVICE_ROLE_KEY", "").strip()
+    beta_key = environ.get("PCS_BETA_SUPABASE_PUBLISHABLE_KEY", "").strip()
     if beta_url and beta_key:
         environ["PCS_SUPABASE_URL"] = beta_url
-        environ["PCS_SUPABASE_SERVICE_ROLE_KEY"] = beta_key
+        environ["PCS_SUPABASE_PUBLISHABLE_KEY"] = beta_key
     else:
         environ.pop("PCS_SUPABASE_URL", None)
-        environ.pop("PCS_SUPABASE_SERVICE_ROLE_KEY", None)
+        environ.pop("PCS_SUPABASE_PUBLISHABLE_KEY", None)
+    # A packaged beta client must never inherit a worker/server credential.
+    environ.pop("PCS_SUPABASE_SERVICE_ROLE_KEY", None)
     return values

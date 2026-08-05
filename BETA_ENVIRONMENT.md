@@ -14,7 +14,9 @@ runs independently from `/Applications/PCS_Proposal.app`.
   project folder.
 - Supabase proposal tracking is disabled by default, and beta does not inherit
   production Supabase credentials. Dedicated beta credentials can be supplied
-  with `PCS_BETA_SUPABASE_URL` and `PCS_BETA_SUPABASE_SERVICE_ROLE_KEY`.
+  with `PCS_BETA_SUPABASE_URL` and `PCS_BETA_SUPABASE_PUBLISHABLE_KEY`.
+- Multi-tenancy is always active in beta. It is intentionally not controlled
+  by a feature flag.
 
 ## Local Supabase
 
@@ -30,10 +32,23 @@ npm run supabase:start
 npm run supabase:status
 ```
 
-Use `http://127.0.0.1:54321` and the local service-role key shown by the status
-command in the beta Settings screen. Keep all proposal cutover flags off until
-the database connection is verified; then enable and test shadow writes first.
-The production application rejects this loopback URL and remains isolated.
+If Auth reports an invalid upstream response immediately after a reset, restart
+the local API gateway once with
+`docker restart supabase_kong_PilotPoint_IQ_Roof_Intelligence_Report_B`.
+
+Use `http://127.0.0.1:54321` and the local publishable key shown by the status
+command in the beta Settings screen. Never place the service-role key in PCS;
+that secret belongs only to the protected PilotPoint worker. The synthetic PCS
+owner login is `owner@pcs-beta.test` with password `PCS-Beta-Owner-2026!`.
+Keep all proposal cutover flags off until the database connection is verified;
+then enable and test shadow writes first. The production application rejects
+this loopback URL and remains isolated.
+
+Customer, contact, proposal, job, report, revision, asset, notification, and
+feedback records are tenant-owned. Large footprint and canonical-property
+datasets remain shared. Local report copies are written below
+`tenants/<tenant UUID>/`; protected Storage objects use
+`<tenant UUID>/folders/<folder UUID>/reports/<report UUID>/revisions/...`.
 
 When local work is finished:
 

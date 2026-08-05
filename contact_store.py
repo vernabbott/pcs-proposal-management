@@ -8,6 +8,7 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from pcs_local_settings import supabase_configuration
+from tenant_context import current_tenant_context
 
 
 SHARED_UNKNOWN_EMAIL_DOMAINS = frozenset({
@@ -27,24 +28,57 @@ class ContactConfigurationError(ContactStoreError):
 
 
 class ContactStore:
-    def __init__(self, project_url: str, service_key: str):
-        if not project_url or not service_key:
+    TENANT_TABLES = frozenset({
+        "contact", "organization", "organization_contact", "proposal", "proposal_contact",
+        "property_management_companies", "property_management_contacts",
+        "roof_intelligence_jobs", "roof_intelligence_job_items", "roof_intelligence_reports",
+        "roof_intelligence_report_revisions", "roof_intelligence_report_assets",
+        "roof_intelligence_notifications", "roof_intelligence_report_edit_requests",
+        "roof_intelligence_processing_feedback", "roof_intelligence_property_overrides",
+        "report_folder", "tenant_settings", "tenant_feature_flag",
+    })
+
+    def __init__(
+        self,
+        project_url: str,
+        api_key: str,
+        access_token: str | None = None,
+        tenant_id: str | None = None,
+    ):
+        if not project_url or not api_key:
             raise ContactConfigurationError(
-                "Supabase is not configured. Open Local Settings and save the server key."
+                "Supabase is not configured. Open Local Settings and save the publishable key."
             )
         self.base_url = f"{project_url.rstrip('/')}/rest/v1"
-        self.service_key = service_key
+        self.api_key = api_key
+        self.access_token = access_token or api_key
+        self.tenant_id = tenant_id
 
     @classmethod
     def from_local_settings(cls) -> "ContactStore":
-        return cls(*supabase_configuration())
+        project_url, api_key = supabase_configuration()
+        context = current_tenant_context()
+        return cls(project_url, api_key, context.access_token, context.tenant_id)
 
     def _request(self, table: str, *, method: str = "GET", params=None, payload=None, return_rows=False):
+        params = dict(params or {})
+        if table in self.TENANT_TABLES:
+            if not self.tenant_id:
+                raise ContactConfigurationError("An authenticated company context is required.")
+            if method in {"GET", "PATCH", "DELETE"}:
+                params["tenant_id"] = f"eq.{self.tenant_id}"
+            if payload is not None and method in {"POST", "PUT", "PATCH"}:
+                rows = payload if isinstance(payload, list) else [payload]
+                for row in rows:
+                    supplied_tenant = row.get("tenant_id")
+                    if supplied_tenant and str(supplied_tenant) != self.tenant_id:
+                        raise ContactStoreError("Cross-company writes are not allowed.")
+                    row["tenant_id"] = self.tenant_id
         query = f"?{urlencode(params or {}, doseq=True)}" if params else ""
         body = json.dumps(payload).encode("utf-8") if payload is not None else None
         headers = {
-            "apikey": self.service_key,
-            "Authorization": f"Bearer {self.service_key}",
+            "apikey": self.api_key,
+            "Authorization": f"Bearer {self.access_token}",
             "Accept": "application/json",
             "Content-Type": "application/json",
         }
