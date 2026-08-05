@@ -46,6 +46,17 @@ class ProposalTrackingCutoverFlagTests(unittest.TestCase):
         self.assertTrue(flags.spreadsheet_writes_active)
         self.assertFalse(flags.fully_cut_over)
 
+    def test_full_cutover_disables_all_spreadsheet_access(self):
+        flags = load_proposal_tracking_cutover_flags({
+            MASTER_FLAG: "true",
+            READ_FLAG: "true",
+            WRITE_FLAG: "true",
+            SHADOW_WRITE_FLAG: "false",
+        })
+        self.assertTrue(flags.fully_cut_over)
+        self.assertFalse(flags.spreadsheet_reads_active)
+        self.assertFalse(flags.spreadsheet_writes_active)
+
     def test_persistent_shadow_mode_is_used_when_environment_is_absent(self):
         persisted = {
             MASTER_FLAG: "true",

@@ -50,9 +50,12 @@ def beta_environment(
         "DAVIDS_PROPOSALS_WEB_URL": "",
         "LYDIAS_PROPOSALS_WEB_URL": "",
         "RANDYS_PROPOSALS_WEB_URL": "",
-        "PROPOSAL_TRACKING_SUPABASE_ENABLED": "0",
-        "PROPOSAL_TRACKING_SUPABASE_READS_ENABLED": "0",
-        "PROPOSAL_TRACKING_SUPABASE_WRITES_ENABLED": "0",
+        # Beta is fully cut over to tenant-scoped Supabase proposal tracking.
+        # The beta workbook remains an inert rollback artifact and is neither
+        # read nor written by the application.
+        "PROPOSAL_TRACKING_SUPABASE_ENABLED": "1",
+        "PROPOSAL_TRACKING_SUPABASE_READS_ENABLED": "1",
+        "PROPOSAL_TRACKING_SUPABASE_WRITES_ENABLED": "1",
         "PROPOSAL_TRACKING_SUPABASE_SHADOW_WRITES_ENABLED": "0",
     }
 

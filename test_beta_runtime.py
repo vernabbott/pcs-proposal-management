@@ -20,7 +20,12 @@ class BetaRuntimeIsolationTests(unittest.TestCase):
         self.assertIn("PCS Proposal Management Beta", values["PCS_DATA_DIR"])
         self.assertIn("PilotPoint Beta", values["ROOF_INTELLIGENCE_PROJECT_DIR"])
         self.assertNotIn("OneDrive-ProfessionalCoatingSystems", values["PCS_PROPOSAL_TRACKER"])
-        self.assertEqual(values["PROPOSAL_TRACKING_SUPABASE_ENABLED"], "0")
+        self.assertEqual(values["PROPOSAL_TRACKING_SUPABASE_ENABLED"], "1")
+        self.assertEqual(values["PROPOSAL_TRACKING_SUPABASE_READS_ENABLED"], "1")
+        self.assertEqual(values["PROPOSAL_TRACKING_SUPABASE_WRITES_ENABLED"], "1")
+        self.assertEqual(
+            values["PROPOSAL_TRACKING_SUPABASE_SHADOW_WRITES_ENABLED"], "0"
+        )
 
     def test_beta_does_not_inherit_production_supabase_credentials(self):
         environment = {

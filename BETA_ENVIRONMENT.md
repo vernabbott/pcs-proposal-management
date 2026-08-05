@@ -40,9 +40,10 @@ Use `http://127.0.0.1:54321` and the local publishable key shown by the status
 command in the beta Settings screen. Never place the service-role key in PCS;
 that secret belongs only to the protected PilotPoint worker. The synthetic PCS
 owner login is `owner@pcs-beta.test` with password `PCS-Beta-Owner-2026!`.
-Keep all proposal cutover flags off until the database connection is verified;
-then enable and test shadow writes first. The production application rejects
-this loopback URL and remains isolated.
+Proposal tracking in beta is fully cut over to the tenant-scoped Supabase
+tables. Supabase supplies all proposal reads and receives all proposal writes;
+the beta proposal-tracking workbook is not read or updated. The production
+application rejects this loopback URL and remains isolated.
 
 Customer, contact, proposal, job, report, revision, asset, notification, and
 feedback records are tenant-owned. Large footprint and canonical-property
@@ -60,9 +61,9 @@ colima stop
 ## Test and build
 
 ```sh
-env PROPOSAL_TRACKING_SUPABASE_ENABLED=0 \
-  PROPOSAL_TRACKING_SUPABASE_READS_ENABLED=0 \
-  PROPOSAL_TRACKING_SUPABASE_WRITES_ENABLED=0 \
+env PROPOSAL_TRACKING_SUPABASE_ENABLED=1 \
+  PROPOSAL_TRACKING_SUPABASE_READS_ENABLED=1 \
+  PROPOSAL_TRACKING_SUPABASE_WRITES_ENABLED=1 \
   PROPOSAL_TRACKING_SUPABASE_SHADOW_WRITES_ENABLED=0 \
   .venv/bin/python -m unittest discover
 
