@@ -37,6 +37,13 @@ class TenantPostgrestTests(unittest.TestCase):
             self.store._request("organization", params={"select": "id"})
         self.assertIn("tenant_id=eq.tenant-1", request.call_args.args[0].full_url)
 
+    def test_proposal_tracking_reads_are_tenant_filtered(self):
+        with patch("contact_store.urlopen", return_value=_Response([])) as request:
+            self.store._request(
+                "proposal_tracking", params={"select": "proposal_id"}
+            )
+        self.assertIn("tenant_id=eq.tenant-1", request.call_args.args[0].full_url)
+
     def test_writes_receive_server_selected_tenant(self):
         with patch("contact_store.urlopen", return_value=_Response([])) as request:
             self.store._request("organization", method="POST", payload={"name": "Example"})
@@ -89,4 +96,3 @@ class LocalRoofTenantCompatibilityTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

@@ -45,6 +45,11 @@ tables. Supabase supplies all proposal reads and receives all proposal writes;
 the beta proposal-tracking workbook is not read or updated. The production
 application rejects this loopback URL and remains isolated.
 
+`proposal` stores customer and project identity. `proposal_tracking` is a
+one-to-one extension keyed by `proposal_id` and stores only lifecycle,
+assignment, response, status, and source-reconciliation fields. Contacts are
+linked to the same proposal through `proposal_contact`.
+
 Customer, contact, proposal, job, report, revision, asset, notification, and
 feedback records are tenant-owned. Large footprint and canonical-property
 datasets remain shared. Local report copies are written below

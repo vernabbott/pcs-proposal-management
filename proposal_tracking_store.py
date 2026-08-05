@@ -23,13 +23,14 @@ _LEGACY_STATUS_MAP = {
 
 class ProposalTrackingStore(ContactStore):
     PROPOSAL_SELECT = (
-        "id,customer_name,project_street_address,project_address_line_2,"
-        "project_city,project_state,project_zip_code,display_name,lead_source,"
-        "submitted_by,estimated_by,estimate_completed_date,proposal_sent_date,"
-        "follow_up_date,response_notes,status,proposal_folder_name,created_at,updated_at,"
-        "proposal_contact(proposal_id,organization_contact_id,contact_role,is_primary,"
-        "organization_contact:organization_contact(id,business_email,is_current,"
-        "contact:contact(id,full_name,first_name,last_name)))"
+        "proposal_id,lead_source,submitted_by,estimated_by,estimate_completed_date,"
+        "proposal_sent_date,follow_up_date,response_notes,status,created_at,updated_at,"
+        "proposal:proposal(id,customer_name,project_street_address,project_address_line_2,"
+        "project_city,project_state,project_zip_code,display_name,proposal_folder_name,"
+        "created_at,updated_at,proposal_contact(proposal_id,organization_contact_id,"
+        "contact_role,is_primary,organization_contact:organization_contact("
+        "id,business_email,is_current,contact:contact("
+        "id,full_name,first_name,last_name))))"
     )
 
     @classmethod
@@ -39,7 +40,7 @@ class ProposalTrackingStore(ContactStore):
         return cls(project_url, api_key, context.access_token, context.tenant_id)
 
     def test_connection(self) -> None:
-        self._request("proposal", params={"select": "id", "limit": "1"})
+        self._request("proposal_tracking", params={"select": "proposal_id", "limit": "1"})
 
     @staticmethod
     def _iso_date(value) -> str | None:
@@ -108,12 +109,15 @@ class ProposalTrackingStore(ContactStore):
 
     @classmethod
     def _screen_entry(cls, row: dict) -> dict:
-        contacts = cls._contact_values(row)
+        proposal = row.get("proposal") or {}
+        contacts = cls._contact_values(proposal)
         return {
-            "row_number": row["id"],
-            "customer": str(row.get("display_name") or "").strip(),
-            "customer_name": str(row.get("customer_name") or "").strip(),
-            "project_street_address": str(row.get("project_street_address") or "").strip(),
+            "row_number": row["proposal_id"],
+            "customer": str(proposal.get("display_name") or "").strip(),
+            "customer_name": str(proposal.get("customer_name") or "").strip(),
+            "project_street_address": str(
+                proposal.get("project_street_address") or ""
+            ).strip(),
             "contact": ", ".join(item["name"] for item in contacts if item["name"]),
             "email_address": "; ".join(item["email"] for item in contacts if item["email"]),
             "lead_source": str(row.get("lead_source") or "").strip(),
@@ -128,13 +132,20 @@ class ProposalTrackingStore(ContactStore):
         }
 
     def list_proposals(self) -> list[dict]:
-        return self._request(
-            "proposal",
+        rows = self._request(
+            "proposal_tracking",
             params={
                 "select": self.PROPOSAL_SELECT,
-                "order": "display_name.asc,proposal_sent_date.asc.nullsfirst,created_at.asc",
                 "limit": "5000",
             },
+        )
+        return sorted(
+            rows,
+            key=lambda row: (
+                str((row.get("proposal") or {}).get("display_name") or "").casefold(),
+                str(row.get("proposal_sent_date") or ""),
+                str(row.get("created_at") or ""),
+            ),
         )
 
     def list_missing_entries(self) -> list[dict]:
@@ -152,13 +163,13 @@ class ProposalTrackingStore(ContactStore):
 
     def list_weekly_follow_ups(self, cutoff_date: datetime.date) -> list[dict]:
         rows = self._request(
-            "proposal",
+            "proposal_tracking",
             params={
                 "select": self.PROPOSAL_SELECT,
                 "proposal_sent_date": f"lte.{cutoff_date.isoformat()}",
                 "follow_up_date": "is.null",
                 "status": "eq.sent",
-                "order": "submitted_by.asc,proposal_sent_date.asc,display_name.asc",
+                "order": "submitted_by.asc,proposal_sent_date.asc",
                 "limit": "5000",
             },
         )
@@ -183,9 +194,9 @@ class ProposalTrackingStore(ContactStore):
                 if not proposal_id:
                     continue
                 self._request(
-                    "proposal",
+                    "proposal_tracking",
                     method="PATCH",
-                    params={"id": f"eq.{proposal_id}"},
+                    params={"proposal_id": f"eq.{proposal_id}"},
                     payload=self._editable_payload(entry),
                 )
             self._link_contacts(
@@ -202,15 +213,15 @@ class ProposalTrackingStore(ContactStore):
             return ""
         if identifier.isdigit():
             rows = self._request(
-                "proposal",
+                "proposal_tracking",
                 params={
-                    "select": "id",
+                    "select": "proposal_id",
                     "source_name": "eq.Proposal Tracking.xlsx",
                     "source_row_number": f"eq.{identifier}",
                     "limit": "1",
                 },
             )
-            return rows[0]["id"] if rows else ""
+            return rows[0]["proposal_id"] if rows else ""
         return identifier
 
     def _create_proposal(self, entry: dict) -> str:
@@ -226,23 +237,29 @@ class ProposalTrackingStore(ContactStore):
                 customer_name = combined
         if not customer_name:
             raise ProposalTrackingStoreError("Customer name is required.")
-        payload = {
+        proposal_payload = {
             "customer_name": customer_name,
             "project_street_address": project_street_address or None,
             "proposal_folder_name": (
                 f"{customer_name} - {project_street_address}"
                 if project_street_address else customer_name
             ),
+        }
+        rows = self._request(
+            "proposal", method="POST", payload=proposal_payload, return_rows=True
+        )
+        proposal_id = rows[0]["id"]
+        tracking_payload = {
+            "proposal_id": proposal_id,
             "source_name": "PCS application",
             **self._editable_payload(entry, infer_status=True),
         }
-        rows = self._request(
-            "proposal",
+        self._request(
+            "proposal_tracking",
             method="POST",
-            payload=payload,
-            return_rows=True,
+            payload=tracking_payload,
         )
-        return rows[0]["id"]
+        return proposal_id
 
     def _editable_payload(self, entry: dict, *, infer_status: bool = False) -> dict:
         proposal_date = self._iso_date(entry.get("proposal_date"))
@@ -362,9 +379,9 @@ class ProposalTrackingStore(ContactStore):
         if not ids:
             return 0
         rows = self._request(
-            "proposal",
+            "proposal_tracking",
             method="PATCH",
-            params={"id": f"in.({','.join(ids)})"},
+            params={"proposal_id": f"in.({','.join(ids)})"},
             payload={"follow_up_date": follow_up_date.isoformat(), "status": "sent"},
             return_rows=True,
         )
@@ -390,7 +407,7 @@ class ProposalTrackingStore(ContactStore):
             params={
                 "select": "id",
                 "proposal_folder_name": f"eq.{folder_name}",
-                "order": "proposal_sent_date.desc.nullslast,updated_at.desc",
+                "order": "updated_at.desc",
                 "limit": "1",
             },
         )
@@ -400,35 +417,66 @@ class ProposalTrackingStore(ContactStore):
                 params={
                     "select": "id",
                     "display_name": f"eq.{folder_name}",
-                    "order": "proposal_sent_date.desc.nullslast,updated_at.desc",
+                    "order": "updated_at.desc",
                     "limit": "1",
                 },
             )
-        payload = {
+        proposal_payload = {
             "customer_name": " ".join(str(customer_name or "").split()),
             "project_street_address": " ".join(str(street_address or "").split()) or None,
             "project_city": " ".join(str(city or "").split()) or None,
             "project_state": str(state or "").strip().upper() or None,
             "project_zip_code": str(zip_code or "").strip() or None,
+            "proposal_folder_name": folder_name or None,
+        }
+        tracking_payload = {
             "lead_source": str(lead_value or "").strip() or None,
             "submitted_by": str(submitted_by or "").strip() or None,
             "estimated_by": str(estimated_by or "").strip() or None,
-            "proposal_folder_name": folder_name or None,
         }
         if not rows:
-            payload.update({
+            created = self._request(
+                "proposal", method="POST", payload=proposal_payload, return_rows=True
+            )
+            proposal_id = created[0]["id"]
+            tracking_payload.update({
+                "proposal_id": proposal_id,
                 "estimate_completed_date": self._iso_date(created_date),
                 "status": "draft",
                 "source_name": "PCS application",
             })
-            created = self._request(
-                "proposal", method="POST", payload=payload, return_rows=True
+            self._request(
+                "proposal_tracking", method="POST", payload=tracking_payload
             )
-            return created[0]["id"]
+            return proposal_id
         proposal_id = rows[0]["id"]
         self._request(
-            "proposal", method="PATCH", params={"id": f"eq.{proposal_id}"}, payload=payload
+            "proposal",
+            method="PATCH",
+            params={"id": f"eq.{proposal_id}"},
+            payload=proposal_payload,
         )
+        tracking_rows = self._request(
+            "proposal_tracking",
+            params={"select": "proposal_id", "proposal_id": f"eq.{proposal_id}", "limit": "1"},
+        )
+        if tracking_rows:
+            self._request(
+                "proposal_tracking",
+                method="PATCH",
+                params={"proposal_id": f"eq.{proposal_id}"},
+                payload=tracking_payload,
+            )
+        else:
+            tracking_payload.update({
+                "proposal_id": proposal_id,
+                "estimate_completed_date": self._iso_date(created_date),
+                "status": "draft",
+                "source_name": "PCS application",
+            })
+            self._request(
+                "proposal_tracking", method="POST", payload=tracking_payload
+            )
         return proposal_id
 
 

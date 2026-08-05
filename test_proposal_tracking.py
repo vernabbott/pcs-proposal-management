@@ -100,10 +100,7 @@ class ProposalTrackingStoreTests(unittest.TestCase):
     @staticmethod
     def proposal_row(**updates):
         row = {
-            "id": PROPOSAL_ID,
-            "customer_name": "Example Roofing",
-            "project_street_address": "123 Main St",
-            "display_name": "Example Roofing - 123 Main St",
+            "proposal_id": PROPOSAL_ID,
             "lead_source": "Referral",
             "submitted_by": "David",
             "estimated_by": "Vern",
@@ -111,15 +108,24 @@ class ProposalTrackingStoreTests(unittest.TestCase):
             "proposal_sent_date": "2026-07-15",
             "follow_up_date": None,
             "response_notes": None,
-            "proposal_contact": [{
-                "is_primary": True,
-                "organization_contact": {
-                    "id": RELATIONSHIP_ID,
-                    "business_email": "casey@example.com",
-                    "is_current": True,
-                    "contact": {"id": "contact-id", "full_name": "Casey Smith"},
-                },
-            }],
+            "proposal": {
+                "id": PROPOSAL_ID,
+                "customer_name": "Example Roofing",
+                "project_street_address": "123 Main St",
+                "display_name": "Example Roofing - 123 Main St",
+                "proposal_contact": [{
+                    "is_primary": True,
+                    "organization_contact": {
+                        "id": RELATIONSHIP_ID,
+                        "business_email": "casey@example.com",
+                        "is_current": True,
+                        "contact": {
+                            "id": "contact-id",
+                            "full_name": "Casey Smith",
+                        },
+                    },
+                }],
+            },
         }
         row.update(updates)
         return row
@@ -146,14 +152,17 @@ class ProposalTrackingStoreTests(unittest.TestCase):
         with patch.object(
             self.store,
             "_request",
-            return_value=[{"id": PROPOSAL_ID}],
+            return_value=[{"proposal_id": PROPOSAL_ID}],
         ) as request:
             resolved = self.store._resolve_proposal_id("42")
         self.assertEqual(resolved, PROPOSAL_ID)
         self.assertEqual(request.call_args.kwargs["params"]["source_row_number"], "eq.42")
 
     def test_mark_followups_updates_resolved_ids(self):
-        responses = [[{"id": PROPOSAL_ID}], [{"id": PROPOSAL_ID}]]
+        responses = [
+            [{"proposal_id": PROPOSAL_ID}],
+            [{"proposal_id": PROPOSAL_ID}],
+        ]
         with patch.object(self.store, "_request", side_effect=responses) as request:
             count = self.store.mark_follow_ups(["42"], datetime.date(2026, 8, 3))
         self.assertEqual(count, 1)
@@ -180,7 +189,7 @@ class ProposalTrackingStoreTests(unittest.TestCase):
         )
 
     def test_new_proposal_save_sets_estimate_date_without_setting_sent_date(self):
-        responses = [[], [], [{"id": PROPOSAL_ID}]]
+        responses = [[], [], [{"id": PROPOSAL_ID}], []]
         with patch.object(self.store, "_request", side_effect=responses) as request:
             proposal_id = self.store.upsert_from_proposal_save(
                 created_date="08/03/2026",
@@ -194,10 +203,15 @@ class ProposalTrackingStoreTests(unittest.TestCase):
                 lead_value="Referral",
             )
         self.assertEqual(proposal_id, PROPOSAL_ID)
-        payload = request.call_args.kwargs["payload"]
-        self.assertEqual(payload["estimate_completed_date"], "2026-08-03")
-        self.assertNotIn("proposal_sent_date", payload)
-        self.assertEqual(payload["project_state"], "CO")
+        proposal_payload = request.call_args_list[2].kwargs["payload"]
+        tracking_payload = request.call_args_list[3].kwargs["payload"]
+        self.assertEqual(proposal_payload["project_state"], "CO")
+        self.assertNotIn("estimate_completed_date", proposal_payload)
+        self.assertEqual(tracking_payload["proposal_id"], PROPOSAL_ID)
+        self.assertEqual(
+            tracking_payload["estimate_completed_date"], "2026-08-03"
+        )
+        self.assertNotIn("proposal_sent_date", tracking_payload)
 
 
 if __name__ == "__main__":

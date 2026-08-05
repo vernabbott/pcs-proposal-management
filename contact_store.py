@@ -29,7 +29,8 @@ class ContactConfigurationError(ContactStoreError):
 
 class ContactStore:
     TENANT_TABLES = frozenset({
-        "contact", "organization", "organization_contact", "proposal", "proposal_contact",
+        "contact", "organization", "organization_contact", "proposal",
+        "proposal_tracking", "proposal_contact",
         "property_management_companies", "property_management_contacts",
         "roof_intelligence_jobs", "roof_intelligence_job_items", "roof_intelligence_reports",
         "roof_intelligence_report_revisions", "roof_intelligence_report_assets",
