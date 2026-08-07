@@ -1,8 +1,12 @@
 import datetime
 import os
+import tempfile
 import unittest
 from unittest.mock import patch
 
+from openpyxl import Workbook, load_workbook
+
+import pcs_proposal_web as web
 from proposal_tracking_cutover_flags import (
     MASTER_FLAG,
     READ_FLAG,
@@ -15,6 +19,20 @@ from proposal_tracking_store import ProposalTrackingStore
 
 PROPOSAL_ID = "11111111-1111-4111-8111-111111111111"
 RELATIONSHIP_ID = "22222222-2222-4222-8222-222222222222"
+
+
+CURRENT_TRACKER_HEADERS = [
+    "Customer",
+    "Contact",
+    "Email Address",
+    "Lead Generated",
+    "Submitted By",
+    "Estimate Dt",
+    "Proposal Dt",
+    "Follow-Up",
+    "Estimated By",
+    "Response",
+]
 
 
 class ProposalTrackingCutoverFlagTests(unittest.TestCase):
@@ -187,6 +205,156 @@ class ProposalTrackingStoreTests(unittest.TestCase):
         self.assertEqual(payload["estimate_completed_date"], "2026-08-03")
         self.assertNotIn("proposal_sent_date", payload)
         self.assertEqual(payload["project_state"], "CO")
+
+
+class ProposalTrackingSpreadsheetColumnTests(unittest.TestCase):
+    def setUp(self):
+        self.temporary_directory = tempfile.TemporaryDirectory()
+        self.tracker_path = os.path.join(
+            self.temporary_directory.name, "Proposal Tracking.xlsx"
+        )
+
+    def tearDown(self):
+        self.temporary_directory.cleanup()
+
+    def write_tracker(self, rows):
+        workbook = Workbook()
+        worksheet = workbook.active
+        worksheet.title = "Tracking"
+        worksheet.append(CURRENT_TRACKER_HEADERS)
+        for row in rows:
+            worksheet.append(row)
+        workbook.save(self.tracker_path)
+        workbook.close()
+
+    def read_row(self, row_number=2):
+        workbook = load_workbook(self.tracker_path, data_only=True)
+        try:
+            worksheet = workbook.active
+            return [
+                worksheet.cell(row=row_number, column=column).value
+                for column in range(1, 11)
+            ]
+        finally:
+            workbook.close()
+
+    def test_tracker_screen_reads_reordered_columns_by_header(self):
+        self.write_tracker([[
+            "Anchor Roofing - 10 Oak Ave",
+            "",
+            "joel.anchorroofing@gmail.com",
+            "Referral",
+            "Mark",
+            datetime.date(2026, 7, 30),
+            "-",
+            "-",
+            "Mark",
+            "Waiting",
+        ]])
+
+        entries, error = web._load_proposal_tracker_missing_entries_spreadsheet(
+            self.tracker_path
+        )
+
+        self.assertIsNone(error)
+        self.assertEqual(len(entries), 1)
+        self.assertEqual(entries[0]["estimated_by"], "Mark")
+        self.assertEqual(entries[0]["estimate_date_input"], "7/30/2026")
+        self.assertEqual(entries[0]["proposal_date_input"], "-")
+        self.assertEqual(entries[0]["follow_up_date_input"], "-")
+
+    def test_tracker_screen_save_writes_reordered_columns_by_header(self):
+        self.write_tracker([[
+            "Example Roofing - 123 Main St",
+            "Casey",
+            "casey@example.com",
+            "Referral",
+            "David",
+            "",
+            "",
+            "",
+            "Vern",
+            "Keep this response",
+        ]])
+
+        count = web._update_proposal_tracker_missing_entries_spreadsheet([{
+            "row_number": "2",
+            "contact": "Casey Smith",
+            "email_address": "casey@example.com",
+            "lead_source": "Website",
+            "submitted_by": "Mark",
+            "estimate_date": "7/30/2026",
+            "proposal_date": "8/1/2026",
+            "follow_up_date": "8/15/2026",
+            "estimated_by": "Mark",
+        }], self.tracker_path)
+
+        self.assertEqual(count, 1)
+        row = self.read_row()
+        self.assertEqual(row[5], "7/30/2026")
+        self.assertEqual(row[6], "8/1/2026")
+        self.assertEqual(row[7], "8/15/2026")
+        self.assertEqual(row[8], "Mark")
+        self.assertEqual(row[9], "Keep this response")
+
+    def test_weekly_follow_up_uses_proposal_and_follow_up_headers(self):
+        self.write_tracker([[
+            "Example Roofing - 123 Main St",
+            "Casey",
+            "casey@example.com",
+            "Referral",
+            "David",
+            datetime.date(2026, 7, 30),
+            datetime.date(2026, 8, 1),
+            "",
+            "Vern",
+            "Keep this response",
+        ]])
+
+        entries, _, error = web._load_weekly_follow_up_entries_spreadsheet(
+            self.tracker_path, datetime.date(2026, 8, 2)
+        )
+        self.assertIsNone(error)
+        self.assertEqual([entry["row_number"] for entry in entries], [2])
+
+        count = web._update_weekly_follow_up_dates_spreadsheet(
+            [2], datetime.date(2026, 8, 3), self.tracker_path
+        )
+        self.assertEqual(count, 1)
+        row = self.read_row()
+        self.assertEqual(row[6], datetime.datetime(2026, 8, 1, 0, 0))
+        self.assertEqual(row[7], datetime.datetime(2026, 8, 3, 0, 0))
+        self.assertEqual(row[8], "Vern")
+        self.assertEqual(row[9], "Keep this response")
+
+    def test_proposal_save_refresh_preserves_dates_and_response_columns(self):
+        self.write_tracker([[
+            "Example Roofing - 123 Main St",
+            "Casey",
+            "casey@example.com",
+            "Referral",
+            "David",
+            "",
+            datetime.date(2026, 8, 1),
+            "",
+            "Mark",
+            "Keep this response",
+        ]])
+
+        updated = web.update_existing_tracker_row(
+            "Example Roofing - 123 Main St",
+            "Website",
+            "David",
+            datetime.date(2026, 7, 30),
+            self.tracker_path,
+        )
+
+        self.assertTrue(updated)
+        row = self.read_row()
+        self.assertEqual(row[5], datetime.datetime(2026, 7, 30, 0, 0))
+        self.assertEqual(row[6], datetime.datetime(2026, 8, 1, 0, 0))
+        self.assertEqual(row[8], "Vern")
+        self.assertEqual(row[9], "Keep this response")
 
 
 if __name__ == "__main__":

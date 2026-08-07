@@ -242,6 +242,91 @@ REPAIR_COSTS_PROPOSAL_LANGUAGE = "*PCS will perform all necessary repairs to bri
 PROPOSAL_TRACKER = "/Users/vernabbott/Library/CloudStorage/OneDrive-ProfessionalCoatingSystems/PCS/1 - Open Proposals/Proposal Tracking.xlsx"
 TRACKER_IO_LOCK = threading.RLock()
 
+_PROPOSAL_TRACKER_CANONICAL_HEADERS = (
+    "Customer",
+    "Contact",
+    "Email Address",
+    "Lead Generated",
+    "Submitted By",
+    "Estimate Dt",
+    "Proposal Dt",
+    "Follow-Up",
+    "Estimated By",
+    "Response",
+)
+_PROPOSAL_TRACKER_DEFAULT_COLUMNS = {
+    # Legacy workbooks used this order. Header names override every fallback.
+    "customer": 1,
+    "contact": 2,
+    "email_address": 3,
+    "lead_source": 4,
+    "submitted_by": 5,
+    "proposal_date": 6,
+    "follow_up_date": 7,
+    "estimated_by": 8,
+    "response": 9,
+    "estimate_date": 10,
+}
+_PROPOSAL_TRACKER_HEADER_ALIASES = {
+    "customer": ("Customer", "Proposal Folder Name", "Proposal Name"),
+    "contact": ("Contact", "Contact Name"),
+    "email_address": ("Email Address", "Email"),
+    "lead_source": ("Lead Generated", "Lead", "Lead Source"),
+    "submitted_by": ("Submitted By", "Submitted"),
+    "estimate_date": ("Estimate Dt", "Estimate Date", "Estimate Completed Date"),
+    "proposal_date": ("Proposal Dt", "Proposal Date", "Proposal Sent Date"),
+    "follow_up_date": ("Follow-Up", "Follow Up", "Follow-Up Date", "Follow Up Date"),
+    "estimated_by": ("Estimated By", "Estimator", "Vern"),
+    "response": ("Response", "Response Notes"),
+}
+
+
+def _normalize_proposal_tracker_header(value):
+    return re.sub(r"[^a-z0-9]+", "", str(value or "").strip().casefold())
+
+
+def _proposal_tracker_column_map_from_headers(headers):
+    indexed_headers = {}
+    for column_number, header in enumerate(headers or (), start=1):
+        normalized = _normalize_proposal_tracker_header(header)
+        if normalized and normalized not in indexed_headers:
+            indexed_headers[normalized] = column_number
+
+    columns = {}
+    for field_name, aliases in _PROPOSAL_TRACKER_HEADER_ALIASES.items():
+        for alias in aliases:
+            column_number = indexed_headers.get(
+                _normalize_proposal_tracker_header(alias)
+            )
+            if column_number is not None:
+                columns[field_name] = column_number
+                break
+        columns.setdefault(
+            field_name, _PROPOSAL_TRACKER_DEFAULT_COLUMNS[field_name]
+        )
+    return columns
+
+
+def _proposal_tracker_column_map(ws):
+    max_column = max(getattr(ws, "max_column", 0) or 0, 10)
+    headers = [
+        ws.cell(row=1, column=column_number).value
+        for column_number in range(1, max_column + 1)
+    ]
+    return _proposal_tracker_column_map_from_headers(headers)
+
+
+def _initialize_proposal_tracker_headers(ws):
+    for column_number, header in enumerate(
+        _PROPOSAL_TRACKER_CANONICAL_HEADERS, start=1
+    ):
+        ws.cell(row=1, column=column_number).value = header
+
+
+def _proposal_tracker_row_value(row, column_number):
+    index = int(column_number) - 1
+    return row[index] if 0 <= index < len(row) else None
+
 
 def _proposal_tracker_previous_path(tracker_path):
     base, ext = os.path.splitext(tracker_path)
@@ -365,12 +450,11 @@ def _append_to_proposal_tracking_xlwings(tracker_path,
             wb = xw_module.Book()
             ws = wb.sheets[0]
             ws.name = "Tracking"
-            # Minimal header row so row 1 is always header (adjust if your template has different headers)
-            ws.range("A1:J1").value = [[
-                "Proposal Folder Name", "", "", "Lead", "Submitted By", "", "", "Vern", "", "Estimate Dt"
-            ]]
-        if not str(ws.range("J1").value or "").strip():
-            ws.range("J1").value = "Estimate Dt"
+            ws.range("A1:J1").value = [list(_PROPOSAL_TRACKER_CANONICAL_HEADERS)]
+        header_values = ws.range("A1:J1").value or []
+        if header_values and isinstance(header_values[0], list):
+            header_values = header_values[0]
+        columns = _proposal_tracker_column_map_from_headers(header_values)
 
         # Calculate insertion point by scanning A2..last
         used = ws.used_range
@@ -383,7 +467,7 @@ def _append_to_proposal_tracking_xlwings(tracker_path,
         insert_at = last_row + 1  # default append
         existing_row = None
         for r in range(first_data_row, last_row + 1):
-            a_val = ws.range((r, 1)).value
+            a_val = ws.range((r, columns["customer"])).value
             a_key = (str(a_val).strip().lower() if a_val is not None else "")
             if a_key == new_key:
                 existing_row = r
@@ -391,23 +475,8 @@ def _append_to_proposal_tracking_xlwings(tracker_path,
             if insert_at == (last_row + 1) and a_key > new_key:
                 insert_at = r
 
-        # Build the A..J values for the new/updated row (shifted left, no total_squares)
-        row_vals = [
-            folder_name,         # A
-            "",                 # B
-            "",                 # C
-            lead_value or "",   # D (was E)
-            submitted_by or "", # E (was F)
-            "",                 # F (was G)
-            "",                 # G (was H)
-            "Vern",             # H (was I)
-            "",                 # I (was J)
-            estimate_completed_date or "", # J
-        ]
-
         if existing_row is not None:
-            # Overwrite existing row values (A..J) in place; formats already set on that row remain
-            ws.range((existing_row, 1)).value = [row_vals]
+            target_row = existing_row
         else:
             # Insert a new row at insert_at. Excel shifts formats down automatically.
             ws.api.Rows(insert_at).Insert()
@@ -418,8 +487,17 @@ def _append_to_proposal_tracking_xlwings(tracker_path,
                     ws.range(f"{insert_at}:{insert_at}").api.PasteSpecial(Paste=-4122)  # xlPasteFormats
             except Exception:
                 pass
-            # Write values into A..J for the inserted row
-            ws.range((insert_at, 1)).value = [row_vals]
+            target_row = insert_at
+
+        values = {
+            "customer": folder_name or "",
+            "lead_source": lead_value or "",
+            "submitted_by": submitted_by or "",
+            "estimated_by": "Vern",
+            "estimate_date": estimate_completed_date or "",
+        }
+        for field_name, value in values.items():
+            ws.range((target_row, columns[field_name])).value = value
 
         temp_path = _proposal_tracker_temp_path(tracker_path)
         wb.save(temp_path)
@@ -466,9 +544,8 @@ def _append_to_proposal_tracking_openpyxl_simple(
             raise RuntimeError("Proposal tracker workbook does not have an active worksheet")
         if not source_path:
             ws.title = "Tracking"
-            ws.append(["Proposal Folder Name", "", "", "Lead", "Submitted By", "", "", "Vern", "", "Estimate Dt"])
-        elif not str(ws.cell(row=1, column=10).value or "").strip():
-            ws.cell(row=1, column=10).value = "Estimate Dt"
+            _initialize_proposal_tracker_headers(ws)
+        columns = _proposal_tracker_column_map(ws)
 
         first_data_row = 2
         last_row = max(ws.max_row or 1, 1)
@@ -477,7 +554,9 @@ def _append_to_proposal_tracking_openpyxl_simple(
         insert_at = last_row + 1
 
         for row_idx in range(first_data_row, last_row + 1):
-            row_key = str(ws.cell(row=row_idx, column=1).value or "").strip().lower()
+            row_key = str(
+                ws.cell(row=row_idx, column=columns["customer"]).value or ""
+            ).strip().lower()
             if row_key == new_key:
                 existing_row = row_idx
                 break
@@ -488,20 +567,15 @@ def _append_to_proposal_tracking_openpyxl_simple(
         if existing_row is None and insert_at <= last_row:
             ws.insert_rows(insert_at)
 
-        row_values = [
-            folder_name or "",
-            "",
-            "",
-            lead_value or "",
-            submitted_by or "",
-            "",
-            "",
-            "Vern",
-            "",
-            estimate_completed_date or "",
-        ]
-        for col_idx, value in enumerate(row_values, start=1):
-            ws.cell(row=target_row, column=col_idx).value = value
+        values = {
+            "customer": folder_name or "",
+            "lead_source": lead_value or "",
+            "submitted_by": submitted_by or "",
+            "estimated_by": "Vern",
+            "estimate_date": estimate_completed_date or "",
+        }
+        for field_name, value in values.items():
+            ws.cell(row=target_row, column=columns[field_name]).value = value
 
         temp_path = _proposal_tracker_temp_path(tracker_path)
         wb.save(temp_path)
@@ -606,9 +680,7 @@ def _append_to_proposal_tracking_unlocked(created_date,
             raise RuntimeError("Proposal tracker workbook does not have an active worksheet")
         new_ws.title = "Tracking"
         if prev_ws is None:
-            new_ws.append([
-                "Proposal Folder Name", "", "", "Lead", "Submitted By", "", "", "Vern", "", "Estimate Dt"
-            ])
+            _initialize_proposal_tracker_headers(new_ws)
         # Preserve column widths, row heights, and freeze panes from previous sheet (if any)
         prev_freeze = None
         if prev_ws is not None:
@@ -713,23 +785,14 @@ def _append_to_proposal_tracking_unlocked(created_date,
             for r in range(1, max_row_prev + 1):
                 for c in range(1, max_col + 1):
                     _copy_cell(prev_ws.cell(row=r, column=c), new_ws.cell(row=r, column=c))
-        if not str(new_ws.cell(row=1, column=10).value or "").strip():
-            new_ws.cell(row=1, column=10).value = "Estimate Dt"
-
-        # Compute the new row values for A..J (leave other columns untouched)
-        vern_flag = "Vern"  # Always populate Column I with the literal string "Vern"
-        row_vals = [
-            folder_name,    # A
-            "",            # B
-            "",            # C
-            lead_value,     # D (was E)
-            submitted_by,   # E (was F)
-            "",            # F (was G)
-            "",            # G (was H)
-            vern_flag,      # H (was I)
-            "",            # I (was J)
-            created_date or "", # J (estimate completed date)
-        ]
+        columns = _proposal_tracker_column_map(new_ws)
+        row_values = {
+            "customer": folder_name or "",
+            "lead_source": lead_value or "",
+            "submitted_by": submitted_by or "",
+            "estimated_by": "Vern",
+            "estimate_date": created_date or "",
+        }
 
         # Determine insertion point by Column A (case-insensitive), preserving header at row 1
         first_data_row = 2
@@ -740,7 +803,7 @@ def _append_to_proposal_tracking_unlocked(created_date,
         # Scan existing data rows only from the *new* worksheet copy
         if max_row_prev >= first_data_row:
             for r in range(first_data_row, max_row_prev + 1):
-                a_val = new_ws.cell(row=r, column=1).value
+                a_val = new_ws.cell(row=r, column=columns["customer"]).value
                 a_key = (str(a_val).strip().lower() if a_val is not None else "")
                 if a_key == new_key:
                     existing_row = r
@@ -787,9 +850,9 @@ def _append_to_proposal_tracking_unlocked(created_date,
             insert_target = insert_at
 
         for c in range(1, 11):
-            val = row_vals[c-1] if c-1 < len(row_vals) else None
             cell = new_ws.cell(row=insert_target, column=c)
-            cell.value = val
+            if existing_row is None:
+                cell.value = None
             # Apply styles from template row to preserve fonts/sizes/bold/color
             try:
                 tmpl = new_ws.cell(row=template_row, column=c)
@@ -809,6 +872,11 @@ def _append_to_proposal_tracking_unlocked(created_date,
                     cell.number_format = tmpl.number_format
                 except Exception:
                     pass
+
+        for field_name, value in row_values.items():
+            new_ws.cell(
+                row=insert_target, column=columns[field_name]
+            ).value = value
 
         # Save the new tracker atomically so the live file is never half-written.
         temp_path = _proposal_tracker_temp_path(tracker_path)
@@ -5300,26 +5368,34 @@ def _find_tracker_insert_row(ws, customer_name):
     new_key = str(customer_name or "").strip().casefold()
     first_data_row = 2
     last_row = max(ws.max_row, first_data_row - 1)
+    customer_column = _proposal_tracker_column_map(ws)["customer"]
     for row_number in range(first_data_row, last_row + 1):
-        existing_key = str(ws.cell(row=row_number, column=1).value or "").strip().casefold()
+        existing_key = str(
+            ws.cell(row=row_number, column=customer_column).value or ""
+        ).strip().casefold()
         if existing_key and existing_key > new_key:
             return row_number
     return last_row + 1
 
 
 def _write_tracker_entry_to_row(ws, row_number, entry):
-    ws.cell(row=row_number, column=1).value = str(entry.get("customer") or "").strip()
-    ws.cell(row=row_number, column=2).value = str(entry.get("contact") or "").strip()
-    ws.cell(row=row_number, column=3).value = str(entry.get("email_address") or "").strip()
-    ws.cell(row=row_number, column=4).value = str(entry.get("lead_source") or "").strip()
-    ws.cell(row=row_number, column=5).value = str(entry.get("submitted_by") or "").strip()
-    ws.cell(row=row_number, column=6).number_format = "General"
-    ws.cell(row=row_number, column=6).value = str(entry.get("proposal_date") or "").strip()
-    ws.cell(row=row_number, column=7).number_format = "General"
-    ws.cell(row=row_number, column=7).value = str(entry.get("follow_up_date") or "").strip()
-    ws.cell(row=row_number, column=8).value = str(entry.get("estimated_by") or "").strip()
-    ws.cell(row=row_number, column=10).number_format = "General"
-    ws.cell(row=row_number, column=10).value = str(entry.get("estimate_date") or "").strip()
+    columns = _proposal_tracker_column_map(ws)
+    values = {
+        "customer": entry.get("customer"),
+        "contact": entry.get("contact"),
+        "email_address": entry.get("email_address"),
+        "lead_source": entry.get("lead_source"),
+        "submitted_by": entry.get("submitted_by"),
+        "estimate_date": entry.get("estimate_date"),
+        "proposal_date": entry.get("proposal_date"),
+        "follow_up_date": entry.get("follow_up_date"),
+        "estimated_by": entry.get("estimated_by"),
+    }
+    for field_name, value in values.items():
+        cell = ws.cell(row=row_number, column=columns[field_name])
+        if field_name.endswith("_date"):
+            cell.number_format = "General"
+        cell.value = str(value or "").strip()
 
 
 def _load_proposal_tracker_missing_entries_spreadsheet(tracker_path=PROPOSAL_TRACKER):
@@ -5333,16 +5409,17 @@ def _load_proposal_tracker_missing_entries_spreadsheet(tracker_path=PROPOSAL_TRA
             wb = load_workbook(source_path, data_only=True, read_only=True)
             ws = wb.active
             try:
+                columns = _proposal_tracker_column_map(ws)
                 for row_idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
-                    customer = row[0] if len(row) > 0 else ""
-                    contact = row[1] if len(row) > 1 else ""
-                    email_address = row[2] if len(row) > 2 else ""
-                    lead = row[3] if len(row) > 3 else ""
-                    submitted_by = row[4] if len(row) > 4 else ""
-                    proposal_dt_raw = row[5] if len(row) > 5 else None
-                    follow_up_raw = row[6] if len(row) > 6 else None
-                    estimated_by = row[7] if len(row) > 7 else ""
-                    estimate_dt_raw = row[9] if len(row) > 9 else None
+                    customer = _proposal_tracker_row_value(row, columns["customer"])
+                    contact = _proposal_tracker_row_value(row, columns["contact"])
+                    email_address = _proposal_tracker_row_value(row, columns["email_address"])
+                    lead = _proposal_tracker_row_value(row, columns["lead_source"])
+                    submitted_by = _proposal_tracker_row_value(row, columns["submitted_by"])
+                    estimate_dt_raw = _proposal_tracker_row_value(row, columns["estimate_date"])
+                    proposal_dt_raw = _proposal_tracker_row_value(row, columns["proposal_date"])
+                    follow_up_raw = _proposal_tracker_row_value(row, columns["follow_up_date"])
+                    estimated_by = _proposal_tracker_row_value(row, columns["estimated_by"])
 
                     if not any([customer, contact, email_address, lead, submitted_by, proposal_dt_raw, follow_up_raw]):
                         continue
@@ -5399,6 +5476,7 @@ def _update_proposal_tracker_missing_entries_spreadsheet(entries, tracker_path=P
         with TRACKER_IO_LOCK:
             wb = load_workbook(source_path)
             ws = wb.active
+            columns = _proposal_tracker_column_map(ws)
             updated_count = 0
             existing_entries = [entry for entry in entries if not entry.get("is_new")]
             new_entries = [
@@ -5411,17 +5489,21 @@ def _update_proposal_tracker_missing_entries_spreadsheet(entries, tracker_path=P
                 if row_number < 2 or row_number > ws.max_row:
                     continue
 
-                ws.cell(row=row_number, column=2).value = str(entry.get("contact") or "").strip()
-                ws.cell(row=row_number, column=3).value = str(entry.get("email_address") or "").strip()
-                ws.cell(row=row_number, column=4).value = str(entry.get("lead_source") or "").strip()
-                ws.cell(row=row_number, column=5).value = str(entry.get("submitted_by") or "").strip()
-                ws.cell(row=row_number, column=6).number_format = "General"
-                ws.cell(row=row_number, column=6).value = str(entry.get("proposal_date") or "").strip()
-                ws.cell(row=row_number, column=7).number_format = "General"
-                ws.cell(row=row_number, column=7).value = str(entry.get("follow_up_date") or "").strip()
-                ws.cell(row=row_number, column=8).value = str(entry.get("estimated_by") or "").strip()
-                ws.cell(row=row_number, column=10).number_format = "General"
-                ws.cell(row=row_number, column=10).value = str(entry.get("estimate_date") or "").strip()
+                values = {
+                    "contact": entry.get("contact"),
+                    "email_address": entry.get("email_address"),
+                    "lead_source": entry.get("lead_source"),
+                    "submitted_by": entry.get("submitted_by"),
+                    "estimate_date": entry.get("estimate_date"),
+                    "proposal_date": entry.get("proposal_date"),
+                    "follow_up_date": entry.get("follow_up_date"),
+                    "estimated_by": entry.get("estimated_by"),
+                }
+                for field_name, value in values.items():
+                    cell = ws.cell(row=row_number, column=columns[field_name])
+                    if field_name.endswith("_date"):
+                        cell.number_format = "General"
+                    cell.value = str(value or "").strip()
                 updated_count += 1
 
             for entry in sorted(new_entries, key=lambda item: str(item.get("customer") or "").casefold()):
@@ -5489,13 +5571,14 @@ def _load_weekly_follow_up_entries_spreadsheet(tracker_path=PROPOSAL_TRACKER, cu
             wb = load_workbook(tracker_path, data_only=True, read_only=True)
             ws = wb.active
             try:
+                columns = _proposal_tracker_column_map(ws)
                 for row_idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
-                    customer = row[0] if len(row) > 0 else ""
-                    contact = row[1] if len(row) > 1 else ""
-                    email_address = row[2] if len(row) > 2 else ""
-                    submitted_by = row[4] if len(row) > 4 else ""
-                    proposal_dt_raw = row[5] if len(row) > 5 else None
-                    follow_up_raw = row[6] if len(row) > 6 else None
+                    customer = _proposal_tracker_row_value(row, columns["customer"])
+                    contact = _proposal_tracker_row_value(row, columns["contact"])
+                    email_address = _proposal_tracker_row_value(row, columns["email_address"])
+                    submitted_by = _proposal_tracker_row_value(row, columns["submitted_by"])
+                    proposal_dt_raw = _proposal_tracker_row_value(row, columns["proposal_date"])
+                    follow_up_raw = _proposal_tracker_row_value(row, columns["follow_up_date"])
                     proposal_dt = _coerce_tracker_date(proposal_dt_raw)
 
                     if not any([customer, contact, email_address, submitted_by, proposal_dt_raw]):
@@ -5560,11 +5643,12 @@ def _update_weekly_follow_up_dates_spreadsheet(row_numbers, follow_up_date=None,
         with TRACKER_IO_LOCK:
             wb = load_workbook(source_path)
             ws = wb.active
+            follow_up_column = _proposal_tracker_column_map(ws)["follow_up_date"]
             updated_count = 0
             for row_number in sorted(row_numbers):
                 if row_number > ws.max_row:
                     continue
-                cell = ws.cell(row=row_number, column=7)
+                cell = ws.cell(row=row_number, column=follow_up_column)
                 cell.value = follow_up_date
                 cell.number_format = "m/d/yyyy"
                 updated_count += 1
@@ -7158,25 +7242,27 @@ def update_existing_tracker_row(
         try:
             wb = load_workbook(source_path)
             ws = wb.active
+            columns = _proposal_tracker_column_map(ws)
             row_key = str(folder_name or "").strip().lower()
             if not row_key:
                 return False
 
             for row in range(2, ws.max_row + 1):
-                existing_key = str(ws.cell(row=row, column=1).value or "").strip().lower()
+                existing_key = str(
+                    ws.cell(row=row, column=columns["customer"]).value or ""
+                ).strip().lower()
                 if existing_key != row_key:
                     continue
-                ws.cell(row=row, column=1).value = folder_name
-                ws.cell(row=row, column=4).value = lead_value or ""
-                ws.cell(row=row, column=5).value = submitted_by or ""
-                ws.cell(row=row, column=8).value = "Vern"
-                if not str(ws.cell(row=row, column=10).value or "").strip():
-                    ws.cell(row=row, column=10).value = (
+                ws.cell(row=row, column=columns["customer"]).value = folder_name
+                ws.cell(row=row, column=columns["lead_source"]).value = lead_value or ""
+                ws.cell(row=row, column=columns["submitted_by"]).value = submitted_by or ""
+                ws.cell(row=row, column=columns["estimated_by"]).value = "Vern"
+                estimate_cell = ws.cell(row=row, column=columns["estimate_date"])
+                if not str(estimate_cell.value or "").strip():
+                    estimate_cell.value = (
                         estimate_completed_date or datetime.date.today()
                     )
-                    ws.cell(row=row, column=10).number_format = "m/d/yyyy"
-                if not str(ws.cell(row=1, column=10).value or "").strip():
-                    ws.cell(row=1, column=10).value = "Estimate Dt"
+                    estimate_cell.number_format = "m/d/yyyy"
                 temp_path = _proposal_tracker_temp_path(tracker_path)
                 wb.save(temp_path)
                 wb.close()
