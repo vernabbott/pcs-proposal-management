@@ -12,9 +12,16 @@ from tenant_context import current_tenant_context
 
 
 SHARED_UNKNOWN_EMAIL_DOMAINS = frozenset({
+    "aol.com",
     "comcast.net",
+    "fastmail.com",
     "gmail.com",
+    "hotmail.com",
+    "icloud.com",
+    "mail.com",
+    "me.com",
     "m.knck.io",
+    "msn.com",
     "yahoo.com",
 })
 
@@ -107,7 +114,7 @@ class ContactStore:
             "organization",
             params={
                 "select": (
-                    "id,name,organization_type,main_office_address_line_1,"
+                    "id,name,organization_type,email_domain,main_office_address_line_1,"
                     "main_office_address_line_2,main_office_city,main_office_state,"
                     "main_office_zip_code"
                 ),
@@ -357,6 +364,77 @@ class ContactStore:
             organization = find_domain_organization()
             if organization:
                 return organization["id"]
+            raise
+
+    def find_organization_for_email(self, email: str) -> dict | None:
+        """Return one unambiguous organization for an email without creating it."""
+        domain = self._email_domain(email)
+        if not domain:
+            raise ContactStoreError("Enter a valid business email address.")
+        if domain in SHARED_UNKNOWN_EMAIL_DOMAINS:
+            return None
+        rows = self._request(
+            "organization",
+            params={
+                "select": "id,name,normalized_name,email_domain,organization_type",
+                "is_active": "eq.true",
+                "or": f"(normalized_name.eq.{domain},email_domain.ilike.{domain})",
+                "limit": "20",
+            },
+        )
+        domain_matches = [
+            row for row in rows
+            if str(row.get("email_domain") or "").strip().casefold() == domain
+        ]
+        if len(domain_matches) == 1:
+            return domain_matches[0]
+        name_matches = [
+            row for row in rows
+            if str(row.get("normalized_name") or "").strip().casefold() == domain
+        ]
+        return name_matches[0] if len(name_matches) == 1 else None
+
+    def resolve_named_organization_for_email(self, name: str, email: str) -> str:
+        """Reuse or create a user-named organization for a new contact."""
+        clean_name = " ".join(str(name or "").split())
+        if not clean_name:
+            raise ContactStoreError("Enter the organization name.")
+        domain = self._email_domain(email)
+        if not domain:
+            raise ContactStoreError("Enter a valid business email address.")
+        existing = self.find_organization_by_name(clean_name)
+        if existing:
+            if (
+                domain not in SHARED_UNKNOWN_EMAIL_DOMAINS
+                and not str(existing.get("email_domain") or "").strip()
+            ):
+                self._request(
+                    "organization",
+                    method="PATCH",
+                    params={"id": f"eq.{existing['id']}"},
+                    payload={"email_domain": domain},
+                )
+            return existing["id"]
+        payload = {
+            "name": clean_name,
+            "organization_type": "Other",
+            "source_name": "Proposal Management contact",
+        }
+        if domain not in SHARED_UNKNOWN_EMAIL_DOMAINS:
+            payload["email_domain"] = domain
+        try:
+            rows = self._request(
+                "organization",
+                method="POST",
+                payload=payload,
+                return_rows=True,
+            )
+            return rows[0]["id"]
+        except ContactStoreError:
+            # A simultaneous request may have created the same organization.
+            existing = self.find_organization_by_name(clean_name)
+            if existing:
+                return existing["id"]
             raise
 
     def _resolve_shared_unknown_organization(self) -> str:

@@ -15,4 +15,4 @@ where status in ('follow_up', 'won', 'lost', 'withdrawn', 'archived');
 
 alter table public.proposal_tracking
   add constraint proposal_tracking_status_check
-  check (status in ('draft', 'sent', 'under_contract', 'dead'));
+  check (status in ('draft', 'sent', 'under_contract', 'finished', 'dead'));

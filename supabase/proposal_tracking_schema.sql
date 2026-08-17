@@ -24,6 +24,9 @@ create table if not exists public.proposal (
     end
   ) stored,
   proposal_folder_name text,
+  draft_detail jsonb not null default '{}'::jsonb check (
+    jsonb_typeof(draft_detail) = 'object'
+  ),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -32,6 +35,8 @@ comment on table public.proposal is
   'Proposal customer and project identity. Lifecycle tracking is stored one-to-one in proposal_tracking.';
 comment on column public.proposal.display_name is
   'Customer and project street address formatted for PCS screens as Customer - Street Address.';
+comment on column public.proposal.draft_detail is
+  'Temporary proposal-detail form snapshot used before proposal files are created; tenant access is inherited from proposal RLS.';
 
 create table if not exists public.proposal_tracking (
   proposal_id uuid primary key references public.proposal(id) on delete cascade,
@@ -43,7 +48,7 @@ create table if not exists public.proposal_tracking (
   follow_up_date date,
   response_notes text,
   status text not null default 'draft' check (
-    status in ('draft', 'sent', 'under_contract', 'dead')
+    status in ('draft', 'sent', 'under_contract', 'finished', 'dead')
   ),
   source_name text,
   source_row_number integer check (

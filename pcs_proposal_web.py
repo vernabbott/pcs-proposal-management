@@ -54,6 +54,7 @@ from pcs_local_settings import (
 )
 from contact_store import ContactConfigurationError, ContactStore, ContactStoreError, get_contact_store
 from proposal_tracking_store import (
+    ProposalContactOrganizationRequired,
     ProposalTrackingStoreError,
     get_proposal_tracking_store,
 )
@@ -1859,17 +1860,68 @@ def desktop_session_closed():
 _DESKTOP_LIFECYCLE_SCRIPT = """
 <script id="pcs-desktop-lifecycle">
 (() => {
+    let heartbeatTimer = null;
+    let internalNavigationPending = false;
+    let internalNavigationResetTimer = null;
+
     const heartbeat = () => fetch('/api/desktop-session/heartbeat', {
         method: 'POST',
         cache: 'no-store',
         keepalive: true,
     }).catch(() => {});
-    heartbeat();
-    const heartbeatTimer = window.setInterval(heartbeat, 2000);
-    window.addEventListener('pagehide', () => {
-        window.clearInterval(heartbeatTimer);
-        navigator.sendBeacon('/api/desktop-session/closed', '');
+
+    const startHeartbeat = () => {
+        if (heartbeatTimer !== null) window.clearInterval(heartbeatTimer);
+        heartbeat();
+        heartbeatTimer = window.setInterval(heartbeat, 2000);
+    };
+
+    const markInternalNavigation = () => {
+        internalNavigationPending = true;
+        if (internalNavigationResetTimer !== null) {
+            window.clearTimeout(internalNavigationResetTimer);
+        }
+        internalNavigationResetTimer = window.setTimeout(() => {
+            internalNavigationPending = false;
+            internalNavigationResetTimer = null;
+        }, 2000);
+    };
+
+    document.addEventListener('click', (event) => {
+        const element = event.target instanceof Element ? event.target : null;
+        const anchor = element ? element.closest('a[href]') : null;
+        if (anchor && !anchor.hasAttribute('download') && anchor.target !== '_blank') {
+            try {
+                const destination = new URL(anchor.href, window.location.href);
+                if (destination.origin === window.location.origin) markInternalNavigation();
+            } catch (_) {}
+            return;
+        }
+        if (element && element.closest('[data-href]')) markInternalNavigation();
+    }, true);
+
+    document.addEventListener('submit', markInternalNavigation, true);
+
+    window.addEventListener('pageshow', () => {
+        internalNavigationPending = false;
+        if (internalNavigationResetTimer !== null) {
+            window.clearTimeout(internalNavigationResetTimer);
+            internalNavigationResetTimer = null;
+        }
+        startHeartbeat();
     });
+
+    window.addEventListener('pagehide', () => {
+        if (heartbeatTimer !== null) {
+            window.clearInterval(heartbeatTimer);
+            heartbeatTimer = null;
+        }
+        if (!internalNavigationPending) {
+            navigator.sendBeacon('/api/desktop-session/closed', '');
+        }
+    });
+
+    startHeartbeat();
 })();
 </script>
 """
@@ -3183,6 +3235,21 @@ def make_blank_data():
     }
 
 
+def proposal_customer_organization_names() -> list[str]:
+    """Return active tenant organization names for proposal autocomplete."""
+    try:
+        organizations = get_contact_store().list_organizations()
+    except (ContactStoreError, TenantAuthenticationError) as exc:
+        _safe_debug(f"[WARN] Could not load proposal customer organizations: {exc}")
+        return []
+    names_by_key = {}
+    for organization in organizations:
+        name = " ".join(str(organization.get("name") or "").split())
+        if name:
+            names_by_key.setdefault(name.casefold(), name)
+    return sorted(names_by_key.values(), key=str.casefold)
+
+
 
 def calculation_routine(
     squares,
@@ -3666,15 +3733,22 @@ def calculation_routine(
         except Exception:
             return u, float(base_price_val or 0.0)
 
-    # Apply to each line-item pair
+    # Apply to each line-item pair. Automatic quantities remain conditional on
+    # product/roof type, but a user-entered quantity must always receive the
+    # item's catalog price when its price is blank or zero.
+    default_foam_price = (
+        GACO_FOAM_BASE_PRICE
+        if product == "Gaco"
+        else (UNIFLEX_FOAM_BASE_PRICE if product == "Uniflex" else 0)
+    )
     silicone_units_10, silicone_price = _normalize_unit_price(silicone_units_10, silicone_price, base_silicone_price)
     gaco_patch_units, gaco_patch_price = _normalize_unit_price(gaco_patch_units, gaco_patch_price, base_gaco_patch_price)
-    bleed_trap_units, bleed_trap_price = _normalize_unit_price(bleed_trap_units, bleed_trap_price, base_bleed_price)
+    bleed_trap_units, bleed_trap_price = _normalize_unit_price(bleed_trap_units, bleed_trap_price, BLEED_TRAP_BASE_PRICE)
     gaco_e5320_units, gaco_e5320_price = _normalize_unit_price(gaco_e5320_units, gaco_e5320_price, GACO_E5320_PRICE)
-    sw_1flash_units, sw_1flash_price = _normalize_unit_price(sw_1flash_units, sw_1flash_price, base_sw_1flash_price)
-    sw_bleed_block_units, sw_bleed_block_price = _normalize_unit_price(sw_bleed_block_units, sw_bleed_block_price, base_sw_bleed_block_price)
-    drainage_mat_units, drainage_mat_price = _normalize_unit_price(drainage_mat_units, drainage_mat_price, base_drainage_price)
-    foam_units, foam_price = _normalize_unit_price(foam_units, foam_price, base_foam_price)
+    sw_1flash_units, sw_1flash_price = _normalize_unit_price(sw_1flash_units, sw_1flash_price, SW_1FLASH_BASE_PRICE)
+    sw_bleed_block_units, sw_bleed_block_price = _normalize_unit_price(sw_bleed_block_units, sw_bleed_block_price, SW_BLEED_BLOCK_BASE_PRICE)
+    drainage_mat_units, drainage_mat_price = _normalize_unit_price(drainage_mat_units, drainage_mat_price, DRAINAGE_MAT_BASE_PRICE)
+    foam_units, foam_price = _normalize_unit_price(foam_units, foam_price, default_foam_price)
 
     def _price_overridden(actual_price, base_price):
         try:
@@ -4067,6 +4141,75 @@ def _resolve_contact_organization(store, values):
         )
 
 
+def _contact_assignment_context(source):
+    proposal_id = str(source.get("attach_to_proposal", "") or "").strip()
+    proposal_name = " ".join(str(source.get("proposal_name", "") or "").split())
+    if not proposal_id:
+        return "", proposal_name
+    try:
+        proposal_id = str(uuid.UUID(proposal_id))
+    except ValueError as exc:
+        raise ValueError("That proposal could not be selected.") from exc
+    return proposal_id, proposal_name
+
+
+def _attach_contact_record(proposal_id, contact_record):
+    relationship_id = str((contact_record or {}).get("id") or "").strip()
+    if not relationship_id:
+        raise ContactStoreError("The contact's organization relationship could not be found.")
+    return get_proposal_tracking_store().assign_or_create_primary_contact(
+        proposal_id,
+        organization_contact_id=relationship_id,
+    )
+
+
+_CONTACT_DETAIL_RETURN_SESSION_KEY = "proposal_contact_detail_return"
+
+
+def _remember_contact_detail_return(proposal_id, source):
+    if str(source.get("return_to_detail", "")).strip() != "1":
+        session.pop(_CONTACT_DETAIL_RETURN_SESSION_KEY, None)
+        return
+    folder_name = os.path.basename(
+        str(source.get("proposal_folder_name", "") or "").strip()
+    )
+    session[_CONTACT_DETAIL_RETURN_SESSION_KEY] = {
+        "proposal_id": str(proposal_id),
+        "folder_name": folder_name,
+        "customer_was_blank": (
+            str(source.get("customer_was_blank", "")).strip() == "1"
+        ),
+    }
+
+
+def _contact_assignment_success_redirect(proposal_id, contact_result):
+    context = session.get(_CONTACT_DETAIL_RETURN_SESSION_KEY) or {}
+    if str(context.get("proposal_id") or "") != str(proposal_id):
+        return redirect(url_for("proposal_list"))
+
+    customer_was_blank = bool(context.get("customer_was_blank"))
+    organization_name = " ".join(
+        str((contact_result or {}).get("organization") or "").split()
+    )
+    if customer_was_blank and organization_name:
+        get_proposal_tracking_store().update_proposal_customer_name(
+            str(proposal_id),
+            organization_name,
+        )
+
+    session.pop(_CONTACT_DETAIL_RETURN_SESSION_KEY, None)
+    folder_name = str(context.get("folder_name") or "").strip() or "__blank__"
+    return redirect(url_for(
+        "proposal_details_query",
+        folder_name=folder_name,
+        proposal_id=str(proposal_id),
+        read_only="No",
+        customer_was_blank=(
+            "1" if customer_was_blank and not organization_name else None
+        ),
+    ))
+
+
 @app.get('/contacts')
 def contact_management():
     search = request.args.get("q", "").strip()
@@ -4078,6 +4221,14 @@ def contact_management():
     organizations = []
     selected_contact = None
     configuration_error = ""
+    attach_to_proposal = ""
+    proposal_name = ""
+    try:
+        attach_to_proposal, proposal_name = _contact_assignment_context(request.args)
+        if attach_to_proposal:
+            _remember_contact_detail_return(attach_to_proposal, request.args)
+    except ValueError as exc:
+        flash(str(exc), "danger")
     try:
         store = get_contact_store()
         contacts = store.list_contacts(search=search, status=status)
@@ -4097,12 +4248,17 @@ def contact_management():
         status=status,
         configuration_error=configuration_error,
         organization_types=CONTACT_ORGANIZATION_TYPES,
+        attach_to_proposal=attach_to_proposal,
+        proposal_name=proposal_name,
     )
 
 
 @app.post('/contacts')
 def create_contact():
+    attach_to_proposal = ""
+    proposal_name = ""
     try:
+        attach_to_proposal, proposal_name = _contact_assignment_context(request.form)
         store = get_contact_store()
         values = _contact_form_values()
         action = request.form.get("duplicate_action", "").strip().lower()
@@ -4127,6 +4283,8 @@ def create_contact():
                 organization_types=CONTACT_ORGANIZATION_TYPES,
                 duplicate_matches=duplicates,
                 pending_values=values,
+                attach_to_proposal=attach_to_proposal,
+                proposal_name=proposal_name,
             )
 
         if action == "replace":
@@ -4139,28 +4297,84 @@ def create_contact():
                 raise ValueError("Select an existing duplicate contact to replace.")
             _resolve_contact_organization(store, values)
             store.update_contact(duplicate_contact_id, values)
+            if attach_to_proposal:
+                result = _attach_contact_record(
+                    attach_to_proposal,
+                    store.get_contact(duplicate_contact_id),
+                )
+                flash(f"{result.get('name') or 'Contact'} updated and attached.", "success")
+                return _contact_assignment_success_redirect(
+                    attach_to_proposal, result
+                )
             flash("Existing contact replaced with the submitted information.", "success")
             return redirect(url_for("contact_management", edit=duplicate_contact_id))
 
         _resolve_contact_organization(store, values)
-        store.create_contact(values)
-    except (ValueError, ContactStoreError) as exc:
+        contact_id = store.create_contact(values)
+        if attach_to_proposal:
+            result = _attach_contact_record(
+                attach_to_proposal,
+                store.get_contact(contact_id),
+            )
+            flash(f"{result.get('name') or 'Contact'} added and attached.", "success")
+            return _contact_assignment_success_redirect(attach_to_proposal, result)
+    except (ValueError, ContactStoreError, TenantAuthenticationError) as exc:
         flash(str(exc), "danger")
+        if attach_to_proposal:
+            return redirect(url_for(
+                "contact_management",
+                attach_to_proposal=attach_to_proposal,
+                proposal_name=proposal_name,
+            ))
     else:
         flash("Contact added." if action != "keep" else "Contact kept as a separate record.", "success")
     return redirect(url_for("contact_management"))
 
 
+@app.post('/proposals/<uuid:proposal_id>/contacts/<uuid:organization_contact_id>/attach')
+def attach_proposal_contact(proposal_id, organization_contact_id):
+    proposal_name = " ".join(request.form.get("proposal_name", "").split())
+    try:
+        result = get_proposal_tracking_store().assign_or_create_primary_contact(
+            str(proposal_id),
+            organization_contact_id=str(organization_contact_id),
+        )
+    except (ContactStoreError, TenantAuthenticationError, ValueError) as exc:
+        flash(str(exc), "danger")
+        return redirect(url_for(
+            "contact_management",
+            attach_to_proposal=str(proposal_id),
+            proposal_name=proposal_name,
+        ))
+    flash(f"{result.get('name') or 'Contact'} attached to {proposal_name or 'the proposal'}.", "success")
+    return _contact_assignment_success_redirect(str(proposal_id), result)
+
+
 @app.post('/contacts/<uuid:contact_id>/edit')
 def edit_contact(contact_id):
+    attach_to_proposal = ""
+    proposal_name = ""
     try:
+        attach_to_proposal, proposal_name = _contact_assignment_context(request.form)
         store = get_contact_store()
         values = _contact_form_values()
         _resolve_contact_organization(store, values)
         store.update_contact(str(contact_id), values)
-    except (ValueError, ContactStoreError) as exc:
+        if attach_to_proposal:
+            result = _attach_contact_record(
+                attach_to_proposal,
+                store.get_contact(str(contact_id)),
+            )
+            flash(f"{result.get('name') or 'Contact'} updated and attached.", "success")
+            return _contact_assignment_success_redirect(attach_to_proposal, result)
+    except (ValueError, ContactStoreError, TenantAuthenticationError) as exc:
         flash(str(exc), "danger")
-        return redirect(url_for("contact_management", edit=str(contact_id)))
+        return redirect(url_for(
+            "contact_management",
+            edit=str(contact_id),
+            attach_to_proposal=attach_to_proposal or None,
+            proposal_name=proposal_name or None,
+        ))
     flash("Contact updated.", "success")
     return redirect(url_for("contact_management"))
 
@@ -4178,22 +4392,83 @@ def delete_contact(contact_id):
 
 @app.route('/proposals')
 def proposal_list():
-    # Which tab is selected: 'open' (default) or 'under'
-    status = (request.args.get('status') or 'open').strip().lower()
+    requested_filter = (
+        request.args.get('filter')
+        or request.args.get('status')
+        or 'all'
+    ).strip().lower()
+    filter_aliases = {
+        'open': 'all',
+        'under': 'under_contract',
+        'under-contract': 'under_contract',
+        'contract': 'under_contract',
+        'draft_unsent': 'draft',
+        'draft-unsent': 'draft',
+        'unsent': 'draft',
+        'not_sent': 'draft',
+        'not-sent': 'draft',
+    }
+    selected_filter = filter_aliases.get(requested_filter, requested_filter)
+    filter_statuses = {
+        'all': {'draft', 'sent', 'under_contract', 'finished', 'dead'},
+        'draft': {'draft'},
+        'sent': {'sent'},
+        'under_contract': {'under_contract'},
+        'finished': {'finished'},
+        'dead': {'dead'},
+    }
+    if selected_filter not in filter_statuses:
+        selected_filter = 'all'
 
     recent_cutoff = datetime.datetime.now() - datetime.timedelta(days=7)
+    try:
+        store = get_proposal_tracking_store()
+        proposals = store.list_management_proposals(
+            filter_statuses[selected_filter]
+        )
+    except (ContactStoreError, TenantAuthenticationError) as exc:
+        flash(str(exc), "danger")
+        proposals = []
 
-    open_proposals = build_proposal_entries(OPEN_PROPOSAL_DIRS, recent_cutoff)
-    contract_proposals = build_proposal_entries(CONTRACTS_DIR, recent_cutoff)
+    proposals = [
+        proposal for proposal in proposals
+        if proposal.get("status") in filter_statuses[selected_filter]
+    ]
+    for proposal in proposals:
+        last_modified = proposal.get("last_modified")
+        proposal["is_recent"] = bool(
+            last_modified and last_modified >= recent_cutoff
+        )
 
     return render_template(
         'proposal_list.html',
-        open_proposals=open_proposals,
-        contract_proposals=contract_proposals,
-        recent_open_proposals=recent_proposals(open_proposals),
-        recent_contract_proposals=recent_proposals(contract_proposals),
-        status=status,
+        proposal_list=proposals,
+        selected_filter=selected_filter,
     )
+
+
+@app.post('/api/proposals/<uuid:proposal_id>/primary-contact')
+def update_proposal_primary_contact(proposal_id):
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return jsonify({"error": "Enter contact information and try again."}), 400
+    try:
+        result = get_proposal_tracking_store().assign_or_create_primary_contact(
+            str(proposal_id),
+            organization_contact_id=payload.get("organization_contact_id", ""),
+            contact_name=payload.get("contact_name", ""),
+            email=payload.get("email", ""),
+            organization_name=payload.get("organization_name", ""),
+        )
+    except ProposalContactOrganizationRequired as exc:
+        return jsonify({
+            "error": str(exc),
+            "organization_required": True,
+            "domain": exc.domain,
+        }), 409
+    except (ContactStoreError, TenantAuthenticationError, ValueError) as exc:
+        return jsonify({"error": str(exc)}), 400
+    return jsonify({"contact": result})
 
 
 @app.route('/blast-emails')
@@ -7453,6 +7728,48 @@ def find_profit_summary_file(folder_path):
     return None
 
 
+_PROPOSAL_DRAFT_EXCLUDED_FIELDS = frozenset({
+    "action",
+    "database_proposal_id",
+    "customer_name_existing",
+    "read_only",
+    "readonly",
+    "selected_proposal_file_paths",
+})
+
+
+def _proposal_draft_detail_from_form() -> dict:
+    """Capture safe proposal form values so a contact detour is lossless."""
+    snapshot = {}
+    for field_name in request.form:
+        if field_name in _PROPOSAL_DRAFT_EXCLUDED_FIELDS:
+            continue
+        if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]{0,79}", field_name):
+            continue
+        snapshot[field_name] = str(request.form.get(field_name) or "")[:20000]
+    return snapshot
+
+
+def _proposal_draft_detail_for_display(draft_detail: dict) -> dict:
+    """Restore form values with the types required by the detail template."""
+    restored = dict(draft_detail) if isinstance(draft_detail, dict) else {}
+    raw_office_fee = str(restored.get("office_fee_pct") or "").strip()
+    if not raw_office_fee:
+        restored["office_fee_pct"] = None
+        return restored
+    try:
+        office_fee = float(
+            raw_office_fee.replace("%", "").replace("$", "").replace(",", "")
+        )
+    except (TypeError, ValueError):
+        restored["office_fee_pct"] = None
+    else:
+        restored["office_fee_pct"] = (
+            office_fee / 100.0 if office_fee > 1 else office_fee
+        )
+    return restored
+
+
 
 @app.route('/update-proposal/<folder_name>', methods=['POST'])
 def update_proposal(folder_name):
@@ -7461,6 +7778,84 @@ def update_proposal(folder_name):
     folder_path = None if allow_blank else resolve_open_proposal_folder(folder_name)
 
     action = (request.form.get('action') or '').strip().lower()
+    database_proposal_id = (request.form.get('database_proposal_id') or '').strip()
+
+    if action == "contact":
+        customer_name = " ".join(
+            (request.form.get("customer_name") or "").split()
+        )
+        contact_search = customer_name
+        street_address = " ".join(
+            (request.form.get("street_address") or "").split()
+        )
+        proposal_name = (
+            f"{customer_name} - {street_address}"
+            if street_address else customer_name
+        )
+        try:
+            proposal_store = get_proposal_tracking_store()
+            if database_proposal_id:
+                database_proposal_id = str(uuid.UUID(database_proposal_id))
+                stored_customer_name = (
+                    customer_name
+                    or f"New Proposal {database_proposal_id[:8].upper()}"
+                )
+                if not proposal_name:
+                    proposal_name = stored_customer_name
+                proposal_store.upsert_from_proposal_save(
+                    proposal_id=database_proposal_id,
+                    created_date=None,
+                    customer_name=stored_customer_name,
+                    street_address=street_address,
+                    city=request.form.get("city", ""),
+                    state=request.form.get("state", ""),
+                    zip_code=request.form.get("zip_code", ""),
+                    submitted_by=request.form.get("submitted_by", ""),
+                    folder_name=(proposal_name if allow_blank else folder_name),
+                    lead_value=request.form.get("lead", ""),
+                    estimated_by="",
+                )
+            else:
+                if not customer_name:
+                    draft_reference = uuid.uuid4().hex[:8].upper()
+                    customer_name = f"New Proposal {draft_reference}"
+                    proposal_name = customer_name
+                database_proposal_id = (
+                    proposal_store.upsert_from_proposal_save(
+                        created_date=None,
+                        customer_name=customer_name,
+                        street_address=street_address,
+                        city=request.form.get("city", ""),
+                        state=request.form.get("state", ""),
+                        zip_code=request.form.get("zip_code", ""),
+                        submitted_by=request.form.get("submitted_by", ""),
+                        folder_name=(
+                            proposal_name if allow_blank else folder_name
+                        ),
+                        lead_value=request.form.get("lead", ""),
+                        estimated_by="",
+                    )
+                )
+            proposal_store.save_proposal_draft_detail(
+                database_proposal_id,
+                _proposal_draft_detail_from_form(),
+            )
+        except (ValueError, ContactStoreError, TenantAuthenticationError) as exc:
+            flash(str(exc), "danger")
+            if allow_blank:
+                return redirect(url_for("proposal_details_new"))
+            return redirect(url_for("proposal_details", folder_name=folder_name))
+        return redirect(url_for(
+            "contact_management",
+            attach_to_proposal=database_proposal_id,
+            proposal_name=proposal_name,
+            q=(contact_search or None),
+            return_to_detail="1",
+            proposal_folder_name=(
+                proposal_name if allow_blank else folder_name
+            ),
+            customer_was_blank=("1" if not request.form.get("customer_name", "").strip() else "0"),
+        ))
 
     excel_file = None
     if not allow_blank:
@@ -7503,6 +7898,14 @@ def update_proposal(folder_name):
 
     # If the Blank Proposal flow hits the Create button, build artifacts and redirect
     if allow_blank and action == 'create':
+        finalized_proposal_id = ""
+        if database_proposal_id:
+            try:
+                finalized_proposal_id = str(uuid.UUID(database_proposal_id))
+            except ValueError:
+                flash("That proposal draft could not be selected.", "danger")
+                return redirect(url_for("proposal_details_new"))
+
         # Pull the minimal required fields from the posted form
         customer_name = (request.form.get('customer_name') or '').strip()
         street_address = (request.form.get('street_address') or '').strip()
@@ -7612,8 +8015,30 @@ def update_proposal(folder_name):
             mapped_data=mapped_data_full,
             pdf_async=False,
             use_libreoffice=True,
+            update_tracking=not bool(finalized_proposal_id),
             copy_destination=False,
         )
+        if finalized_proposal_id:
+            proposal_store = get_proposal_tracking_store()
+            proposal_store.upsert_from_proposal_save(
+                proposal_id=finalized_proposal_id,
+                created_date=datetime.date.today(),
+                customer_name=customer_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_code=zip_code,
+                submitted_by=submitted_by,
+                folder_name=new_folder,
+                lead_value=lead_val,
+            )
+            try:
+                proposal_store.clear_proposal_draft_detail(finalized_proposal_id)
+            except (ContactStoreError, TenantAuthenticationError) as exc:
+                _safe_debug(
+                    "Could not clear finalized proposal draft detail: "
+                    f"{exc}"
+                )
         new_proposal_folder = os.path.join(PROPOSAL_TEMP_DIR, new_folder)
         copy_proposal_to_submitter_destination(
             new_proposal_folder,
@@ -8186,9 +8611,11 @@ def update_proposal(folder_name):
         "proposal_details.html",
         data=data,
         **data,
+        customer_organization_names=proposal_customer_organization_names(),
         folder_name=folder_name,
         readonly=readonly,
         is_blank=(folder_name in ("NEW", "__blank__")),
+        database_proposal_id=database_proposal_id or None,
     )
 
 
@@ -8207,6 +8634,7 @@ def proposal_details_new():
         "proposal_details.html",
         data=data,
         **data,
+        customer_organization_names=proposal_customer_organization_names(),
         folder_name="NEW",
         readonly=readonly,
         is_blank=True,
@@ -8217,6 +8645,50 @@ def proposal_details_query():
     folder_name = (request.args.get('folder_name') or '').strip()
     if not folder_name:
         return redirect(url_for('proposal_list'))
+    if APP_IS_BETA and not _resolve_existing_proposal_folder(folder_name):
+        proposal_id = (request.args.get('proposal_id') or '').strip()
+        try:
+            proposal = get_proposal_tracking_store().get_management_proposal(
+                proposal_id
+            )
+        except (ContactStoreError, TenantAuthenticationError) as exc:
+            flash(str(exc), "danger")
+            return redirect(url_for('proposal_list'))
+        if proposal:
+            data = make_blank_data()
+            data.update(
+                _proposal_draft_detail_for_display(
+                    proposal.get("draft_detail") or {}
+                )
+            )
+            data.update({
+                "customer_name": proposal.get("customer_name", ""),
+                "street_address": proposal.get("project_street_address", ""),
+                "city": proposal.get("project_city", ""),
+                "state": proposal.get("project_state", ""),
+                "zip_code": proposal.get("project_zip_code", ""),
+                "submitted_by": proposal.get("submitted_by", ""),
+                "previous_submitted_by": proposal.get("submitted_by", ""),
+                "lead": proposal.get("lead_source", ""),
+                "proposal_note": proposal.get("response_notes", ""),
+            })
+            if request.args.get("customer_was_blank") == "1":
+                data["customer_name"] = ""
+            read_only_param = request.args.get('read_only')
+            readonly = (
+                read_only_param is not None
+                and read_only_param.strip().lower() == 'yes'
+            )
+            return render_template(
+                "proposal_details.html",
+                data=data,
+                **data,
+                customer_organization_names=proposal_customer_organization_names(),
+                folder_name="__blank__",
+                readonly=readonly,
+                is_blank=True,
+                database_proposal_id=proposal["id"],
+            )
     return proposal_details(folder_name)
 
 def _resolve_existing_proposal_folder(folder_name: str) -> str | None:
@@ -8268,7 +8740,8 @@ def proposal_details(folder_name):
         return render_template(
             "proposal_details.html",
             data=data,
-            **data,            
+            **data,
+            customer_organization_names=proposal_customer_organization_names(),
             folder_name="NEW",
             readonly=readonly,
             is_blank=True,
@@ -8332,6 +8805,18 @@ def proposal_details(folder_name):
 
     # Determine source root (Open Proposals vs Contracts) by checking where the folder exists
     safe_folder = os.path.basename(folder_name)
+    database_proposal_id = (request.args.get('proposal_id') or '').strip()
+    if APP_IS_BETA and not database_proposal_id:
+        try:
+            database_proposal = (
+                get_proposal_tracking_store().get_management_proposal_by_folder(
+                    safe_folder
+                )
+            )
+            if database_proposal:
+                database_proposal_id = str(database_proposal.get("id") or "")
+        except (ContactStoreError, TenantAuthenticationError):
+            database_proposal_id = ""
     proposals_path = resolve_open_proposal_folder(safe_folder)
     contracts_path = os.path.join(CONTRACTS_DIR, safe_folder)
 
@@ -8785,9 +9270,11 @@ def proposal_details(folder_name):
         "proposal_details.html",
         data=data,
         **data,
+        customer_organization_names=proposal_customer_organization_names(),
         folder_name=folder_name,
         readonly=readonly,
         is_blank=False,
+        database_proposal_id=database_proposal_id or None,
     )
 
         

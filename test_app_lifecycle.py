@@ -45,6 +45,14 @@ class DesktopLifecycleDecisionTests(unittest.TestCase):
             )
         )
 
+    def test_browser_lifecycle_handles_internal_navigation_and_safari_cache(self):
+        script = pcs_proposal_web._DESKTOP_LIFECYCLE_SCRIPT
+        self.assertIn("destination.origin === window.location.origin", script)
+        self.assertIn("document.addEventListener('submit', markInternalNavigation", script)
+        self.assertIn("window.addEventListener('pageshow'", script)
+        self.assertIn("startHeartbeat();", script)
+        self.assertIn("if (!internalNavigationPending)", script)
+
 
 class LauncherEnvironmentTests(unittest.TestCase):
     @patch("run_app.subprocess.Popen")

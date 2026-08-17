@@ -3,6 +3,7 @@ import datetime
 import math
 import os
 import pathlib
+import re
 import shutil
 import tempfile
 import threading
@@ -130,7 +131,124 @@ class RockFoamCalculationTests(unittest.TestCase):
         self.assertEqual(result["rfc_labor_total"], 25000)
 
 
+class ManualUnitPriceTests(unittest.TestCase):
+    def test_manual_units_receive_catalog_prices_and_totals(self):
+        import pcs_proposal_web as app
+
+        result = app.calculation_routine(
+            squares=100,
+            product="Gaco",
+            roof_type="TPO/EPDM",
+            labor_days=0,
+            warranty_incl="No",
+            include_travel="No",
+            price_per_sq_10=0,
+            commission_pct=0,
+            submitted_by="Vern",
+            previous_submitted_by="Vern",
+            office_fee_pct=0,
+            adjusted_coverage=0,
+            silicone_units_10=0,
+            silicone_price=0,
+            gaco_patch_units=0,
+            gaco_patch_price=0,
+            bleed_trap_units=2,
+            bleed_trap_price=0,
+            sw_1flash_units=2,
+            sw_1flash_price=0,
+            sw_bleed_block_units=2,
+            sw_bleed_block_price=0,
+            drainage_mat_units=2,
+            drainage_mat_price=0,
+            foam_units=2,
+            foam_price=0,
+            rfc_labor_price=0,
+            pcs_labor_price=0,
+            scarifying_total=0,
+            travel_total=0,
+            repair_costs_total=0,
+            previous_squares=100,
+            previous_roof_type="TPO/EPDM",
+            previous_product="Gaco",
+            previous_adjusted_coverage=0,
+            previous_silicone_units_10=0,
+            proposal_note="",
+            pcs_or_roofer_ind="PCS Direct",
+            previous_pcs_or_roofer_ind="PCS Direct",
+            previous_include_travel="No",
+            previous_calc_travel_total=0,
+        )
+
+        expected = {
+            "bleed_trap": app.BLEED_TRAP_BASE_PRICE,
+            "sw_1flash": app.SW_1FLASH_BASE_PRICE,
+            "sw_bleed_block": app.SW_BLEED_BLOCK_BASE_PRICE,
+            "drainage_mat": app.DRAINAGE_MAT_BASE_PRICE,
+            "foam": app.GACO_FOAM_BASE_PRICE,
+        }
+        for prefix, unit_price in expected.items():
+            self.assertEqual(result[f"{prefix}_price"], unit_price)
+            self.assertEqual(result[f"{prefix}_total"], 2 * unit_price)
+
+
 class FullDetailPreviewTests(unittest.TestCase):
+    def test_manual_cost_units_populate_prices_and_totals_on_detail_screen(self):
+        import pcs_proposal_web as app
+
+        payload = {
+            "action": "recalculate",
+            "customer_name": "Unit Test",
+            "street_address": "1 Test St",
+            "city": "Denver",
+            "state": "CO",
+            "zip_code": "80202",
+            "flat_roof_squares": "100",
+            "wall_squares": "0",
+            "squares": "100",
+            "current_roof": "TPO/EPDM",
+            "product": "Gaco",
+            "submitted_by": "Vern",
+            "pcs_or_roofer_ind": "PCS Direct",
+            "warranty_incl": "No",
+            "include_travel": "No",
+            "adjusted_coverage": "0",
+            "previous_squares": "100",
+            "previous_roof_type": "TPO/EPDM",
+            "previous_product": "Gaco",
+            "previous_adjusted_coverage": "0",
+            "previous_submitted_by": "Vern",
+            "previous_pcs_or_roofer_ind": "PCS Direct",
+            "bleed_trap_units": "2",
+            "sw_1flash_units": "2",
+            "sw_bleed_block_units": "2",
+            "drainage_mat_units": "2",
+            "foam_units": "2",
+        }
+
+        with app.app.test_client() as client:
+            response = client.post("/update-proposal/NEW", data=payload)
+
+        html = response.get_data(as_text=True)
+        self.assertEqual(response.status_code, 200)
+        expected_values = {
+            "bleed_trap_price": "$168",
+            "bleed_trap_total": "$336",
+            "sw_1flash_price": "$110",
+            "sw_1flash_total": "$220",
+            "sw_bleed_block_price": "$100",
+            "sw_bleed_block_total": "$200",
+            "drainage_mat_price": "$164",
+            "drainage_mat_total": "$328",
+            "foam_price": "$2,600",
+            "foam_total": "$5,200",
+        }
+        for field_name, expected_value in expected_values.items():
+            match = re.search(
+                rf'name="{field_name}"[^>]*value="([^"]*)"', html
+            )
+            self.assertIsNotNone(match, field_name)
+            self.assertEqual(match.group(1), expected_value, field_name)
+
     def test_blank_proposal_can_preview_full_detail_from_posted_values(self):
         import pcs_proposal_web as app
 

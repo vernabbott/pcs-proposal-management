@@ -59,6 +59,12 @@
             font-size: 13px;
         }
 
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
         .menu-btn {
             display: inline-flex;
             align-items: center;
@@ -78,6 +84,18 @@
             background: var(--pcs-primary-dark);
             border-color: var(--pcs-primary-dark);
             color: #fff;
+        }
+
+        .menu-btn.secondary {
+            border-color: var(--pcs-border);
+            background: var(--pcs-panel);
+            color: var(--pcs-text);
+        }
+
+        .menu-btn.secondary:hover {
+            border-color: #aeb9c6;
+            background: #e9edf2;
+            color: var(--pcs-text);
         }
 
         .action-btn {
@@ -298,6 +316,11 @@
                 justify-content: center;
             }
 
+            .topbar-actions {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
             .proposal-row {
                 grid-template-columns: 1fr;
                 align-items: start;
@@ -331,9 +354,14 @@
                 <h1 class="screen-title">Weekly Follow-Ups</h1>
                 <p class="screen-subtitle">Proposal tracking rows with proposal dates on or before {{ cutoff_date_display }}.</p>
             </div>
-            <a href="{{ url_for('landing_page') }}" class="menu-btn">
-                <i class="bi bi-house"></i> Home
-            </a>
+            <div class="topbar-actions">
+                <a href="{{ url_for('proposal_list') }}" class="menu-btn secondary">
+                    <i class="bi bi-arrow-left"></i> Back
+                </a>
+                <a href="{{ url_for('landing_page') }}" class="menu-btn">
+                    <i class="bi bi-house"></i> Home
+                </a>
+            </div>
         </div>
 
         {% if tracker_error %}

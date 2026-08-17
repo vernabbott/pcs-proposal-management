@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime
 import re
+import uuid
 
 from contact_store import ContactStore, ContactStoreError
 from pcs_local_settings import supabase_configuration
@@ -11,13 +12,15 @@ from tenant_context import current_tenant_context
 
 
 _EMAIL_PATTERN = re.compile(r"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}", re.I)
-_PROPOSAL_STATUSES = {"draft", "sent", "under_contract", "dead"}
+_PROPOSAL_STATUSES = {"draft", "sent", "under_contract", "finished", "dead"}
 _LEGACY_STATUS_MAP = {
     "follow_up": "sent",
     "won": "under_contract",
     "lost": "dead",
     "withdrawn": "dead",
     "archived": "dead",
+    "under contract": "under_contract",
+    "under-contract": "under_contract",
 }
 
 
@@ -31,6 +34,20 @@ class ProposalTrackingStore(ContactStore):
         "contact_role,is_primary,organization_contact:organization_contact("
         "id,business_email,is_current,contact:contact("
         "id,full_name,first_name,last_name))))"
+    )
+    MANAGEMENT_SELECT = (
+        "id,customer_name,project_street_address,project_address_line_2,"
+        "project_city,project_state,project_zip_code,display_name,proposal_folder_name,draft_detail,"
+        "created_at,updated_at,proposal_tracking!inner(status,submitted_by,"
+        "estimated_by,lead_source,response_notes,estimate_completed_date,"
+        "proposal_sent_date,follow_up_date,created_at,updated_at),"
+        "proposal_contact(organization_contact_id,contact_role,is_primary,"
+        "organization_contact:organization_contact(id,business_email,is_current,"
+        "contact:contact(id,full_name),organization:organization(id,name)))"
+    )
+    CONTACT_OPTION_SELECT = (
+        "id,business_email,is_current,contact:contact(id,full_name),"
+        "organization:organization(id,name)"
     )
 
     @classmethod
@@ -148,10 +165,404 @@ class ProposalTrackingStore(ContactStore):
             ),
         )
 
+    @staticmethod
+    def _management_timestamp(value) -> datetime.datetime | None:
+        text = str(value or "").strip()
+        if not text:
+            return None
+        try:
+            parsed = datetime.datetime.fromisoformat(text.replace("Z", "+00:00"))
+        except ValueError:
+            return None
+        if parsed.tzinfo is not None:
+            parsed = parsed.astimezone().replace(tzinfo=None)
+        return parsed
+
+    @classmethod
+    def _management_entry(cls, row: dict) -> dict:
+        tracking = row.get("proposal_tracking") or {}
+        if isinstance(tracking, list):
+            tracking = tracking[0] if tracking else {}
+        customer_name = " ".join(str(row.get("customer_name") or "").split())
+        street_address = " ".join(
+            str(row.get("project_street_address") or "").split()
+        )
+        display_name = " ".join(str(row.get("display_name") or "").split())
+        if not display_name:
+            display_name = (
+                f"{customer_name} - {street_address}" if street_address else customer_name
+            )
+        folder_name = " ".join(
+            str(row.get("proposal_folder_name") or display_name).split()
+        )
+        timestamps = [
+            cls._management_timestamp(row.get("updated_at") or row.get("created_at")),
+            cls._management_timestamp(
+                tracking.get("updated_at") or tracking.get("created_at")
+            ),
+        ]
+        last_modified = max((value for value in timestamps if value), default=None)
+        contact_links = sorted(
+            row.get("proposal_contact") or [],
+            key=lambda link: (
+                not bool(link.get("is_primary")),
+                str(link.get("contact_role") or "") != "primary",
+            ),
+        )
+        primary_relationship = (
+            (contact_links[0].get("organization_contact") or {})
+            if contact_links else {}
+        )
+        primary_person = primary_relationship.get("contact") or {}
+        primary_organization = primary_relationship.get("organization") or {}
+        return {
+            "id": str(row.get("id") or ""),
+            "name": display_name,
+            "folder_name": folder_name,
+            "customer_name": customer_name,
+            "project_street_address": street_address,
+            "project_address_line_2": str(
+                row.get("project_address_line_2") or ""
+            ).strip(),
+            "project_city": str(row.get("project_city") or "").strip(),
+            "project_state": str(row.get("project_state") or "").strip(),
+            "project_zip_code": str(row.get("project_zip_code") or "").strip(),
+            "draft_detail": (
+                row.get("draft_detail")
+                if isinstance(row.get("draft_detail"), dict)
+                else {}
+            ),
+            "status": str(tracking.get("status") or "draft").strip(),
+            "submitted_by": str(tracking.get("submitted_by") or "").strip(),
+            "estimated_by": str(tracking.get("estimated_by") or "").strip(),
+            "lead_source": str(tracking.get("lead_source") or "").strip(),
+            "response_notes": str(tracking.get("response_notes") or "").strip(),
+            "estimate_completed_date": cls._iso_date(
+                tracking.get("estimate_completed_date")
+            ),
+            "estimate_completed_date_display": cls._display_date(
+                tracking.get("estimate_completed_date")
+            ),
+            "proposal_sent_date": cls._iso_date(tracking.get("proposal_sent_date")),
+            "proposal_sent_date_display": cls._display_date(
+                tracking.get("proposal_sent_date")
+            ),
+            "follow_up_date": cls._iso_date(tracking.get("follow_up_date")),
+            "follow_up_date_display": cls._display_date(
+                tracking.get("follow_up_date")
+            ),
+            "organization_contact_id": str(
+                primary_relationship.get("id") or ""
+            ),
+            "contact_id": str(primary_person.get("id") or ""),
+            "contact_name": str(primary_person.get("full_name") or "").strip(),
+            "contact_email": str(
+                primary_relationship.get("business_email") or ""
+            ).strip(),
+            "organization_name": str(
+                primary_organization.get("name") or ""
+            ).strip(),
+            "last_modified": last_modified,
+            "last_modified_display": (
+                last_modified.strftime("%m/%d/%Y") if last_modified else "Unavailable"
+            ),
+        }
+
+    def list_management_proposals(self, statuses) -> list[dict]:
+        requested_statuses = {
+            str(status or "").strip().lower() for status in statuses or ()
+        }
+        requested_statuses.discard("")
+        unsupported = requested_statuses - _PROPOSAL_STATUSES
+        if unsupported:
+            raise ProposalTrackingStoreError(
+                f"Unsupported proposal status: {sorted(unsupported)[0]}"
+            )
+        if not requested_statuses:
+            return []
+        rows = self._request(
+            "proposal",
+            params={
+                "select": self.MANAGEMENT_SELECT,
+                "proposal_tracking.status": (
+                    f"in.({','.join(sorted(requested_statuses))})"
+                ),
+                "limit": "5000",
+            },
+        )
+        entries = [self._management_entry(row) for row in rows]
+        return sorted(entries, key=lambda entry: entry["name"].casefold())
+
+    def get_management_proposal(self, proposal_id: str) -> dict | None:
+        identifier = str(proposal_id or "").strip()
+        if not identifier:
+            return None
+        rows = self._request(
+            "proposal",
+            params={
+                "select": self.MANAGEMENT_SELECT,
+                "id": f"eq.{identifier}",
+                "limit": "1",
+            },
+        )
+        return self._management_entry(rows[0]) if rows else None
+
+    def get_management_proposal_by_folder(self, folder_name: str) -> dict | None:
+        name = " ".join(str(folder_name or "").split())
+        if not name:
+            return None
+        rows = self._request(
+            "proposal",
+            params={
+                "select": self.MANAGEMENT_SELECT,
+                "proposal_folder_name": f"eq.{name}",
+                "order": "updated_at.desc",
+                "limit": "1",
+            },
+        )
+        if not rows:
+            rows = self._request(
+                "proposal",
+                params={
+                    "select": self.MANAGEMENT_SELECT,
+                    "display_name": f"eq.{name}",
+                    "order": "updated_at.desc",
+                    "limit": "1",
+                },
+            )
+        return self._management_entry(rows[0]) if rows else None
+
+    @staticmethod
+    def _contact_option(row: dict) -> dict:
+        person = row.get("contact") or {}
+        organization = row.get("organization") or {}
+        return {
+            "id": str(row.get("id") or ""),
+            "name": str(person.get("full_name") or "").strip(),
+            "email": str(row.get("business_email") or "").strip(),
+            "organization": str(organization.get("name") or "").strip(),
+        }
+
+    def list_management_contact_options(self) -> list[dict]:
+        rows = []
+        last_id = ""
+        while True:
+            params = {
+                "select": self.CONTACT_OPTION_SELECT,
+                "is_current": "eq.true",
+                "order": "id.asc",
+                "limit": "1000",
+            }
+            if last_id:
+                params["id"] = f"gt.{last_id}"
+            page = self._request("organization_contact", params=params)
+            rows.extend(page)
+            if len(page) < 1000:
+                break
+            last_id = str(page[-1].get("id") or "")
+            if not last_id:
+                break
+        options = [
+            self._contact_option(row) for row in rows
+            if (row.get("contact") or {}).get("full_name") or row.get("business_email")
+        ]
+        return sorted(
+            options,
+            key=lambda option: (
+                option["name"].casefold(),
+                option["email"].casefold(),
+            ),
+        )
+
+    def _get_organization_contact_option(self, relationship_id: str) -> dict:
+        rows = self._request(
+            "organization_contact",
+            params={
+                "select": self.CONTACT_OPTION_SELECT,
+                "id": f"eq.{relationship_id}",
+                "is_current": "eq.true",
+                "limit": "1",
+            },
+        )
+        if not rows:
+            raise ProposalTrackingStoreError("That contact is no longer available.")
+        return self._contact_option(rows[0])
+
+    def _set_primary_contact(self, proposal_id: str, relationship_id: str) -> None:
+        proposals = self._request(
+            "proposal",
+            params={"select": "id", "id": f"eq.{proposal_id}", "limit": "1"},
+        )
+        if not proposals:
+            raise ProposalTrackingStoreError("That proposal is no longer available.")
+        existing_links = self._request(
+            "proposal_contact",
+            params={
+                "select": "organization_contact_id,is_primary",
+                "proposal_id": f"eq.{proposal_id}",
+                "limit": "5000",
+            },
+        )
+        selected_link = next(
+            (
+                link for link in existing_links
+                if str(link.get("organization_contact_id")) == relationship_id
+            ),
+            None,
+        )
+        if selected_link and selected_link.get("is_primary"):
+            return
+        previous_primary_ids = [
+            str(link.get("organization_contact_id"))
+            for link in existing_links if link.get("is_primary")
+        ]
+        try:
+            if previous_primary_ids:
+                self._request(
+                    "proposal_contact",
+                    method="PATCH",
+                    params={
+                        "proposal_id": f"eq.{proposal_id}",
+                        "is_primary": "eq.true",
+                    },
+                    payload={"is_primary": False, "contact_role": "additional"},
+                )
+            if selected_link:
+                self._request(
+                    "proposal_contact",
+                    method="PATCH",
+                    params={
+                        "proposal_id": f"eq.{proposal_id}",
+                        "organization_contact_id": f"eq.{relationship_id}",
+                    },
+                    payload={"is_primary": True, "contact_role": "primary"},
+                )
+            else:
+                self._request(
+                    "proposal_contact",
+                    method="POST",
+                    payload={
+                        "proposal_id": proposal_id,
+                        "organization_contact_id": relationship_id,
+                        "is_primary": True,
+                        "contact_role": "primary",
+                    },
+                )
+        except Exception:
+            for previous_id in previous_primary_ids:
+                try:
+                    self._request(
+                        "proposal_contact",
+                        method="PATCH",
+                        params={
+                            "proposal_id": f"eq.{proposal_id}",
+                            "organization_contact_id": f"eq.{previous_id}",
+                        },
+                        payload={"is_primary": True, "contact_role": "primary"},
+                    )
+                except Exception:
+                    pass
+            raise
+
+    def assign_or_create_primary_contact(
+        self,
+        proposal_id: str,
+        *,
+        organization_contact_id: str = "",
+        contact_name: str = "",
+        email: str = "",
+        organization_name: str = "",
+    ) -> dict:
+        relationship_id = str(organization_contact_id or "").strip()
+        created = False
+        if relationship_id:
+            option = self._get_organization_contact_option(relationship_id)
+        else:
+            clean_name = " ".join(str(contact_name or "").split())
+            clean_email = str(email or "").strip().casefold()
+            if not clean_name:
+                raise ProposalTrackingStoreError("Enter the contact name.")
+            if not clean_email or _EMAIL_PATTERN.fullmatch(clean_email) is None:
+                raise ProposalTrackingStoreError("Enter a valid email address.")
+            matches = self._request(
+                "organization_contact",
+                params={
+                    "select": self.CONTACT_OPTION_SELECT,
+                    "normalized_email": f"eq.{clean_email}",
+                    "is_current": "eq.true",
+                    "order": "updated_at.desc",
+                    "limit": "2",
+                },
+            )
+            if matches:
+                option = self._contact_option(matches[0])
+                relationship_id = option["id"]
+            else:
+                organization = self.find_organization_for_email(clean_email)
+                if organization:
+                    organization_id = organization["id"]
+                elif not str(organization_name or "").strip():
+                    raise ProposalContactOrganizationRequired(
+                        self._email_domain(clean_email)
+                    )
+                else:
+                    organization_id = self.resolve_named_organization_for_email(
+                        organization_name,
+                        clean_email,
+                    )
+                first_name, last_name = self._split_name(clean_name)
+                contact_id = self.create_contact({
+                    "first_name": first_name,
+                    "last_name": last_name,
+                    "organization_id": organization_id,
+                    "business_email": clean_email,
+                })
+                relationships = self._request(
+                    "organization_contact",
+                    params={
+                        "select": self.CONTACT_OPTION_SELECT,
+                        "contact_id": f"eq.{contact_id}",
+                        "is_current": "eq.true",
+                        "limit": "1",
+                    },
+                )
+                if not relationships:
+                    raise ProposalTrackingStoreError(
+                        "The new contact relationship was not created."
+                    )
+                option = self._contact_option(relationships[0])
+                relationship_id = option["id"]
+                created = True
+        self._set_primary_contact(str(proposal_id), relationship_id)
+        return {**option, "created": created}
+
+    def update_proposal_customer_name(
+        self,
+        proposal_id: str,
+        customer_name: str,
+    ) -> None:
+        identifier = str(proposal_id or "").strip()
+        clean_name = " ".join(str(customer_name or "").split())
+        if not identifier:
+            raise ProposalTrackingStoreError("That proposal could not be selected.")
+        if not clean_name:
+            return
+        rows = self._request(
+            "proposal",
+            method="PATCH",
+            params={"id": f"eq.{identifier}"},
+            payload={"customer_name": clean_name},
+            return_rows=True,
+        )
+        if not rows:
+            raise ProposalTrackingStoreError("That proposal is no longer available.")
+
     def list_missing_entries(self) -> list[dict]:
         entries = []
         for row in self.list_proposals():
             entry = self._screen_entry(row)
+            if entry["status"] == "dead":
+                continue
             if any((
                 not entry["contact"],
                 not entry["email_address"],
@@ -211,18 +622,10 @@ class ProposalTrackingStore(ContactStore):
         identifier = str(value or "").strip()
         if not identifier:
             return ""
-        if identifier.isdigit():
-            rows = self._request(
-                "proposal_tracking",
-                params={
-                    "select": "proposal_id",
-                    "source_name": "eq.Proposal Tracking.xlsx",
-                    "source_row_number": f"eq.{identifier}",
-                    "limit": "1",
-                },
-            )
-            return rows[0]["proposal_id"] if rows else ""
-        return identifier
+        try:
+            return str(uuid.UUID(identifier))
+        except (ValueError, AttributeError):
+            return ""
 
     def _create_proposal(self, entry: dict) -> str:
         customer_name = " ".join(str(entry.get("customer_name") or "").split())
@@ -261,6 +664,30 @@ class ProposalTrackingStore(ContactStore):
         )
         return proposal_id
 
+    def save_proposal_draft_detail(
+        self, proposal_id: str, draft_detail: dict
+    ) -> None:
+        """Persist the unsaved proposal-detail form during a contact detour."""
+        identifier = str(proposal_id or "").strip()
+        if not identifier:
+            raise ProposalTrackingStoreError("A proposal draft is required.")
+        if not isinstance(draft_detail, dict):
+            raise ProposalTrackingStoreError("Proposal draft detail must be an object.")
+        rows = self._request(
+            "proposal",
+            method="PATCH",
+            params={"id": f"eq.{identifier}"},
+            payload={"draft_detail": draft_detail},
+            return_rows=True,
+        )
+        if not rows:
+            raise ProposalTrackingStoreError(
+                "That proposal draft is no longer available."
+            )
+
+    def clear_proposal_draft_detail(self, proposal_id: str) -> None:
+        self.save_proposal_draft_detail(proposal_id, {})
+
     def _editable_payload(self, entry: dict, *, infer_status: bool = False) -> dict:
         proposal_date = self._iso_date(entry.get("proposal_date"))
         follow_up_date = self._iso_date(entry.get("follow_up_date"))
@@ -278,7 +705,7 @@ class ProposalTrackingStore(ContactStore):
         if requested_status:
             if requested_status not in _PROPOSAL_STATUSES:
                 raise ProposalTrackingStoreError(
-                    "Proposal status must be draft, sent, under contract, or dead."
+                    "Proposal status must be draft, sent, under contract, finished, or dead."
                 )
             payload["status"] = requested_status
         elif infer_status:
@@ -390,6 +817,7 @@ class ProposalTrackingStore(ContactStore):
     def upsert_from_proposal_save(
         self,
         *,
+        proposal_id="",
         created_date,
         customer_name,
         street_address,
@@ -402,25 +830,40 @@ class ProposalTrackingStore(ContactStore):
         estimated_by="Vern",
     ) -> str:
         folder_name = str(folder_name or "").strip()
-        rows = self._request(
-            "proposal",
-            params={
-                "select": "id",
-                "proposal_folder_name": f"eq.{folder_name}",
-                "order": "updated_at.desc",
-                "limit": "1",
-            },
-        )
-        if not rows:
+        requested_proposal_id = str(proposal_id or "").strip()
+        if requested_proposal_id:
             rows = self._request(
                 "proposal",
                 params={
                     "select": "id",
-                    "display_name": f"eq.{folder_name}",
+                    "id": f"eq.{requested_proposal_id}",
+                    "limit": "1",
+                },
+            )
+            if not rows:
+                raise ProposalTrackingStoreError(
+                    "That proposal draft is no longer available."
+                )
+        else:
+            rows = self._request(
+                "proposal",
+                params={
+                    "select": "id",
+                    "proposal_folder_name": f"eq.{folder_name}",
                     "order": "updated_at.desc",
                     "limit": "1",
                 },
             )
+            if not rows:
+                rows = self._request(
+                    "proposal",
+                    params={
+                        "select": "id",
+                        "display_name": f"eq.{folder_name}",
+                        "order": "updated_at.desc",
+                        "limit": "1",
+                    },
+                )
         proposal_payload = {
             "customer_name": " ".join(str(customer_name or "").split()),
             "project_street_address": " ".join(str(street_address or "").split()) or None,
@@ -434,6 +877,10 @@ class ProposalTrackingStore(ContactStore):
             "submitted_by": str(submitted_by or "").strip() or None,
             "estimated_by": str(estimated_by or "").strip() or None,
         }
+        if requested_proposal_id and created_date:
+            tracking_payload["estimate_completed_date"] = self._iso_date(
+                created_date
+            )
         if not rows:
             created = self._request(
                 "proposal", method="POST", payload=proposal_payload, return_rows=True
@@ -445,9 +892,20 @@ class ProposalTrackingStore(ContactStore):
                 "status": "draft",
                 "source_name": "PCS application",
             })
-            self._request(
-                "proposal_tracking", method="POST", payload=tracking_payload
-            )
+            try:
+                self._request(
+                    "proposal_tracking", method="POST", payload=tracking_payload
+                )
+            except Exception:
+                try:
+                    self._request(
+                        "proposal",
+                        method="DELETE",
+                        params={"id": f"eq.{proposal_id}"},
+                    )
+                except Exception:
+                    pass
+                raise
             return proposal_id
         proposal_id = rows[0]["id"]
         self._request(
@@ -478,6 +936,14 @@ class ProposalTrackingStore(ContactStore):
                 "proposal_tracking", method="POST", payload=tracking_payload
             )
         return proposal_id
+
+
+class ProposalContactOrganizationRequired(ContactStoreError):
+    def __init__(self, domain: str):
+        self.domain = str(domain or "").strip().casefold()
+        super().__init__(
+            f"Enter the organization name for the {self.domain or 'email'} contact."
+        )
 
 
 class ProposalTrackingStoreError(ContactStoreError):
