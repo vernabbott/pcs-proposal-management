@@ -1,4 +1,4 @@
--- Collapse proposal outcomes into the PCS four-state lifecycle.
+-- Collapse legacy proposal outcomes into the PCS lifecycle.
 -- Follow-up remains an activity date and does not change a proposal's status.
 
 alter table public.proposal
@@ -15,4 +15,4 @@ where status in ('follow_up', 'won', 'lost', 'withdrawn', 'archived');
 
 alter table public.proposal
   add constraint proposal_status_check
-  check (status in ('draft', 'sent', 'under_contract', 'dead'));
+  check (status in ('draft', 'sent', 'under_contract', 'finished', 'dead'));

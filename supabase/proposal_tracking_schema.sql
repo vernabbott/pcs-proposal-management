@@ -31,7 +31,7 @@ create table if not exists public.proposal (
   follow_up_date date,
   response_notes text,
   status text not null default 'draft' check (
-    status in ('draft', 'sent', 'under_contract', 'dead')
+    status in ('draft', 'sent', 'under_contract', 'finished', 'dead')
   ),
   proposal_folder_name text,
   source_name text,

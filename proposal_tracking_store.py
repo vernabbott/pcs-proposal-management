@@ -10,13 +10,15 @@ from pcs_local_settings import supabase_configuration
 
 
 _EMAIL_PATTERN = re.compile(r"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}", re.I)
-_PROPOSAL_STATUSES = {"draft", "sent", "under_contract", "dead"}
+_PROPOSAL_STATUSES = {"draft", "sent", "under_contract", "finished", "dead"}
 _LEGACY_STATUS_MAP = {
     "follow_up": "sent",
     "won": "under_contract",
     "lost": "dead",
     "withdrawn": "dead",
     "archived": "dead",
+    "under contract": "under_contract",
+    "under-contract": "under_contract",
 }
 
 
@@ -138,6 +140,8 @@ class ProposalTrackingStore(ContactStore):
         entries = []
         for row in self.list_proposals():
             entry = self._screen_entry(row)
+            if entry["status"] == "dead":
+                continue
             if any((
                 not entry["contact"],
                 not entry["email_address"],
@@ -176,7 +180,11 @@ class ProposalTrackingStore(ContactStore):
             if entry.get("is_new"):
                 proposal_id = self._create_proposal(entry)
             else:
-                proposal_id = self._resolve_proposal_id(entry.get("row_number"))
+                proposal_id = self._resolve_proposal_id(
+                    entry.get("row_number"),
+                    display_name=entry.get("customer"),
+                    proposal_date=entry.get("proposal_date"),
+                )
                 if not proposal_id:
                     continue
                 self._request(
@@ -193,11 +201,24 @@ class ProposalTrackingStore(ContactStore):
             updated += 1
         return updated
 
-    def _resolve_proposal_id(self, value) -> str:
+    def _resolve_proposal_id(self, value, *, display_name=None, proposal_date=None) -> str:
         identifier = str(value or "").strip()
         if not identifier:
             return ""
         if identifier.isdigit():
+            display_name = " ".join(str(display_name or "").split())
+            if display_name:
+                params = {
+                    "select": "id",
+                    "display_name": f"eq.{display_name}",
+                    "limit": "2",
+                }
+                normalized_date = self._iso_date(proposal_date)
+                if normalized_date:
+                    params["proposal_sent_date"] = f"eq.{normalized_date}"
+                rows = self._request("proposal", params=params)
+                if len(rows) == 1:
+                    return rows[0]["id"]
             rows = self._request(
                 "proposal",
                 params={
@@ -258,7 +279,7 @@ class ProposalTrackingStore(ContactStore):
         if requested_status:
             if requested_status not in _PROPOSAL_STATUSES:
                 raise ProposalTrackingStoreError(
-                    "Proposal status must be draft, sent, under contract, or dead."
+                    "Proposal status must be draft, sent, under contract, finished, or dead."
                 )
             payload["status"] = requested_status
         elif infer_status:

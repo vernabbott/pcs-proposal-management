@@ -30,6 +30,7 @@ CURRENT_TRACKER_HEADERS = [
     "Estimate Dt",
     "Proposal Dt",
     "Follow-Up",
+    "Status",
     "Estimated By",
     "Response",
 ]
@@ -149,6 +150,11 @@ class ProposalTrackingStoreTests(unittest.TestCase):
         with patch.object(self.store, "list_proposals", return_value=[row]):
             self.assertEqual(self.store.list_missing_entries(), [])
 
+    def test_dead_entry_is_not_returned_as_missing(self):
+        row = self.proposal_row(status="dead")
+        with patch.object(self.store, "list_proposals", return_value=[row]):
+            self.assertEqual(self.store.list_missing_entries(), [])
+
     def test_numeric_spreadsheet_row_resolves_to_migrated_proposal(self):
         with patch.object(
             self.store,
@@ -158,6 +164,27 @@ class ProposalTrackingStoreTests(unittest.TestCase):
             resolved = self.store._resolve_proposal_id("42")
         self.assertEqual(resolved, PROPOSAL_ID)
         self.assertEqual(request.call_args.kwargs["params"]["source_row_number"], "eq.42")
+
+    def test_numeric_spreadsheet_row_prefers_name_and_date_match(self):
+        with patch.object(
+            self.store,
+            "_request",
+            return_value=[{"id": PROPOSAL_ID}],
+        ) as request:
+            resolved = self.store._resolve_proposal_id(
+                "42",
+                display_name="Example Roofing - 123 Main St",
+                proposal_date="8/1/2026",
+            )
+        self.assertEqual(resolved, PROPOSAL_ID)
+        self.assertEqual(
+            request.call_args.kwargs["params"]["display_name"],
+            "eq.Example Roofing - 123 Main St",
+        )
+        self.assertEqual(
+            request.call_args.kwargs["params"]["proposal_sent_date"],
+            "eq.2026-08-01",
+        )
 
     def test_mark_followups_updates_resolved_ids(self):
         responses = [[{"id": PROPOSAL_ID}], [{"id": PROPOSAL_ID}]]
@@ -184,6 +211,12 @@ class ProposalTrackingStoreTests(unittest.TestCase):
         self.assertEqual(
             self.store._editable_payload({"status": "withdrawn"})["status"],
             "dead",
+        )
+
+    def test_finished_is_an_accepted_lifecycle_status(self):
+        self.assertEqual(
+            self.store._editable_payload({"status": "finished"})["status"],
+            "finished",
         )
 
     def test_new_proposal_save_sets_estimate_date_without_setting_sent_date(self):
@@ -233,7 +266,7 @@ class ProposalTrackingSpreadsheetColumnTests(unittest.TestCase):
             worksheet = workbook.active
             return [
                 worksheet.cell(row=row_number, column=column).value
-                for column in range(1, 11)
+                for column in range(1, 12)
             ]
         finally:
             workbook.close()
@@ -248,6 +281,7 @@ class ProposalTrackingSpreadsheetColumnTests(unittest.TestCase):
             datetime.date(2026, 7, 30),
             "-",
             "-",
+            "Draft Unsent",
             "Mark",
             "Waiting",
         ]])
@@ -262,6 +296,47 @@ class ProposalTrackingSpreadsheetColumnTests(unittest.TestCase):
         self.assertEqual(entries[0]["estimate_date_input"], "7/30/2026")
         self.assertEqual(entries[0]["proposal_date_input"], "-")
         self.assertEqual(entries[0]["follow_up_date_input"], "-")
+        self.assertEqual(entries[0]["status"], "draft")
+
+    def test_legacy_tracker_gets_status_column_without_overwriting_response(self):
+        workbook = Workbook()
+        worksheet = workbook.active
+        worksheet.append([
+            "Customer", "Contact", "Email Address", "Lead Generated", "Submitted By",
+            "Estimate Dt", "Proposal Dt", "Follow-Up", "Estimated By", "Response",
+        ])
+        worksheet.append([
+            "Example Roofing - 123 Main St", "Casey", "casey@example.com", "Referral",
+            "David", "", "", "", "Vern", "Keep this response",
+        ])
+
+        web._ensure_proposal_tracker_status_column(worksheet)
+
+        self.assertEqual(worksheet.cell(1, 9).value, "Status")
+        self.assertEqual(worksheet.cell(2, 10).value, "Vern")
+        self.assertEqual(worksheet.cell(2, 11).value, "Keep this response")
+
+    def test_dead_tracker_row_is_not_shown_on_tracker_screen(self):
+        self.write_tracker([[
+            "Closed Roofing - 500 Main St",
+            "",
+            "",
+            "Referral",
+            "David",
+            "",
+            "-",
+            "-",
+            "Dead",
+            "Vern",
+            "Closed",
+        ]])
+
+        entries, error = web._load_proposal_tracker_missing_entries_spreadsheet(
+            self.tracker_path
+        )
+
+        self.assertIsNone(error)
+        self.assertEqual(entries, [])
 
     def test_tracker_screen_save_writes_reordered_columns_by_header(self):
         self.write_tracker([[
@@ -273,6 +348,7 @@ class ProposalTrackingSpreadsheetColumnTests(unittest.TestCase):
             "",
             "",
             "",
+            "Sent",
             "Vern",
             "Keep this response",
         ]])
@@ -286,6 +362,7 @@ class ProposalTrackingSpreadsheetColumnTests(unittest.TestCase):
             "estimate_date": "7/30/2026",
             "proposal_date": "8/1/2026",
             "follow_up_date": "8/15/2026",
+            "status": "under_contract",
             "estimated_by": "Mark",
         }], self.tracker_path)
 
@@ -294,8 +371,9 @@ class ProposalTrackingSpreadsheetColumnTests(unittest.TestCase):
         self.assertEqual(row[5], "7/30/2026")
         self.assertEqual(row[6], "8/1/2026")
         self.assertEqual(row[7], "8/15/2026")
-        self.assertEqual(row[8], "Mark")
-        self.assertEqual(row[9], "Keep this response")
+        self.assertEqual(row[8], "Under Contract")
+        self.assertEqual(row[9], "Mark")
+        self.assertEqual(row[10], "Keep this response")
 
     def test_weekly_follow_up_uses_proposal_and_follow_up_headers(self):
         self.write_tracker([[
@@ -307,6 +385,7 @@ class ProposalTrackingSpreadsheetColumnTests(unittest.TestCase):
             datetime.date(2026, 7, 30),
             datetime.date(2026, 8, 1),
             "",
+            "Sent",
             "Vern",
             "Keep this response",
         ]])
@@ -324,8 +403,9 @@ class ProposalTrackingSpreadsheetColumnTests(unittest.TestCase):
         row = self.read_row()
         self.assertEqual(row[6], datetime.datetime(2026, 8, 1, 0, 0))
         self.assertEqual(row[7], datetime.datetime(2026, 8, 3, 0, 0))
-        self.assertEqual(row[8], "Vern")
-        self.assertEqual(row[9], "Keep this response")
+        self.assertEqual(row[8], "Sent")
+        self.assertEqual(row[9], "Vern")
+        self.assertEqual(row[10], "Keep this response")
 
     def test_proposal_save_refresh_preserves_dates_and_response_columns(self):
         self.write_tracker([[
@@ -337,6 +417,7 @@ class ProposalTrackingSpreadsheetColumnTests(unittest.TestCase):
             "",
             datetime.date(2026, 8, 1),
             "",
+            "Sent",
             "Mark",
             "Keep this response",
         ]])
@@ -353,8 +434,31 @@ class ProposalTrackingSpreadsheetColumnTests(unittest.TestCase):
         row = self.read_row()
         self.assertEqual(row[5], datetime.datetime(2026, 7, 30, 0, 0))
         self.assertEqual(row[6], datetime.datetime(2026, 8, 1, 0, 0))
-        self.assertEqual(row[8], "Vern")
-        self.assertEqual(row[9], "Keep this response")
+        self.assertEqual(row[8], "Sent")
+        self.assertEqual(row[9], "Vern")
+        self.assertEqual(row[10], "Keep this response")
+
+    def test_dead_status_is_excluded_from_weekly_follow_up(self):
+        self.write_tracker([[
+            "Example Roofing - 123 Main St",
+            "Casey",
+            "casey@example.com",
+            "Referral",
+            "David",
+            datetime.date(2026, 7, 30),
+            datetime.date(2026, 8, 1),
+            "",
+            "Dead",
+            "Vern",
+            "Closed",
+        ]])
+
+        entries, _, error = web._load_weekly_follow_up_entries_spreadsheet(
+            self.tracker_path, datetime.date(2026, 8, 20)
+        )
+
+        self.assertIsNone(error)
+        self.assertEqual(entries, [])
 
 
 if __name__ == "__main__":

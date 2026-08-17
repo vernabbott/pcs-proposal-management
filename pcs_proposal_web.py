@@ -251,6 +251,7 @@ _PROPOSAL_TRACKER_CANONICAL_HEADERS = (
     "Estimate Dt",
     "Proposal Dt",
     "Follow-Up",
+    "Status",
     "Estimated By",
     "Response",
 )
@@ -266,6 +267,7 @@ _PROPOSAL_TRACKER_DEFAULT_COLUMNS = {
     "estimated_by": 8,
     "response": 9,
     "estimate_date": 10,
+    "status": 11,
 }
 _PROPOSAL_TRACKER_HEADER_ALIASES = {
     "customer": ("Customer", "Proposal Folder Name", "Proposal Name"),
@@ -276,6 +278,7 @@ _PROPOSAL_TRACKER_HEADER_ALIASES = {
     "estimate_date": ("Estimate Dt", "Estimate Date", "Estimate Completed Date"),
     "proposal_date": ("Proposal Dt", "Proposal Date", "Proposal Sent Date"),
     "follow_up_date": ("Follow-Up", "Follow Up", "Follow-Up Date", "Follow Up Date"),
+    "status": ("Status", "Proposal Status"),
     "estimated_by": ("Estimated By", "Estimator", "Vern"),
     "response": ("Response", "Response Notes"),
 }
@@ -308,7 +311,7 @@ def _proposal_tracker_column_map_from_headers(headers):
 
 
 def _proposal_tracker_column_map(ws):
-    max_column = max(getattr(ws, "max_column", 0) or 0, 10)
+    max_column = max(getattr(ws, "max_column", 0) or 0, 11)
     headers = [
         ws.cell(row=1, column=column_number).value
         for column_number in range(1, max_column + 1)
@@ -321,6 +324,36 @@ def _initialize_proposal_tracker_headers(ws):
         _PROPOSAL_TRACKER_CANONICAL_HEADERS, start=1
     ):
         ws.cell(row=1, column=column_number).value = header
+
+
+def _ensure_proposal_tracker_status_column(ws):
+    headers = [
+        ws.cell(row=1, column=column_number).value
+        for column_number in range(1, (ws.max_column or 0) + 1)
+    ]
+    normalized = {
+        _normalize_proposal_tracker_header(value): column_number
+        for column_number, value in enumerate(headers, start=1)
+        if _normalize_proposal_tracker_header(value)
+    }
+    if _normalize_proposal_tracker_header("Status") in normalized:
+        return
+
+    follow_up_column = None
+    for alias in _PROPOSAL_TRACKER_HEADER_ALIASES["follow_up_date"]:
+        follow_up_column = normalized.get(_normalize_proposal_tracker_header(alias))
+        if follow_up_column is not None:
+            break
+    insert_column = (follow_up_column + 1) if follow_up_column else (ws.max_column + 1)
+    ws.insert_cols(insert_column)
+    style_column = insert_column + 1 if insert_column + 1 <= ws.max_column else insert_column - 1
+    for row_number in range(1, ws.max_row + 1):
+        source = ws.cell(row=row_number, column=style_column)
+        target = ws.cell(row=row_number, column=insert_column)
+        if source.has_style:
+            target._style = _copy_style(source._style)
+        target.number_format = source.number_format
+    ws.cell(row=1, column=insert_column).value = "Status"
 
 
 def _proposal_tracker_row_value(row, column_number):
@@ -777,14 +810,15 @@ def _append_to_proposal_tracking_unlocked(created_date,
                 dst.value = src.value
 
         # If we have a previous sheet, copy everything over unchanged
-        max_col = 10  # at least A..J
+        max_col = 11  # at least A..K
         max_row_prev = 0
         if prev_ws is not None:
-            max_col = max(max_col, prev_ws.max_column or 10)
+            max_col = max(max_col, prev_ws.max_column or 11)
             max_row_prev = prev_ws.max_row or 0
             for r in range(1, max_row_prev + 1):
                 for c in range(1, max_col + 1):
                     _copy_cell(prev_ws.cell(row=r, column=c), new_ws.cell(row=r, column=c))
+        _ensure_proposal_tracker_status_column(new_ws)
         columns = _proposal_tracker_column_map(new_ws)
         row_values = {
             "customer": folder_name or "",
@@ -792,6 +826,7 @@ def _append_to_proposal_tracking_unlocked(created_date,
             "submitted_by": submitted_by or "",
             "estimated_by": "Vern",
             "estimate_date": created_date or "",
+            "status": "Draft",
         }
 
         # Determine insertion point by Column A (case-insensitive), preserving header at row 1
@@ -812,13 +847,13 @@ def _append_to_proposal_tracking_unlocked(created_date,
                     insert_at = r
                     break
 
-        # Shift rows down by 1 from bottom to insert_at (A..J only) to make space
+        # Shift rows down by 1 from bottom to insert_at (A..K only) to make space
         if existing_row is None and insert_at <= max(max_row_prev, first_data_row - 1):
             for rr in range(max_row_prev, insert_at - 1, -1):
-                for c in range(1, 11):  # A..J only
+                for c in range(1, 12):  # A..K only
                     src = new_ws.cell(row=rr, column=c)
                     dst = new_ws.cell(row=rr + 1, column=c)
-                    # Move value + full style (deep copy) for A..J to retain bold/color/etc.
+                    # Move value + full style (deep copy) for A..K to retain bold/color/etc.
                     dst.value = src.value
                     try:
                         dst.font = _copy_style(src.font)
@@ -849,7 +884,7 @@ def _append_to_proposal_tracking_unlocked(created_date,
             template_row = insert_at
             insert_target = insert_at
 
-        for c in range(1, 11):
+        for c in range(1, 12):
             cell = new_ws.cell(row=insert_target, column=c)
             if existing_row is None:
                 cell.value = None
@@ -3643,15 +3678,22 @@ def calculation_routine(
         except Exception:
             return u, float(base_price_val or 0.0)
 
-    # Apply to each line-item pair
+    # Apply to each line-item pair. Automatic quantities remain conditional on
+    # product/roof type, but a user-entered quantity must always receive the
+    # item's catalog price when its price is blank or zero.
+    default_foam_price = (
+        GACO_FOAM_BASE_PRICE
+        if product == "Gaco"
+        else (UNIFLEX_FOAM_BASE_PRICE if product == "Uniflex" else 0)
+    )
     silicone_units_10, silicone_price = _normalize_unit_price(silicone_units_10, silicone_price, base_silicone_price)
     gaco_patch_units, gaco_patch_price = _normalize_unit_price(gaco_patch_units, gaco_patch_price, base_gaco_patch_price)
-    bleed_trap_units, bleed_trap_price = _normalize_unit_price(bleed_trap_units, bleed_trap_price, base_bleed_price)
+    bleed_trap_units, bleed_trap_price = _normalize_unit_price(bleed_trap_units, bleed_trap_price, BLEED_TRAP_BASE_PRICE)
     gaco_e5320_units, gaco_e5320_price = _normalize_unit_price(gaco_e5320_units, gaco_e5320_price, GACO_E5320_PRICE)
-    sw_1flash_units, sw_1flash_price = _normalize_unit_price(sw_1flash_units, sw_1flash_price, base_sw_1flash_price)
-    sw_bleed_block_units, sw_bleed_block_price = _normalize_unit_price(sw_bleed_block_units, sw_bleed_block_price, base_sw_bleed_block_price)
-    drainage_mat_units, drainage_mat_price = _normalize_unit_price(drainage_mat_units, drainage_mat_price, base_drainage_price)
-    foam_units, foam_price = _normalize_unit_price(foam_units, foam_price, base_foam_price)
+    sw_1flash_units, sw_1flash_price = _normalize_unit_price(sw_1flash_units, sw_1flash_price, SW_1FLASH_BASE_PRICE)
+    sw_bleed_block_units, sw_bleed_block_price = _normalize_unit_price(sw_bleed_block_units, sw_bleed_block_price, SW_BLEED_BLOCK_BASE_PRICE)
+    drainage_mat_units, drainage_mat_price = _normalize_unit_price(drainage_mat_units, drainage_mat_price, DRAINAGE_MAT_BASE_PRICE)
+    foam_units, foam_price = _normalize_unit_price(foam_units, foam_price, default_foam_price)
 
     def _price_overridden(actual_price, base_price):
         try:
@@ -5233,6 +5275,7 @@ def save_proposal_tracker():
                 request.form.get(f"estimate_date_{row_key}", ""),
                 request.form.get(f"proposal_date_{row_key}", ""),
                 request.form.get(f"follow_up_date_{row_key}", ""),
+                request.form.get(f"status_{row_key}", ""),
             ]):
                 continue
             entries.append({
@@ -5249,6 +5292,7 @@ def save_proposal_tracker():
                 "estimate_date": request.form.get(f"estimate_date_{row_key}", ""),
                 "proposal_date": request.form.get(f"proposal_date_{row_key}", ""),
                 "follow_up_date": request.form.get(f"follow_up_date_{row_key}", ""),
+                "status": request.form.get(f"status_{row_key}", "draft"),
             })
             continue
         if not re.fullmatch(r"[A-Za-z0-9_-]+", row_key):
@@ -5256,6 +5300,7 @@ def save_proposal_tracker():
         entries.append({
             "is_new": False,
             "row_number": row_key,
+            "customer": request.form.get(f"customer_{row_key}", ""),
             "contact": request.form.get(f"contact_{row_key}", ""),
             "email_address": request.form.get(f"email_address_{row_key}", ""),
             "lead_source": request.form.get(f"lead_source_{row_key}", ""),
@@ -5264,6 +5309,7 @@ def save_proposal_tracker():
             "estimate_date": request.form.get(f"estimate_date_{row_key}", ""),
             "proposal_date": request.form.get(f"proposal_date_{row_key}", ""),
             "follow_up_date": request.form.get(f"follow_up_date_{row_key}", ""),
+            "status": request.form.get(f"status_{row_key}", ""),
         })
 
     try:
@@ -5319,6 +5365,37 @@ def _format_tracker_date_input(value):
     return "" if parsed is None else f"{parsed.month}/{parsed.day}/{parsed.year}"
 
 
+_TRACKER_STATUS_LABELS = {
+    "draft": "Draft Unsent",
+    "sent": "Sent",
+    "under_contract": "Under Contract",
+    "finished": "Finished",
+    "dead": "Dead",
+}
+_TRACKER_STATUS_ALIASES = {
+    "draft unsent": "draft",
+    "follow_up": "sent",
+    "follow up": "sent",
+    "won": "under_contract",
+    "under contract": "under_contract",
+    "lost": "dead",
+    "withdrawn": "dead",
+    "archived": "dead",
+}
+
+
+def _normalize_tracker_status(value, proposal_date=None):
+    cleaned = " ".join(str(value or "").strip().casefold().replace("-", " ").split())
+    cleaned = _TRACKER_STATUS_ALIASES.get(cleaned, cleaned.replace(" ", "_"))
+    if cleaned in _TRACKER_STATUS_LABELS:
+        return cleaned
+    return "sent" if _coerce_tracker_date(proposal_date) is not None else "draft"
+
+
+def _tracker_status_label(value, proposal_date=None):
+    return _TRACKER_STATUS_LABELS[_normalize_tracker_status(value, proposal_date)]
+
+
 def _default_follow_up_cutoff_date():
     return datetime.date.today() - datetime.timedelta(days=14)
 
@@ -5344,7 +5421,7 @@ def _tracker_cell_is_blank(value):
 def _copy_tracker_row_style(ws, source_row, target_row):
     if source_row < 1 or target_row < 1 or source_row == target_row:
         return
-    max_column = max(ws.max_column, 10)
+    max_column = max(ws.max_column, 11)
     for col_idx in range(1, max_column + 1):
         source_cell = ws.cell(row=source_row, column=col_idx)
         target_cell = ws.cell(row=target_row, column=col_idx)
@@ -5389,6 +5466,9 @@ def _write_tracker_entry_to_row(ws, row_number, entry):
         "estimate_date": entry.get("estimate_date"),
         "proposal_date": entry.get("proposal_date"),
         "follow_up_date": entry.get("follow_up_date"),
+        "status": _tracker_status_label(
+            entry.get("status"), entry.get("proposal_date")
+        ),
         "estimated_by": entry.get("estimated_by"),
     }
     for field_name, value in values.items():
@@ -5420,8 +5500,12 @@ def _load_proposal_tracker_missing_entries_spreadsheet(tracker_path=PROPOSAL_TRA
                     proposal_dt_raw = _proposal_tracker_row_value(row, columns["proposal_date"])
                     follow_up_raw = _proposal_tracker_row_value(row, columns["follow_up_date"])
                     estimated_by = _proposal_tracker_row_value(row, columns["estimated_by"])
+                    status = _proposal_tracker_row_value(row, columns["status"])
+                    normalized_status = _normalize_tracker_status(status, proposal_dt_raw)
 
                     if not any([customer, contact, email_address, lead, submitted_by, proposal_dt_raw, follow_up_raw]):
+                        continue
+                    if normalized_status == "dead":
                         continue
                     if not any([
                         _tracker_cell_is_blank(contact),
@@ -5441,6 +5525,7 @@ def _load_proposal_tracker_missing_entries_spreadsheet(tracker_path=PROPOSAL_TRA
                         "estimate_date_input": _format_tracker_date_input(estimate_dt_raw),
                         "proposal_date_input": _format_tracker_date_input(proposal_dt_raw),
                         "follow_up_date_input": _format_tracker_date_input(follow_up_raw),
+                        "status": normalized_status,
                     })
             finally:
                 wb.close()
@@ -5476,6 +5561,7 @@ def _update_proposal_tracker_missing_entries_spreadsheet(entries, tracker_path=P
         with TRACKER_IO_LOCK:
             wb = load_workbook(source_path)
             ws = wb.active
+            _ensure_proposal_tracker_status_column(ws)
             columns = _proposal_tracker_column_map(ws)
             updated_count = 0
             existing_entries = [entry for entry in entries if not entry.get("is_new")]
@@ -5497,6 +5583,9 @@ def _update_proposal_tracker_missing_entries_spreadsheet(entries, tracker_path=P
                     "estimate_date": entry.get("estimate_date"),
                     "proposal_date": entry.get("proposal_date"),
                     "follow_up_date": entry.get("follow_up_date"),
+                    "status": _tracker_status_label(
+                        entry.get("status"), entry.get("proposal_date")
+                    ),
                     "estimated_by": entry.get("estimated_by"),
                 }
                 for field_name, value in values.items():
@@ -5579,11 +5668,17 @@ def _load_weekly_follow_up_entries_spreadsheet(tracker_path=PROPOSAL_TRACKER, cu
                     submitted_by = _proposal_tracker_row_value(row, columns["submitted_by"])
                     proposal_dt_raw = _proposal_tracker_row_value(row, columns["proposal_date"])
                     follow_up_raw = _proposal_tracker_row_value(row, columns["follow_up_date"])
+                    status = _normalize_tracker_status(
+                        _proposal_tracker_row_value(row, columns["status"]),
+                        proposal_dt_raw,
+                    )
                     proposal_dt = _coerce_tracker_date(proposal_dt_raw)
 
                     if not any([customer, contact, email_address, submitted_by, proposal_dt_raw]):
                         continue
                     if str(follow_up_raw or "").strip():
+                        continue
+                    if status != "sent":
                         continue
                     if proposal_dt is None or proposal_dt > cutoff_date:
                         continue
@@ -5643,7 +5738,9 @@ def _update_weekly_follow_up_dates_spreadsheet(row_numbers, follow_up_date=None,
         with TRACKER_IO_LOCK:
             wb = load_workbook(source_path)
             ws = wb.active
+            _ensure_proposal_tracker_status_column(ws)
             follow_up_column = _proposal_tracker_column_map(ws)["follow_up_date"]
+            status_column = _proposal_tracker_column_map(ws)["status"]
             updated_count = 0
             for row_number in sorted(row_numbers):
                 if row_number > ws.max_row:
@@ -5651,6 +5748,7 @@ def _update_weekly_follow_up_dates_spreadsheet(row_numbers, follow_up_date=None,
                 cell = ws.cell(row=row_number, column=follow_up_column)
                 cell.value = follow_up_date
                 cell.number_format = "m/d/yyyy"
+                ws.cell(row=row_number, column=status_column).value = "Sent"
                 updated_count += 1
 
             temp_path = _proposal_tracker_temp_path(tracker_path)
@@ -7242,6 +7340,7 @@ def update_existing_tracker_row(
         try:
             wb = load_workbook(source_path)
             ws = wb.active
+            _ensure_proposal_tracker_status_column(ws)
             columns = _proposal_tracker_column_map(ws)
             row_key = str(folder_name or "").strip().lower()
             if not row_key:
@@ -7257,6 +7356,9 @@ def update_existing_tracker_row(
                 ws.cell(row=row, column=columns["lead_source"]).value = lead_value or ""
                 ws.cell(row=row, column=columns["submitted_by"]).value = submitted_by or ""
                 ws.cell(row=row, column=columns["estimated_by"]).value = "Vern"
+                status_cell = ws.cell(row=row, column=columns["status"])
+                if not str(status_cell.value or "").strip():
+                    status_cell.value = "Draft"
                 estimate_cell = ws.cell(row=row, column=columns["estimate_date"])
                 if not str(estimate_cell.value or "").strip():
                     estimate_cell.value = (

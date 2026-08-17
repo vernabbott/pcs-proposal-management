@@ -190,8 +190,8 @@
 
         .tracker-row {
             display: grid;
-            grid-template-columns: 220px 140px 210px 145px 105px 105px 110px 110px 110px;
-            min-width: 1335px;
+            grid-template-columns: 220px 140px 210px 145px 105px 105px 110px 110px 110px 125px;
+            min-width: 1470px;
             align-items: center;
             min-height: 54px;
             padding: 9px 12px;
@@ -253,6 +253,17 @@
             border-color: var(--pcs-primary);
             outline: 0;
             box-shadow: 0 0 0 3px rgba(33, 90, 156, 0.14);
+        }
+
+        .tracker-row select {
+            width: 100%;
+            min-height: 32px;
+            border: 1px solid var(--pcs-border);
+            border-radius: 6px;
+            padding: 4px 7px;
+            font-size: 13px;
+            color: var(--pcs-text);
+            background: #fff;
         }
 
         .empty-state {
@@ -341,6 +352,7 @@
                         <div>Estimate Dt</div>
                         <div>Proposal Dt</div>
                         <div>Follow-Up Dt</div>
+                        <div>Status</div>
                     </div>
 
                     <div id="trackerRows">
@@ -348,6 +360,7 @@
                         <div class="tracker-row tracker-data-row" data-customer="{{ entry.customer|lower }}" data-new-row="0">
                             <div class="customer-name" title="{{ entry.customer }}">{{ entry.customer }}</div>
                             <input type="hidden" name="row_number" value="{{ entry.row_number }}">
+                            <input type="hidden" name="customer_{{ entry.row_number }}" value="{{ entry.customer }}">
                             <input type="text" name="contact_{{ entry.row_number }}" value="{{ entry.contact }}" aria-label="Contact for {{ entry.customer }}">
                             <input type="text" name="email_address_{{ entry.row_number }}" value="{{ entry.email_address }}" aria-label="Email address for {{ entry.customer }}">
                             <input type="text" name="lead_source_{{ entry.row_number }}" value="{{ entry.lead_source }}" aria-label="Lead source for {{ entry.customer }}">
@@ -356,6 +369,13 @@
                             <input type="text" name="estimate_date_{{ entry.row_number }}" value="{{ entry.estimate_date_input }}" aria-label="Estimate date for {{ entry.customer }}">
                             <input type="text" name="proposal_date_{{ entry.row_number }}" value="{{ entry.proposal_date_input }}" aria-label="Proposal date for {{ entry.customer }}">
                             <input type="text" name="follow_up_date_{{ entry.row_number }}" value="{{ entry.follow_up_date_input }}" aria-label="Follow-up date for {{ entry.customer }}">
+                            <select name="status_{{ entry.row_number }}" aria-label="Status for {{ entry.customer }}">
+                                <option value="draft" {% if entry.status == 'draft' %}selected{% endif %}>Draft Unsent</option>
+                                <option value="sent" {% if entry.status == 'sent' %}selected{% endif %}>Sent</option>
+                                <option value="under_contract" {% if entry.status == 'under_contract' %}selected{% endif %}>Under Contract</option>
+                                <option value="finished" {% if entry.status == 'finished' %}selected{% endif %}>Finished</option>
+                                <option value="dead" {% if entry.status == 'dead' %}selected{% endif %}>Dead</option>
+                            </select>
                         </div>
                         {% endfor %}
                     </div>
@@ -424,6 +444,13 @@
                         <input type="text" name="estimate_date_${rowKey}" aria-label="Estimate date">
                         <input type="text" name="proposal_date_${rowKey}" aria-label="Proposal date">
                         <input type="text" name="follow_up_date_${rowKey}" aria-label="Follow-up date">
+                        <select name="status_${rowKey}" aria-label="Status">
+                            <option value="draft" selected>Draft Unsent</option>
+                            <option value="sent">Sent</option>
+                            <option value="under_contract">Under Contract</option>
+                            <option value="finished">Finished</option>
+                            <option value="dead">Dead</option>
+                        </select>
                     `;
                     const customerInput = row.querySelector(`[name="customer_name_${rowKey}"]`);
                     customerInput.addEventListener('input', function () {
