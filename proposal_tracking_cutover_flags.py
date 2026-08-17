@@ -53,6 +53,17 @@ def load_proposal_tracking_cutover_flags(
             for name in (MASTER_FLAG, READ_FLAG, WRITE_FLAG, SHADOW_WRITE_FLAG)
             if name in os.environ
         })
+        values.update({
+            name: os.environ[name]
+            for name in ("PCS_PROPOSAL_STORAGE_MODE", "PCS_SUPABASE_ONLY")
+            if name in os.environ
+        })
+    if "PCS_PROPOSAL_STORAGE_MODE" in values or "PCS_SUPABASE_ONLY" in values:
+        from pcs_runtime_config import proposal_storage_environment, proposal_storage_mode
+
+        normalized = dict(values)
+        normalized.update(proposal_storage_environment(proposal_storage_mode(values)))
+        values = normalized
     master = _enabled(values, MASTER_FLAG)
     return ProposalTrackingCutoverFlags(
         master_enabled=master,

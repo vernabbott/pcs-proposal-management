@@ -14,7 +14,11 @@ from proposal_tracking_cutover_flags import (
     WRITE_FLAG,
     load_proposal_tracking_cutover_flags,
 )
-from proposal_tracking_store import ProposalTrackingStore
+from proposal_tracking_store import (
+    ProposalContactOrganizationRequired,
+    ProposalTrackingStore,
+)
+from contact_store import ContactStoreError
 
 
 PROPOSAL_ID = "11111111-1111-4111-8111-111111111111"
@@ -65,6 +69,17 @@ class ProposalTrackingCutoverFlagTests(unittest.TestCase):
         self.assertTrue(flags.spreadsheet_writes_active)
         self.assertFalse(flags.fully_cut_over)
 
+    def test_full_cutover_disables_all_spreadsheet_access(self):
+        flags = load_proposal_tracking_cutover_flags({
+            MASTER_FLAG: "true",
+            READ_FLAG: "true",
+            WRITE_FLAG: "true",
+            SHADOW_WRITE_FLAG: "false",
+        })
+        self.assertTrue(flags.fully_cut_over)
+        self.assertFalse(flags.spreadsheet_reads_active)
+        self.assertFalse(flags.spreadsheet_writes_active)
+
     def test_persistent_shadow_mode_is_used_when_environment_is_absent(self):
         persisted = {
             MASTER_FLAG: "true",
@@ -108,26 +123,33 @@ class ProposalTrackingStoreTests(unittest.TestCase):
     @staticmethod
     def proposal_row(**updates):
         row = {
-            "id": PROPOSAL_ID,
-            "customer_name": "Example Roofing",
-            "project_street_address": "123 Main St",
-            "display_name": "Example Roofing - 123 Main St",
+            "proposal_id": PROPOSAL_ID,
             "lead_source": "Referral",
             "submitted_by": "David",
             "estimated_by": "Vern",
             "estimate_completed_date": None,
             "proposal_sent_date": "2026-07-15",
             "follow_up_date": None,
+            "follow_up_required": True,
             "response_notes": None,
-            "proposal_contact": [{
-                "is_primary": True,
-                "organization_contact": {
-                    "id": RELATIONSHIP_ID,
-                    "business_email": "casey@example.com",
-                    "is_current": True,
-                    "contact": {"id": "contact-id", "full_name": "Casey Smith"},
-                },
-            }],
+            "proposal": {
+                "id": PROPOSAL_ID,
+                "customer_name": "Example Roofing",
+                "project_street_address": "123 Main St",
+                "display_name": "Example Roofing - 123 Main St",
+                "proposal_contact": [{
+                    "is_primary": True,
+                    "organization_contact": {
+                        "id": RELATIONSHIP_ID,
+                        "business_email": "casey@example.com",
+                        "is_current": True,
+                        "contact": {
+                            "id": "contact-id",
+                            "full_name": "Casey Smith",
+                        },
+                    },
+                }],
+            },
         }
         row.update(updates)
         return row
@@ -138,6 +160,216 @@ class ProposalTrackingStoreTests(unittest.TestCase):
         self.assertEqual(entry["contact"], "Casey Smith")
         self.assertEqual(entry["email_address"], "casey@example.com")
         self.assertEqual(entry["lead_source"], "Referral")
+
+    def test_management_list_is_rooted_in_proposal_and_filters_joined_status(self):
+        rows = [{
+            "id": PROPOSAL_ID,
+            "customer_name": "Example Roofing",
+            "project_street_address": "123 Main St",
+            "display_name": "Example Roofing - 123 Main St",
+            "proposal_folder_name": "Example Roofing - 123 Main St",
+            "draft_detail": {"flat_roof_squares": "125"},
+            "created_at": "2026-07-15T12:00:00+00:00",
+            "updated_at": "2026-07-16T12:00:00+00:00",
+            "proposal_tracking": {
+                "status": "sent",
+                "submitted_by": "Mark",
+                "estimated_by": "Vern",
+                "estimate_completed_date": "2026-07-14",
+                "proposal_sent_date": "2026-07-15",
+                "follow_up_date": "2026-07-29",
+                "created_at": "2026-07-15T12:00:00+00:00",
+                "updated_at": "2026-07-17T12:00:00+00:00",
+            },
+        }]
+        with patch.object(self.store, "_request", return_value=rows) as request:
+            entries = self.store.list_management_proposals(
+                {"draft", "sent", "under_contract"}
+            )
+        self.assertEqual(request.call_args.args[0], "proposal")
+        params = request.call_args.kwargs["params"]
+        self.assertIn("proposal_tracking!inner", params["select"])
+        self.assertEqual(
+            params["proposal_tracking.status"],
+            "in.(draft,sent,under_contract)",
+        )
+        self.assertEqual(entries[0]["status"], "sent")
+        self.assertEqual(entries[0]["submitted_by"], "Mark")
+        self.assertEqual(entries[0]["estimated_by"], "Vern")
+        self.assertEqual(entries[0]["estimate_completed_date_display"], "7/14/2026")
+        self.assertEqual(entries[0]["proposal_sent_date"], "2026-07-15")
+        self.assertEqual(entries[0]["proposal_sent_date_display"], "7/15/2026")
+        self.assertEqual(entries[0]["follow_up_date_display"], "7/29/2026")
+        self.assertEqual(entries[0]["folder_name"], "Example Roofing - 123 Main St")
+        self.assertEqual(entries[0]["last_modified_display"], "07/17/2026")
+
+    def test_management_list_rejects_unknown_status_before_request(self):
+        with patch.object(self.store, "_request") as request:
+            with self.assertRaisesRegex(Exception, "Unsupported proposal status"):
+                self.store.list_management_proposals({"open"})
+        request.assert_not_called()
+
+    def test_management_proposal_can_be_resolved_by_folder_name(self):
+        row = {
+            "id": PROPOSAL_ID,
+            "customer_name": "Example Roofing",
+            "project_street_address": "123 Main St",
+            "display_name": "Example Roofing - 123 Main St",
+            "proposal_folder_name": "Example Folder",
+            "proposal_tracking": {"status": "draft"},
+        }
+        with patch.object(self.store, "_request", return_value=[row]) as request:
+            proposal = self.store.get_management_proposal_by_folder(
+                "Example Folder"
+            )
+        self.assertEqual(proposal["id"], PROPOSAL_ID)
+        self.assertEqual(
+            request.call_args.kwargs["params"]["proposal_folder_name"],
+            "eq.Example Folder",
+        )
+
+    def test_management_entry_includes_primary_contact_fields(self):
+        row = {
+            "id": PROPOSAL_ID,
+            "customer_name": "Example Roofing",
+            "project_street_address": "123 Main St",
+            "display_name": "Example Roofing - 123 Main St",
+            "proposal_folder_name": "Example Roofing - 123 Main St",
+            "draft_detail": {"flat_roof_squares": "125"},
+            "proposal_tracking": {"status": "sent"},
+            "proposal_contact": [{
+                "organization_contact_id": RELATIONSHIP_ID,
+                "is_primary": True,
+                "contact_role": "primary",
+                "organization_contact": {
+                    "id": RELATIONSHIP_ID,
+                    "business_email": "casey@example.com",
+                    "contact": {"full_name": "Casey Smith"},
+                    "organization": {"name": "Example Roofing"},
+                },
+            }],
+        }
+        entry = self.store._management_entry(row)
+        self.assertEqual(entry["organization_contact_id"], RELATIONSHIP_ID)
+        self.assertEqual(entry["contact_name"], "Casey Smith")
+        self.assertEqual(entry["contact_email"], "casey@example.com")
+        self.assertEqual(entry["organization_name"], "Example Roofing")
+        self.assertEqual(entry["draft_detail"]["flat_roof_squares"], "125")
+
+    def test_proposal_draft_detail_is_patched_by_proposal_id(self):
+        detail = {"flat_roof_squares": "125", "product": "Gaco"}
+        with patch.object(
+            self.store, "_request", return_value=[{"id": PROPOSAL_ID}]
+        ) as request:
+            self.store.save_proposal_draft_detail(PROPOSAL_ID, detail)
+        request.assert_called_once_with(
+            "proposal",
+            method="PATCH",
+            params={"id": f"eq.{PROPOSAL_ID}"},
+            payload={"draft_detail": detail},
+            return_rows=True,
+        )
+
+    def test_management_contact_options_are_normalized_for_autocomplete(self):
+        rows = [{
+            "id": RELATIONSHIP_ID,
+            "business_email": "casey@example.com",
+            "is_current": True,
+            "contact": {"id": "contact-id", "full_name": "Casey Smith"},
+            "organization": {"id": "organization-id", "name": "Example Roofing"},
+        }]
+        with patch.object(self.store, "_request", return_value=rows) as request:
+            options = self.store.list_management_contact_options()
+        self.assertEqual(options, [{
+            "id": RELATIONSHIP_ID,
+            "name": "Casey Smith",
+            "email": "casey@example.com",
+            "organization": "Example Roofing",
+        }])
+        self.assertEqual(request.call_args.args[0], "organization_contact")
+        self.assertEqual(request.call_args.kwargs["params"]["is_current"], "eq.true")
+
+    def test_assign_existing_contact_sets_it_as_primary(self):
+        relationship = {
+            "id": RELATIONSHIP_ID,
+            "business_email": "casey@example.com",
+            "is_current": True,
+            "contact": {"full_name": "Casey Smith"},
+            "organization": {"name": "Example Roofing"},
+        }
+        responses = [[relationship], [{"id": PROPOSAL_ID}], [], []]
+        with patch.object(self.store, "_request", side_effect=responses) as request:
+            result = self.store.assign_or_create_primary_contact(
+                PROPOSAL_ID,
+                organization_contact_id=RELATIONSHIP_ID,
+            )
+        self.assertFalse(result["created"])
+        self.assertEqual(result["name"], "Casey Smith")
+        self.assertEqual(request.call_args.args[0], "proposal_contact")
+        self.assertEqual(request.call_args.kwargs["method"], "POST")
+        self.assertEqual(
+            request.call_args.kwargs["payload"]["organization_contact_id"],
+            RELATIONSHIP_ID,
+        )
+
+    def test_new_contact_requires_organization_when_domain_is_unknown(self):
+        with patch.object(self.store, "_request", return_value=[]), patch.object(
+            self.store, "find_organization_for_email", return_value=None
+        ):
+            with self.assertRaises(ProposalContactOrganizationRequired) as raised:
+                self.store.assign_or_create_primary_contact(
+                    PROPOSAL_ID,
+                    contact_name="Casey Smith",
+                    email="casey@new-roofer.com",
+                )
+        self.assertEqual(raised.exception.domain, "new-roofer.com")
+
+    def test_new_contact_uses_prompted_organization_and_links_proposal(self):
+        relationship = {
+            "id": RELATIONSHIP_ID,
+            "business_email": "casey@new-roofer.com",
+            "is_current": True,
+            "contact": {"full_name": "Casey Smith"},
+            "organization": {"name": "New Roofer"},
+        }
+        responses = [[], [relationship], [{"id": PROPOSAL_ID}], [], []]
+        with patch.object(self.store, "_request", side_effect=responses), patch.object(
+            self.store, "find_organization_for_email", return_value=None
+        ), patch.object(
+            self.store,
+            "resolve_named_organization_for_email",
+            return_value="organization-id",
+        ) as organization, patch.object(
+            self.store, "create_contact", return_value="contact-id"
+        ):
+            result = self.store.assign_or_create_primary_contact(
+                PROPOSAL_ID,
+                contact_name="Casey Smith",
+                email="casey@new-roofer.com",
+                organization_name="New Roofer",
+            )
+        self.assertTrue(result["created"])
+        self.assertEqual(result["organization"], "New Roofer")
+        organization.assert_called_once_with("New Roofer", "casey@new-roofer.com")
+
+    def test_customer_name_update_is_tenant_scoped_by_store_request(self):
+        with patch.object(
+            self.store,
+            "_request",
+            return_value=[{"id": PROPOSAL_ID}],
+        ) as request:
+            self.store.update_proposal_customer_name(
+                PROPOSAL_ID,
+                " Example   Management ",
+            )
+
+        request.assert_called_once_with(
+            "proposal",
+            method="PATCH",
+            params={"id": f"eq.{PROPOSAL_ID}"},
+            payload={"customer_name": "Example Management"},
+            return_rows=True,
+        )
 
     def test_missing_entries_include_missing_estimate_date(self):
         with patch.object(self.store, "list_proposals", return_value=[self.proposal_row()]):
@@ -155,46 +387,49 @@ class ProposalTrackingStoreTests(unittest.TestCase):
         with patch.object(self.store, "list_proposals", return_value=[row]):
             self.assertEqual(self.store.list_missing_entries(), [])
 
-    def test_numeric_spreadsheet_row_resolves_to_migrated_proposal(self):
-        with patch.object(
-            self.store,
-            "_request",
-            return_value=[{"id": PROPOSAL_ID}],
-        ) as request:
-            resolved = self.store._resolve_proposal_id("42")
-        self.assertEqual(resolved, PROPOSAL_ID)
-        self.assertEqual(request.call_args.kwargs["params"]["source_row_number"], "eq.42")
-
-    def test_numeric_spreadsheet_row_prefers_name_and_date_match(self):
-        with patch.object(
-            self.store,
-            "_request",
-            return_value=[{"id": PROPOSAL_ID}],
-        ) as request:
-            resolved = self.store._resolve_proposal_id(
-                "42",
-                display_name="Example Roofing - 123 Main St",
-                proposal_date="8/1/2026",
+    def test_weekly_follow_up_queue_requires_explicit_eligibility(self):
+        with patch.object(self.store, "_request", return_value=[]) as request:
+            self.assertEqual(
+                self.store.list_weekly_follow_ups(datetime.date(2026, 8, 3)),
+                [],
             )
-        self.assertEqual(resolved, PROPOSAL_ID)
-        self.assertEqual(
-            request.call_args.kwargs["params"]["display_name"],
-            "eq.Example Roofing - 123 Main St",
-        )
-        self.assertEqual(
-            request.call_args.kwargs["params"]["proposal_sent_date"],
-            "eq.2026-08-01",
-        )
+        params = request.call_args.kwargs["params"]
+        self.assertEqual(params["status"], "eq.sent")
+        self.assertEqual(params["proposal_sent_date"], "lte.2026-08-03")
+        self.assertEqual(params["follow_up_date"], "is.null")
+        self.assertEqual(params["follow_up_required"], "eq.true")
+
+    def test_proposal_resolution_accepts_only_immutable_uuid(self):
+        with patch.object(self.store, "_request") as request:
+            self.assertEqual(self.store._resolve_proposal_id(PROPOSAL_ID), PROPOSAL_ID)
+            self.assertEqual(self.store._resolve_proposal_id("42"), "")
+            self.assertEqual(self.store._resolve_proposal_id("not-a-proposal-id"), "")
+        request.assert_not_called()
 
     def test_mark_followups_updates_resolved_ids(self):
-        responses = [[{"id": PROPOSAL_ID}], [{"id": PROPOSAL_ID}]]
-        with patch.object(self.store, "_request", side_effect=responses) as request:
-            count = self.store.mark_follow_ups(["42"], datetime.date(2026, 8, 3))
+        with patch.object(
+            self.store,
+            "_request",
+            return_value=[{"proposal_id": PROPOSAL_ID}],
+        ) as request:
+            count = self.store.mark_follow_ups(
+                [PROPOSAL_ID], datetime.date(2026, 8, 3)
+            )
         self.assertEqual(count, 1)
+        self.assertEqual(
+            request.call_args.kwargs["params"]["proposal_id"],
+            f"in.({PROPOSAL_ID})",
+        )
         self.assertEqual(request.call_args.kwargs["payload"], {
             "follow_up_date": "2026-08-03",
             "status": "sent",
         })
+
+    def test_under_contract_status_aliases_are_normalized(self):
+        for status in ("under contract", "under-contract", "under_contract"):
+            with self.subTest(status=status):
+                payload = self.store._editable_payload({"status": status})
+                self.assertEqual(payload["status"], "under_contract")
 
     def test_editing_dates_does_not_reopen_a_closed_proposal(self):
         payload = self.store._editable_payload({
@@ -220,7 +455,7 @@ class ProposalTrackingStoreTests(unittest.TestCase):
         )
 
     def test_new_proposal_save_sets_estimate_date_without_setting_sent_date(self):
-        responses = [[], [], [{"id": PROPOSAL_ID}]]
+        responses = [[], [], [{"id": PROPOSAL_ID}], []]
         with patch.object(self.store, "_request", side_effect=responses) as request:
             proposal_id = self.store.upsert_from_proposal_save(
                 created_date="08/03/2026",
@@ -234,10 +469,75 @@ class ProposalTrackingStoreTests(unittest.TestCase):
                 lead_value="Referral",
             )
         self.assertEqual(proposal_id, PROPOSAL_ID)
-        payload = request.call_args.kwargs["payload"]
-        self.assertEqual(payload["estimate_completed_date"], "2026-08-03")
-        self.assertNotIn("proposal_sent_date", payload)
-        self.assertEqual(payload["project_state"], "CO")
+        proposal_payload = request.call_args_list[2].kwargs["payload"]
+        tracking_payload = request.call_args_list[3].kwargs["payload"]
+        self.assertEqual(proposal_payload["project_state"], "CO")
+        self.assertNotIn("estimate_completed_date", proposal_payload)
+        self.assertEqual(tracking_payload["proposal_id"], PROPOSAL_ID)
+        self.assertEqual(
+            tracking_payload["estimate_completed_date"], "2026-08-03"
+        )
+        self.assertNotIn("proposal_sent_date", tracking_payload)
+
+    def test_failed_tracking_insert_removes_new_proposal_identity(self):
+        responses = [
+            [],
+            [],
+            [{"id": PROPOSAL_ID}],
+            ContactStoreError("Tracking insert failed"),
+            [],
+        ]
+        with patch.object(self.store, "_request", side_effect=responses) as request:
+            with self.assertRaisesRegex(ContactStoreError, "Tracking insert failed"):
+                self.store.upsert_from_proposal_save(
+                    created_date=None,
+                    customer_name="Example Roofing",
+                    street_address="123 Main St",
+                    city="Denver",
+                    state="CO",
+                    zip_code="80202",
+                    submitted_by="Mark",
+                    folder_name="Example Roofing - 123 Main St",
+                    estimated_by="",
+                )
+        cleanup = request.call_args_list[-1]
+        self.assertEqual(cleanup.args[0], "proposal")
+        self.assertEqual(cleanup.kwargs["method"], "DELETE")
+        self.assertEqual(cleanup.kwargs["params"]["id"], f"eq.{PROPOSAL_ID}")
+
+    def test_existing_contact_draft_is_finalized_by_id(self):
+        responses = [
+            [{"id": PROPOSAL_ID}],
+            [],
+            [{"proposal_id": PROPOSAL_ID}],
+            [],
+        ]
+        with patch.object(self.store, "_request", side_effect=responses) as request:
+            proposal_id = self.store.upsert_from_proposal_save(
+                proposal_id=PROPOSAL_ID,
+                created_date="08/13/2026",
+                customer_name="Boulder County",
+                street_address="132 Main St",
+                city="Denver",
+                state="CO",
+                zip_code="88888",
+                submitted_by="Vern",
+                folder_name="Boulder County - 132 Main St",
+            )
+
+        self.assertEqual(proposal_id, PROPOSAL_ID)
+        lookup = request.call_args_list[0]
+        self.assertEqual(lookup.kwargs["params"]["id"], f"eq.{PROPOSAL_ID}")
+        proposal_update = request.call_args_list[1]
+        self.assertEqual(
+            proposal_update.kwargs["payload"]["proposal_folder_name"],
+            "Boulder County - 132 Main St",
+        )
+        tracking_update = request.call_args_list[3]
+        self.assertEqual(
+            tracking_update.kwargs["payload"]["estimate_completed_date"],
+            "2026-08-13",
+        )
 
 
 class ProposalTrackingSpreadsheetColumnTests(unittest.TestCase):

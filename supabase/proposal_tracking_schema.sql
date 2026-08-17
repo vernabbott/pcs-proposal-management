@@ -1,4 +1,4 @@
--- Proposal tracking schema for the staged PCS spreadsheet-to-Supabase cutover.
+-- Normalized proposal and one-to-one tracking schema for PCS Supabase.
 
 create table if not exists public.proposal (
   id uuid primary key default gen_random_uuid(),
@@ -23,17 +23,34 @@ create table if not exists public.proposal (
       else ' - ' || btrim(project_street_address)
     end
   ) stored,
+  proposal_folder_name text,
+  draft_detail jsonb not null default '{}'::jsonb check (
+    jsonb_typeof(draft_detail) = 'object'
+  ),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+comment on table public.proposal is
+  'Proposal customer and project identity. Lifecycle tracking is stored one-to-one in proposal_tracking.';
+comment on column public.proposal.display_name is
+  'Customer and project street address formatted for PCS screens as Customer - Street Address.';
+comment on column public.proposal.draft_detail is
+  'Temporary proposal-detail form snapshot used before proposal files are created; tenant access is inherited from proposal RLS.';
+
+create table if not exists public.proposal_tracking (
+  proposal_id uuid primary key references public.proposal(id) on delete cascade,
   lead_source text,
   submitted_by text,
   estimated_by text,
   estimate_completed_date date,
   proposal_sent_date date,
   follow_up_date date,
+  follow_up_required boolean not null default true,
   response_notes text,
   status text not null default 'draft' check (
     status in ('draft', 'sent', 'under_contract', 'finished', 'dead')
   ),
-  proposal_folder_name text,
   source_name text,
   source_row_number integer check (
     source_row_number is null or source_row_number >= 2
@@ -43,22 +60,24 @@ create table if not exists public.proposal (
   unique (source_name, source_row_number)
 );
 
-comment on table public.proposal is
-  'Normalized proposal tracking records replacing Proposal Tracking.xlsx after a staged feature-flag cutover.';
-comment on column public.proposal.display_name is
-  'Customer and project street address formatted for PCS screens as Customer - Street Address.';
-comment on column public.proposal.estimate_completed_date is
+comment on table public.proposal_tracking is
+  'One-to-one lifecycle, assignment, response, and import metadata for a proposal.';
+comment on column public.proposal_tracking.estimate_completed_date is
   'Date the estimate was completed; distinct from the date the proposal was sent.';
-comment on column public.proposal.source_row_number is
+comment on column public.proposal_tracking.follow_up_required is
+  'True when a sent proposal should remain eligible for the follow-up queue; false when no follow-up is intended.';
+comment on column public.proposal_tracking.source_row_number is
   'Original spreadsheet row number used for idempotent migration and reconciliation.';
 
 create index if not exists proposal_customer_address_idx
   on public.proposal (normalized_customer_name, normalized_project_street_address);
 create index if not exists proposal_display_name_idx
   on public.proposal (display_name);
-create index if not exists proposal_follow_up_queue_idx
-  on public.proposal (proposal_sent_date, follow_up_date)
-  where proposal_sent_date is not null and follow_up_date is null;
+create index if not exists proposal_tracking_follow_up_queue_idx
+  on public.proposal_tracking (proposal_sent_date, follow_up_date)
+  where proposal_sent_date is not null
+    and follow_up_date is null
+    and follow_up_required;
 create index if not exists proposal_folder_name_idx
   on public.proposal (lower(btrim(proposal_folder_name)))
   where proposal_folder_name is not null;
@@ -86,10 +105,18 @@ create trigger proposal_set_updated_at
 before update on public.proposal
 for each row execute function public.set_property_management_updated_at();
 
+drop trigger if exists proposal_tracking_set_updated_at on public.proposal_tracking;
+create trigger proposal_tracking_set_updated_at
+before update on public.proposal_tracking
+for each row execute function public.set_property_management_updated_at();
+
 alter table public.proposal enable row level security;
+alter table public.proposal_tracking enable row level security;
 alter table public.proposal_contact enable row level security;
 
 revoke all on table public.proposal from anon, authenticated;
+revoke all on table public.proposal_tracking from anon, authenticated;
 revoke all on table public.proposal_contact from anon, authenticated;
 grant select, insert, update, delete on table public.proposal to service_role;
+grant select, insert, update, delete on table public.proposal_tracking to service_role;
 grant select, insert, update, delete on table public.proposal_contact to service_role;

@@ -342,6 +342,7 @@
 	    #attachProposalFilesButton,
 	    #createButton,
 	    #fullDetailButton,
+	    #contactButton,
 	    .btn-outline-secondary {
 	      height: 34px;
 	      border-radius: 6px;
@@ -403,6 +404,7 @@
 
   </style>
   <form id="proposalForm" method="POST" action="{{ url_for('update_proposal', folder_name=folder_name) }}">
+    {% if database_proposal_id %}<input type="hidden" name="database_proposal_id" value="{{ database_proposal_id }}">{% endif %}
   <div class="detail-panel project-panel">
     <div class="inline-input-row mb-0" id="customer-name-row">
     <label for="customer_name" class="form-label mb-0" style="min-width: 80px;">Customer</label>
@@ -412,48 +414,11 @@
            name="customer_name"
            id="customer_name"
            list="customer_suggestions"
-           value="{{ data.customer_name or '' }}" {% if ro %}readonly{% endif %}>
+           value="{{ data.customer_name or '' }}" required {% if ro %}readonly{% endif %}>
     <datalist id="customer_suggestions">
-      <option value="Advanced Roofing"></option>
-      <option value="All Season Exteriors"></option>
-      <option value="AVI"></option>
-      <option value="Big Bear"></option>
-      <option value="BRG Builds"></option>
-      <option value="Capital Roofing"></option>
-      <option value="Colorado Strong Capstone Roofing"></option>
-      <option value="d-7 Roofing"></option>
-      <option value="Elite Roofing"></option>
-      <option value="Forest Roofs"></option>
-      <option value="FTC Roofing"></option>
-      <option value="GEN3 Roofing"></option>
-      <option value="Glassford PM"></option>
-      <option value="Gorilla Roofing"></option>
-      <option value="Heritage Roofing"></option>
-      <option value="HPC Contractors"></option>
-      <option value="Industry Builders"></option>
-      <option value="Integrity Roofing"></option>
-      <option value="Knight Commercial"></option>
-      <option value="Levi"></option>
-      <option value="Lifetime Construction"></option>
-      <option value="Matrix"></option>
-      <option value="Maxx Roof"></option>
-      <option value="Overland"></option>
-      <option value="Peak Roofing"></option>
-      <option value="R3D Roofing"></option>
-      <option value="R3ng"></option>
-      <option value="Recovery Roofing"></option>
-      <option value="Red Diamond Roofing"></option>
-      <option value="Riley's Roofing"></option>
-      <option value="Rise Construction"></option>
-      <option value="Rocky Mountain Exteriors"></option>
-      <option value="Roofing Outfitters"></option>
-      <option value="Rooftec"></option>
-      <option value="RSBG"></option>
-      <option value="Scotts Roofing"></option>
-      <option value="SPI"></option>
-      <option value="Storm Exteriors"></option>
-      <option value="Trinity Construction"></option>
-      <option value="Zenith"></option>
+      {% for organization_name in customer_organization_names %}
+        <option value="{{ organization_name }}"></option>
+      {% endfor %}
     </datalist>
     <input type="hidden" name="customer_name_existing" value="{{ data.customer_name or '' }}">
     <label for="pcs_or_roofer_ind" class="form-label mb-0" style="min-width: 90px;">PCS/Roofer</label>
@@ -1010,7 +975,7 @@
             </div>
             <div class="col-4">
               <button type="submit" class="btn btn-outline-success w-100" id="createButton" name="action" value="{% if is_blank %}create{% else %}save{% endif %}" {% if ro %}disabled{% endif %}>
-                <i class="bi bi-check2-square me-1"></i> {% if is_blank %}Create Proposal{% else %}Save Changes{% endif %}
+                <i class="bi bi-check2-square me-1"></i> {% if database_proposal_id %}Create Proposal Files{% elif is_blank %}Create Proposal{% else %}Save Changes{% endif %}
               </button>
             </div>
             <div class="col-4">
@@ -1030,6 +995,11 @@
 	                  <i class="bi bi-table me-1"></i> Full Detail
 	                </a>
 	              {% endif %}
+	            </div>
+	            <div class="col-4 offset-4">
+	              <button type="submit" class="btn btn-outline-primary w-100" id="contactButton" name="action" value="contact" formnovalidate>
+	                <i class="bi bi-person-plus me-1"></i> Contact
+	              </button>
 	            </div>
 	          </div>
 	        </div>

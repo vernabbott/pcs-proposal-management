@@ -22,6 +22,9 @@
         .flash,.configuration-error { margin-bottom:14px; padding:11px 13px; border:1px solid #b9d1ea; border-radius:7px; background:var(--navy-soft); font-size:13px; }
         .flash.danger,.configuration-error { border-color:#f5c6c2; background:#fff1f0; color:#7a271a; }
         .configuration-error a { color:inherit; font-weight:800; }
+        .assignment-banner { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:14px; padding:13px 15px; border:1px solid #9fc2e8; border-radius:8px; background:var(--navy-soft); }
+        .assignment-banner strong { display:block; font-size:14px; }
+        .assignment-banner span { display:block; margin-top:2px; color:var(--muted); font-size:12px; }
         .toolbar { display:flex; align-items:end; gap:10px; margin-bottom:14px; padding:14px; border:1px solid var(--line); border-radius:9px; background:var(--panel); }
         .toolbar .search { flex:1; }
         label { display:block; margin-bottom:6px; font-size:12px; font-weight:800; color:#344054; }
@@ -40,6 +43,8 @@
         td { padding:11px 12px; border-bottom:1px solid #edf0f3; vertical-align:top; }
         tr:last-child td { border-bottom:0; }
         .name { font-weight:800; }
+        .contact-name-link { color:var(--navy); text-decoration:none; }
+        .contact-name-link:hover { text-decoration:underline; }
         .subline { margin-top:3px; color:var(--muted); font-size:12px; }
         .email { color:var(--navy); text-decoration:none; }
         .pill { display:inline-flex; align-items:center; padding:3px 7px; border-radius:999px; background:#eef2f6; color:#475467; font-size:11px; font-weight:800; white-space:nowrap; }
@@ -86,8 +91,9 @@
                 <p class="subtitle">Manage people, their current organizations, and business contact details.</p>
             </div>
             <div class="top-actions">
-                <a class="button secondary" href="{{ url_for('landing_page') }}"><i class="bi bi-arrow-left"></i>Home</a>
-                <a class="button" href="{{ url_for('contact_management') }}#contact-form"><i class="bi bi-person-plus"></i>Add Contact</a>
+                <a class="button secondary" id="contact-back-button" href="{{ url_for('landing_page') }}"><i class="bi bi-arrow-left"></i>Back</a>
+                <a class="button secondary" href="{{ url_for('landing_page') }}"><i class="bi bi-house-door"></i>Home</a>
+                <a class="button" href="{{ url_for('contact_management', attach_to_proposal=attach_to_proposal, proposal_name=proposal_name) if attach_to_proposal else url_for('contact_management') }}#contact-form"><i class="bi bi-person-plus"></i>Add Contact</a>
             </div>
         </header>
 
@@ -97,6 +103,15 @@
         {% if configuration_error %}
             <div class="configuration-error"><strong>Contact data is unavailable.</strong> {{ configuration_error }} <a href="{{ url_for('application_settings') }}">Open Local Settings</a>.</div>
         {% endif %}
+        {% if attach_to_proposal %}
+            <div class="assignment-banner" role="status">
+                <div>
+                    <strong>Attach a contact to {{ proposal_name or 'this proposal' }}</strong>
+                    <span>Select an active contact below, or add a new contact and it will be attached automatically.</span>
+                </div>
+                <a class="button secondary" href="{{ url_for('proposal_list') }}">Cancel</a>
+            </div>
+        {% endif %}
 
         {% if duplicate_matches %}
             <div class="modal-backdrop">
@@ -104,6 +119,10 @@
                     <h2 id="duplicate-dialog-title">Possible duplicate contact</h2>
                     <p>The submitted contact has the same email or full name as an existing record. Choose how to continue.</p>
                     <form method="post" action="{{ url_for('create_contact') }}">
+                        {% if attach_to_proposal %}
+                            <input type="hidden" name="attach_to_proposal" value="{{ attach_to_proposal }}">
+                            <input type="hidden" name="proposal_name" value="{{ proposal_name }}">
+                        {% endif %}
                         {% for field_name, field_value in pending_values.items() %}
                             {% if field_name == 'do_not_contact' %}
                                 {% if field_value %}<input type="hidden" name="do_not_contact" value="on">{% endif %}
@@ -125,7 +144,7 @@
                         <div class="duplicate-actions">
                             <button class="button danger" type="submit" name="duplicate_action" value="replace">Replace Selected</button>
                             <button class="button" type="submit" name="duplicate_action" value="keep">Keep Both</button>
-                            <a class="button secondary" href="{{ url_for('contact_management') }}">Stop</a>
+                            <a class="button secondary" href="{{ url_for('contact_management', attach_to_proposal=attach_to_proposal, proposal_name=proposal_name) if attach_to_proposal else url_for('contact_management') }}">Stop</a>
                         </div>
                     </form>
                 </section>
@@ -133,6 +152,10 @@
         {% endif %}
 
         <form class="toolbar" method="get" action="{{ url_for('contact_management') }}">
+            {% if attach_to_proposal %}
+                <input type="hidden" name="attach_to_proposal" value="{{ attach_to_proposal }}">
+                <input type="hidden" name="proposal_name" value="{{ proposal_name }}">
+            {% endif %}
             <div class="search">
                 <label for="contact-search">Search contacts</label>
                 <input id="contact-search" type="search" name="q" value="{{ search }}" placeholder="Name, organization, title, email, or phone">
@@ -146,7 +169,7 @@
                 </select>
             </div>
             <button class="button" type="submit"><i class="bi bi-search"></i>Search</button>
-            {% if search %}<a class="button secondary" href="{{ url_for('contact_management', status=status) }}">Clear</a>{% endif %}
+            {% if search %}<a class="button secondary" href="{{ url_for('contact_management', status=status, attach_to_proposal=attach_to_proposal, proposal_name=proposal_name) if attach_to_proposal else url_for('contact_management', status=status) }}">Clear</a>{% endif %}
         </form>
 
         <div class="content">
@@ -164,7 +187,7 @@
                                     {% set person = row.contact or {} %}
                                     {% set org = row.organization or {} %}
                                     <tr>
-                                        <td><div class="name">{{ person.full_name }}</div><div class="subline">{{ row.title or 'No title' }}</div></td>
+                                        <td><a class="name contact-name-link" href="{{ url_for('contact_management', edit=person.id, status=status, q=search, attach_to_proposal=attach_to_proposal, proposal_name=proposal_name) if attach_to_proposal else url_for('contact_management', edit=person.id, status=status, q=search) }}#contact-form" aria-label="Edit {{ person.full_name }}">{{ person.full_name }}</a><div class="subline">{{ row.title or 'No title' }}</div></td>
                                         <td><div>{{ org.name }}</div><div class="subline">{{ org.organization_type }}</div></td>
                                         <td>
                                             {% if row.business_email %}<a class="email" href="mailto:{{ row.business_email }}">{{ row.business_email }}</a>{% else %}<span class="subline">No email</span>{% endif %}
@@ -173,7 +196,14 @@
                                         <td><span class="pill {{ '' if row.is_current else 'archived' }}">{{ 'Active' if row.is_current else 'Archived' }}</span>{% if row.do_not_contact %}<div class="subline">Do not contact</div>{% endif %}</td>
                                         <td>
                                             <div class="row-actions">
-                                                <a class="icon-button" href="{{ url_for('contact_management', edit=person.id, status=status, q=search) }}#contact-form" aria-label="Edit {{ person.full_name }}" title="Edit"><i class="bi bi-pencil"></i></a>
+                                                {% if attach_to_proposal and row.is_current %}
+                                                    <form method="post" action="{{ url_for('attach_proposal_contact', proposal_id=attach_to_proposal, organization_contact_id=row.id) }}">
+                                                        <input type="hidden" name="proposal_name" value="{{ proposal_name }}">
+                                                        <button class="icon-button contact-link-button" type="submit" data-contact-id="{{ person.id }}" aria-label="Attach {{ person.full_name }} to {{ proposal_name or 'proposal' }}" title="Attach contact"><i class="bi bi-link-45deg"></i></button>
+                                                    </form>
+                                                {% else %}
+                                                    <button class="icon-button contact-link-button" type="button" data-contact-id="{{ person.id }}" aria-label="Link {{ person.full_name }}" title="Link"><i class="bi bi-link-45deg"></i></button>
+                                                {% endif %}
                                                 {% if row.is_current %}
                                                     <form method="post" action="{{ url_for('delete_contact', contact_id=person.id) }}" onsubmit="return confirm('Remove this contact from the active list? The historical record will be retained.');">
                                                         <button class="icon-button delete" type="submit" aria-label="Delete {{ person.full_name }}" title="Delete"><i class="bi bi-trash3"></i></button>
@@ -200,6 +230,10 @@
                     {% if selected_contact and not selected_contact.is_current %}<span class="pill archived">Saving restores contact</span>{% endif %}
                 </div>
                 <form class="form-body" method="post" action="{{ url_for('edit_contact', contact_id=person.id) if selected_contact else url_for('create_contact') }}">
+                    {% if attach_to_proposal %}
+                        <input type="hidden" name="attach_to_proposal" value="{{ attach_to_proposal }}">
+                        <input type="hidden" name="proposal_name" value="{{ proposal_name }}">
+                    {% endif %}
                     <div class="form-grid">
                         <div class="field"><label for="first-name">First Name</label><input id="first-name" name="first_name" value="{{ form_values.first_name if pending_values else person.first_name or '' }}"></div>
                         <div class="field"><label for="last-name">Last Name</label><input id="last-name" name="last_name" value="{{ form_values.last_name if pending_values else person.last_name or '' }}"></div>
@@ -256,13 +290,27 @@
                     </div>
                     <div class="form-actions">
                         <button class="button" type="submit" {% if configuration_error %}disabled{% endif %}><i class="bi bi-check2"></i>{{ 'Save Changes' if selected_contact else 'Add Contact' }}</button>
-                        {% if selected_contact %}<a class="button secondary" href="{{ url_for('contact_management', status=status, q=search) }}">Cancel</a>{% endif %}
+                        {% if selected_contact %}<a class="button secondary" href="{{ url_for('contact_management', status=status, q=search, attach_to_proposal=attach_to_proposal, proposal_name=proposal_name) if attach_to_proposal else url_for('contact_management', status=status, q=search) }}">Cancel</a>{% endif %}
                     </div>
                 </form>
             </section>
         </div>
     </main>
     <script>
+        const contactBackButton = document.getElementById('contact-back-button');
+        contactBackButton.addEventListener('click', function (event) {
+            if (!document.referrer) return;
+            try {
+                const previousPage = new URL(document.referrer, window.location.href);
+                if (previousPage.origin === window.location.origin) {
+                    event.preventDefault();
+                    window.history.back();
+                }
+            } catch (error) {
+                // The Home link remains the safe fallback for an invalid referrer.
+            }
+        });
+
         const organizationId = document.getElementById('organization-id');
         const organizationName = document.getElementById('organization-name');
         const organizationType = document.getElementById('organization-type');

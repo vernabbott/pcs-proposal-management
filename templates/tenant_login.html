@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in · PCS Beta</title>
+  <style>
+    :root{--navy:#174f85;--ink:#182230;--muted:#667085;--line:#d0d5dd;--page:#f2f5f8}
+    *{box-sizing:border-box} body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--page);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink)}
+    main{width:min(430px,calc(100% - 32px));padding:30px;border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:0 12px 35px rgba(16,24,40,.09)}
+    .beta{display:inline-block;margin-bottom:14px;padding:5px 9px;border-radius:999px;background:#fff1c2;color:#744f00;font-size:12px;font-weight:800}
+    h1{margin:0;font-size:28px}.intro{margin:8px 0 24px;color:var(--muted);line-height:1.5}
+    label{display:block;margin:14px 0 6px;font-size:13px;font-weight:800}input{width:100%;min-height:44px;padding:10px 11px;border:1px solid var(--line);border-radius:7px;font:inherit}
+    button{width:100%;min-height:44px;margin-top:20px;border:0;border-radius:7px;background:var(--navy);color:#fff;font:inherit;font-weight:800;cursor:pointer}
+    .flash{margin:0 0 12px;padding:10px 12px;border-radius:7px;background:#fee4e2;color:#912018;font-size:13px}.settings{display:block;margin-top:16px;text-align:center;color:var(--navy);font-size:13px;font-weight:700}
+  </style>
+</head>
+<body>
+  <main>
+    <span class="beta">BETA</span>
+    <h1>Sign in</h1>
+    <p class="intro">Your account determines which company records, reports, and protected storage paths PCS can access.</p>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}<div class="flash" role="alert">{{ message }}</div>{% endfor %}
+    {% endwith %}
+    <form method="post" autocomplete="on">
+      <input type="hidden" name="next" value="{{ next }}">
+      <label for="email">Email address</label>
+      <input id="email" name="email" type="email" required autocomplete="username" autofocus>
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" required autocomplete="current-password">
+      <button type="submit">Sign in to PCS Beta</button>
+    </form>
+    <a class="settings" href="{{ url_for('application_settings') }}">Connection settings</a>
+  </main>
+</body>
+</html>

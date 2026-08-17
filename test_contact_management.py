@@ -1,6 +1,6 @@
 import unittest
 import uuid
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pcs_proposal_web as web
 from contact_store import ContactConfigurationError, ContactStore, ContactStoreError
@@ -54,9 +54,11 @@ class FakeContactStore:
         self.organizations_resolved_from_email = []
         self.organizations_updated = []
         self.duplicate_matches = []
+        self.contact_searches = []
         self.row = sample_contact()
 
     def list_contacts(self, *, search="", status="active"):
+        self.contact_searches.append((search, status))
         return [self.row]
 
     def list_organizations(self):
@@ -126,6 +128,170 @@ class ContactManagementRouteTests(unittest.TestCase):
         self.assertIn(b"Save Changes", response.data)
         self.assertIn(b'list="organization-options"', response.data)
         self.assertIn(b"Choose an organization or enter a new one", response.data)
+
+    def test_contact_page_has_history_back_button_with_home_fallback(self):
+        response = self.client.get("/contacts")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            b'id="contact-back-button" href="/"',
+            response.data,
+        )
+        self.assertIn(b"window.history.back()", response.data)
+        self.assertIn(b"previousPage.origin === window.location.origin", response.data)
+        self.assertIn(b"bi bi-house-door", response.data)
+
+    def test_contact_name_links_to_edit_form_and_chain_button_replaces_edit_button(self):
+        response = self.client.get("/contacts")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            f'href="/contacts?edit={CONTACT_ID}&amp;status=active&amp;q=#contact-form" aria-label="Edit Casey Morgan"'.encode(),
+            response.data,
+        )
+        self.assertIn(b'class="name contact-name-link"', response.data)
+        self.assertIn(b'class="icon-button contact-link-button"', response.data)
+        self.assertIn(f'data-contact-id="{CONTACT_ID}"'.encode(), response.data)
+        self.assertIn(b'class="bi bi-link-45deg"', response.data)
+        self.assertNotIn(b"bi-pencil", response.data)
+
+    def test_assignment_mode_can_select_an_existing_contact(self):
+        proposal_id = "11111111-1111-4111-8111-111111111111"
+        relationship_id = self.store.row["id"]
+        response = self.client.get(
+            "/contacts",
+            query_string={
+                "attach_to_proposal": proposal_id,
+                "proposal_name": "Example Roofing - 100 Main St",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Attach a contact to Example Roofing - 100 Main St", response.data)
+        self.assertIn(
+            f'action="/proposals/{proposal_id}/contacts/{relationship_id}/attach"'.encode(),
+            response.data,
+        )
+        self.assertIn(b"Select an active contact below", response.data)
+        self.assertIn(b'name="attach_to_proposal"', response.data)
+
+    def test_assignment_mode_uses_customer_name_as_organization_search(self):
+        proposal_id = "11111111-1111-4111-8111-111111111111"
+        response = self.client.get(
+            "/contacts",
+            query_string={
+                "attach_to_proposal": proposal_id,
+                "proposal_name": "Example Roofing - 100 Main St",
+                "q": "Example Roofing",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'value="Example Roofing"', response.data)
+        self.assertIn(("Example Roofing", "active"), self.store.contact_searches)
+
+    def test_existing_contact_selection_attaches_and_returns_to_proposals(self):
+        proposal_id = "11111111-1111-4111-8111-111111111111"
+        relationship_id = self.store.row["id"]
+        tracking_store = Mock()
+        tracking_store.assign_or_create_primary_contact.return_value = {
+            "name": "Casey Morgan"
+        }
+        with patch.object(web, "get_proposal_tracking_store", return_value=tracking_store):
+            response = self.client.post(
+                f"/proposals/{proposal_id}/contacts/{relationship_id}/attach",
+                data={"proposal_name": "Example Roofing - 100 Main St"},
+            )
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response.location.endswith("/proposals"))
+        tracking_store.assign_or_create_primary_contact.assert_called_once_with(
+            proposal_id,
+            organization_contact_id=relationship_id,
+        )
+
+    def test_detail_contact_selection_returns_to_detail_and_prefills_blank_customer(self):
+        proposal_id = "11111111-1111-4111-8111-111111111111"
+        relationship_id = self.store.row["id"]
+        tracking_store = Mock()
+        tracking_store.assign_or_create_primary_contact.return_value = {
+            "name": "Casey Morgan",
+            "organization": "Example Management",
+        }
+        with patch.object(web, "get_proposal_tracking_store", return_value=tracking_store):
+            start = self.client.get(
+                "/contacts",
+                query_string={
+                    "attach_to_proposal": proposal_id,
+                    "proposal_name": "New Proposal ABC12345",
+                    "return_to_detail": "1",
+                    "proposal_folder_name": "New Proposal ABC12345",
+                    "customer_was_blank": "1",
+                },
+            )
+            self.assertEqual(start.status_code, 200)
+            response = self.client.post(
+                f"/proposals/{proposal_id}/contacts/{relationship_id}/attach",
+                data={"proposal_name": "New Proposal ABC12345"},
+            )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/proposal_details?", response.location)
+        self.assertIn("folder_name=New+Proposal+ABC12345", response.location)
+        self.assertIn(f"proposal_id={proposal_id}", response.location)
+        tracking_store.update_proposal_customer_name.assert_called_once_with(
+            proposal_id,
+            "Example Management",
+        )
+
+    def test_detail_contact_without_organization_returns_with_customer_blank(self):
+        proposal_id = "11111111-1111-4111-8111-111111111111"
+        relationship_id = self.store.row["id"]
+        tracking_store = Mock()
+        tracking_store.assign_or_create_primary_contact.return_value = {
+            "name": "Casey Morgan",
+            "organization": "",
+        }
+        with patch.object(web, "get_proposal_tracking_store", return_value=tracking_store):
+            self.client.get(
+                "/contacts",
+                query_string={
+                    "attach_to_proposal": proposal_id,
+                    "return_to_detail": "1",
+                    "proposal_folder_name": "New Proposal ABC12345",
+                    "customer_was_blank": "1",
+                },
+            )
+            response = self.client.post(
+                f"/proposals/{proposal_id}/contacts/{relationship_id}/attach"
+            )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("customer_was_blank=1", response.location)
+        tracking_store.update_proposal_customer_name.assert_not_called()
+
+    def test_new_contact_is_created_attached_and_returns_to_proposals(self):
+        proposal_id = "11111111-1111-4111-8111-111111111111"
+        tracking_store = Mock()
+        tracking_store.assign_or_create_primary_contact.return_value = {
+            "name": "Avery Lee"
+        }
+        with patch.object(web, "get_proposal_tracking_store", return_value=tracking_store):
+            response = self.client.post(
+                "/contacts",
+                data={
+                    "first_name": "Avery",
+                    "last_name": "Lee",
+                    "organization_id": ORGANIZATION_ID,
+                    "organization_name": "Example Management",
+                    "organization_type": "Property Management",
+                    "business_email": "avery@example.com",
+                    "attach_to_proposal": proposal_id,
+                    "proposal_name": "Example Roofing - 100 Main St",
+                },
+            )
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response.location.endswith("/proposals"))
+        tracking_store.assign_or_create_primary_contact.assert_called_once_with(
+            proposal_id,
+            organization_contact_id=self.store.row["id"],
+        )
 
     def test_create_contact_uses_existing_organization(self):
         response = self.client.post(
@@ -355,8 +521,64 @@ class ContactStoreEmailOrganizationTests(unittest.TestCase):
         ):
             self.store.resolve_organization_from_email("")
 
+    def test_find_organization_for_email_returns_unique_domain_match(self):
+        organization = {
+            "id": ORGANIZATION_ID,
+            "name": "Example Roofing",
+            "normalized_name": "example roofing",
+            "email_domain": "example.com",
+            "organization_type": "Roofing Company",
+        }
+        with patch.object(self.store, "_request", return_value=[organization]) as request:
+            result = self.store.find_organization_for_email("casey@EXAMPLE.com")
+        self.assertEqual(result, organization)
+        self.assertEqual(request.call_args.args[0], "organization")
+        self.assertEqual(
+            request.call_args.kwargs["params"]["or"],
+            "(normalized_name.eq.example.com,email_domain.ilike.example.com)",
+        )
+
+    def test_shared_email_domain_requires_user_named_organization(self):
+        with patch.object(self.store, "_request") as request:
+            self.assertIsNone(
+                self.store.find_organization_for_email("casey@gmail.com")
+            )
+        request.assert_not_called()
+
+    def test_named_organization_creation_records_nonshared_email_domain(self):
+        with patch.object(self.store, "find_organization_by_name", return_value=None), patch.object(
+            self.store, "_request", return_value=[{"id": ORGANIZATION_ID}]
+        ) as request:
+            organization_id = self.store.resolve_named_organization_for_email(
+                "Example Roofing", "casey@example.com"
+            )
+        self.assertEqual(organization_id, ORGANIZATION_ID)
+        self.assertEqual(request.call_args.kwargs["payload"]["name"], "Example Roofing")
+        self.assertEqual(request.call_args.kwargs["payload"]["email_domain"], "example.com")
+
+    def test_named_organization_does_not_claim_shared_email_domain(self):
+        with patch.object(self.store, "find_organization_by_name", return_value=None), patch.object(
+            self.store, "_request", return_value=[{"id": ORGANIZATION_ID}]
+        ) as request:
+            self.store.resolve_named_organization_for_email(
+                "Example Roofing", "casey@gmail.com"
+            )
+        self.assertNotIn("email_domain", request.call_args.kwargs["payload"])
+
     def test_selected_shared_domains_use_unknown_organization(self):
-        for domain in ("gmail.com", "comcast.net", "m.knck.io", "yahoo.com"):
+        for domain in (
+            "aol.com",
+            "comcast.net",
+            "fastmail.com",
+            "gmail.com",
+            "hotmail.com",
+            "icloud.com",
+            "mail.com",
+            "me.com",
+            "m.knck.io",
+            "msn.com",
+            "yahoo.com",
+        ):
             with self.subTest(domain=domain), patch.object(
                 self.store,
                 "_request",

@@ -34,7 +34,7 @@
 
         .proposal-shell {
             width: 100%;
-            max-width: 1440px;
+            max-width: 1760px;
             margin: 0 auto;
             padding: 18px 20px 24px;
         }
@@ -113,32 +113,78 @@
             margin-bottom: 14px;
         }
 
-        .status-tabs {
+        .filter-control {
+            position: relative;
+        }
+
+        .filter-button {
             display: inline-flex;
-            border: 1px solid var(--pcs-border);
-            border-radius: 7px;
-            overflow: hidden;
-            background: #f8fafc;
-        }
-
-        .status-tabs .btn-check + label {
+            align-items: center;
+            justify-content: center;
+            width: 36px;
             height: 34px;
-            padding: 7px 12px;
-            border: 0;
-            border-right: 1px solid var(--pcs-border);
-            color: #3f4d5a;
+            padding: 0;
+            border: 1px solid var(--pcs-border);
+            border-radius: 6px;
+            background: #f8fafc;
+            color: #344054;
+            font-size: 16px;
+        }
+
+        .filter-button:hover,
+        .filter-button:focus-visible,
+        .filter-button.is-active {
+            border-color: var(--pcs-primary);
+            background: #eaf2fb;
+            color: var(--pcs-primary);
+        }
+
+        .filter-button:focus-visible {
+            box-shadow: 0 0 0 3px rgba(33, 90, 156, .18);
+            outline: none;
+        }
+
+        .filter-menu {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            z-index: 20;
+            width: 190px;
+            padding: 6px;
+            border: 1px solid var(--pcs-border);
+            border-radius: 8px;
+            background: var(--pcs-panel);
+            box-shadow: 0 10px 28px rgba(16, 24, 40, .16);
+        }
+
+        .filter-menu[hidden] {
+            display: none;
+        }
+
+        .filter-option {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 34px;
+            padding: 7px 9px;
+            border-radius: 5px;
+            color: #344054;
             font-size: 13px;
-            font-weight: 700;
-            border-radius: 0;
+            font-weight: 650;
+            text-decoration: none;
         }
 
-        .status-tabs .btn-check + label:last-child {
-            border-right: 0;
+        .filter-option:hover,
+        .filter-option:focus-visible {
+            background: #f0f5fa;
+            color: var(--pcs-primary);
+            outline: none;
         }
 
-        .status-tabs .btn-check:checked + label {
-            background: var(--pcs-primary);
-            color: #fff;
+        .filter-option.is-selected {
+            background: #eaf2fb;
+            color: var(--pcs-primary);
+            font-weight: 800;
         }
 
         .search-wrap {
@@ -213,12 +259,21 @@
 
         .proposal-row {
             display: grid;
-            grid-template-columns: minmax(260px, 1fr) 150px 320px;
+            grid-template-columns:
+                minmax(225px, 1.25fr)
+                minmax(225px, 1fr)
+                82px
+                82px
+                72px
+                72px
+                72px
+                80px
+                175px;
             align-items: center;
             min-height: 54px;
             padding: 9px 12px;
             border-bottom: 1px solid #edf1f5;
-            column-gap: 12px;
+            column-gap: 8px;
         }
 
         .proposal-row:last-child {
@@ -242,12 +297,27 @@
         }
 
         .proposal-name {
+            display: block;
             min-width: 0;
+            color: var(--pcs-text);
             font-size: 13px;
             font-weight: 750;
             overflow: hidden;
+            text-decoration: none;
             text-overflow: ellipsis;
             white-space: nowrap;
+        }
+
+        .proposal-name:hover,
+        .proposal-name:focus-visible {
+            color: var(--pcs-primary);
+            text-decoration: underline;
+        }
+
+        .proposal-name:focus-visible {
+            border-radius: 3px;
+            box-shadow: 0 0 0 2px rgba(33, 90, 156, .22);
+            outline: none;
         }
 
         .proposal-modified {
@@ -255,10 +325,91 @@
             font-size: 12px;
         }
 
+        .proposal-tracking-value {
+            min-width: 0;
+            overflow: hidden;
+            color: #344054;
+            font-size: 12px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .proposal-tracking-value::before {
+            display: none;
+            content: attr(data-label) ": ";
+            color: var(--pcs-muted);
+            font-weight: 700;
+        }
+
+        .contact-card {
+            display: flex;
+            align-items: center;
+            height: 48px;
+            min-width: 0;
+            padding: 7px 10px;
+            border: 1px solid #dbe4ee;
+            border-radius: 7px;
+            background: #f8fafc;
+            line-height: 1.25;
+        }
+
+        .contact-card-name {
+            overflow: hidden;
+            color: var(--pcs-text);
+            font-size: 13px;
+            font-weight: 750;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .contact-card-email {
+            overflow: hidden;
+            margin-top: 2px;
+            color: var(--pcs-muted);
+            font-size: 11px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .contact-card-empty {
+            color: var(--pcs-primary);
+            font-size: 13px;
+            font-weight: 750;
+        }
+
+        .contact-card-attach-link {
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .contact-card-attach-link:hover,
+        .contact-card-attach-link:focus-visible {
+            text-decoration: underline;
+        }
+
+        .contact-card-link {
+            display: block;
+            width: 100%;
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .contact-card-link:hover .contact-card-name,
+        .contact-card-link:focus-visible .contact-card-name {
+            color: var(--pcs-primary);
+            text-decoration: underline;
+        }
+
+        .contact-card-link:focus-visible {
+            border-radius: 4px;
+            box-shadow: 0 0 0 2px rgba(33, 90, 156, .22);
+            outline: none;
+        }
+
         .proposal-actions {
             display: flex;
             justify-content: flex-end;
-            gap: 7px;
+            gap: 4px;
         }
 
         .action-btn {
@@ -272,6 +423,23 @@
             font-size: 12px;
             font-weight: 700;
             white-space: nowrap;
+        }
+
+        .compact-action-btn {
+            gap: 4px;
+            height: 26px;
+            padding: 0 6px;
+            border-radius: 5px;
+            font-size: 11px;
+        }
+
+        .compact-action-btn i {
+            font-size: 11px;
+        }
+
+        .compact-icon-btn {
+            width: 26px;
+            padding: 0;
         }
 
         .icon-only {
@@ -293,7 +461,8 @@
 
         .proposal-row.is-hidden,
         .proposal-table.is-hidden,
-        .section-header.is-hidden {
+        .section-header.is-hidden,
+        .empty-state.is-hidden {
             display: none;
         }
 
@@ -325,6 +494,10 @@
                 row-gap: 7px;
             }
 
+            .proposal-tracking-value::before {
+                display: inline;
+            }
+
             .proposal-row.table-head {
                 display: none;
             }
@@ -352,52 +525,79 @@
     </style>
 </head>
 <body>
-    {% set status = request.args.get('status', 'open') %}
-    {% set read_only = 'Yes' if status == 'under' else 'No' %}
-    {% if status == 'open' %}
-        {% set proposal_list = open_proposals %}
-        {% set recent_list = recent_open_proposals %}
-        {% set all_heading = 'All Open Proposals' %}
-        {% set status_label = 'Open Proposals' %}
-    {% else %}
-        {% set proposal_list = contract_proposals %}
-        {% set recent_list = recent_contract_proposals %}
-        {% set all_heading = 'All Under Contract' %}
-        {% set status_label = 'Under Contract' %}
-    {% endif %}
+    {% set filter_labels = {
+        'all': 'All',
+        'draft': 'Draft Unsent',
+        'sent': 'Sent',
+        'under_contract': 'Under Contract',
+        'finished': 'Finished',
+        'dead': 'Dead'
+    } %}
 
-    {% macro render_proposal_row(proposal, recent=False) %}
-    <div class="proposal-row proposal-item" data-name="{{ proposal.name|lower }}" data-recent="{{ '1' if recent else '0' }}">
-        <div class="proposal-name" title="{{ proposal.name }}">{{ proposal.name }}</div>
+    {% macro render_proposal_row(proposal, attachable_contact=False) %}
+    {% set row_read_only = 'No' if proposal.status in ['draft', 'sent'] else 'Yes' %}
+    <div class="proposal-row proposal-item" data-name="{{ (proposal.name ~ ' ' ~ proposal.contact_name ~ ' ' ~ proposal.contact_email ~ ' ' ~ proposal.submitted_by ~ ' ' ~ proposal.estimated_by)|lower }}" data-proposal-id="{{ proposal.id }}">
+        <a class="proposal-name"
+           href="{{ url_for('proposal_details_query', proposal_id=proposal.id, folder_name=proposal.folder_name, read_only=row_read_only) }}"
+           title="Open {{ proposal.name }}"
+           aria-label="Open proposal details for {{ proposal.name }}">{{ proposal.name }}</a>
+        <div class="contact-card" aria-label="{{ 'Contact' if proposal.contact_name or proposal.contact_email else ('Attach contact' if attachable_contact else 'No contact assigned') }} for {{ proposal.name }}">
+            {% if proposal.contact_name or proposal.contact_email %}
+                {% if proposal.contact_id %}
+                    <a class="contact-card-link"
+                       href="{{ url_for('contact_management', edit=proposal.contact_id) }}"
+                       title="Edit {{ proposal.contact_name or 'contact' }}"
+                       aria-label="Edit contact {{ proposal.contact_name or proposal.contact_email }}">
+                        <div class="contact-card-name">{{ proposal.contact_name or 'Contact name unavailable' }}</div>
+                        <div class="contact-card-email">{{ proposal.contact_email or 'Email address unavailable' }}</div>
+                    </a>
+                {% else %}
+                    <div class="contact-card-name">{{ proposal.contact_name or 'Contact name unavailable' }}</div>
+                    <div class="contact-card-email">{{ proposal.contact_email or 'Email address unavailable' }}</div>
+                {% endif %}
+            {% else %}
+                {% if attachable_contact %}
+                    <a class="contact-card-empty contact-card-attach-link"
+                       href="{{ url_for('contact_management', attach_to_proposal=proposal.id, proposal_name=proposal.name) }}"
+                       aria-label="Attach contact for {{ proposal.name }}">Attach Contact</a>
+                {% else %}
+                    <div class="contact-card-empty">No contact assigned</div>
+                {% endif %}
+            {% endif %}
+        </div>
+        <div class="proposal-tracking-value" data-label="Sales Person">{{ proposal.submitted_by or '-' }}</div>
+        <div class="proposal-tracking-value" data-label="Estimated By">{{ proposal.estimated_by or '-' }}</div>
+        <div class="proposal-tracking-value" data-label="Estimated Dt">{{ proposal.estimate_completed_date_display or '-' }}</div>
+        <div class="proposal-tracking-value" data-label="Sent Dt">{{ proposal.proposal_sent_date_display or '-' }}</div>
+        <div class="proposal-tracking-value" data-label="Follow-Up Dt">{{ proposal.follow_up_date_display or '-' }}</div>
         <div class="proposal-modified">{{ proposal.last_modified_display }}</div>
         <div class="proposal-actions">
-            <a href="{{ url_for('proposal_details_query', folder_name=proposal.name, read_only=read_only) }}"
-               class="btn btn-outline-primary action-btn">
-                <i class="bi bi-pencil-square"></i> Details
-            </a>
-            {% if status == 'open' %}
+            {% if proposal.status in ['draft', 'sent'] %}
                 <button type="button"
-                        class="btn btn-outline-success action-btn under-contract-btn"
-                        data-folder="{{ proposal.name }}"
-                        data-href="{{ url_for('proposal_details_query', folder_name=proposal.name, read_only=read_only) }}">
-                    <i class="bi bi-check2-circle"></i> Contract
+                        class="btn btn-outline-success action-btn icon-only under-contract-btn"
+                        title="Move to under contract"
+                        aria-label="Move {{ proposal.name }} to under contract"
+                        data-folder="{{ proposal.folder_name }}"
+                        data-href="{{ url_for('proposal_details_query', folder_name=proposal.folder_name, read_only=row_read_only) }}">
+                    <i class="bi bi-check-lg" aria-hidden="true"></i>
+                    <span class="visually-hidden">Contract</span>
                 </button>
                 <button type="button"
                         class="btn btn-outline-danger action-btn icon-only dead-btn"
                         title="Mark dead"
                         aria-label="Mark {{ proposal.name }} dead"
-                        data-folder="{{ proposal.name }}"
-                        data-href="{{ url_for('proposal_details_query', folder_name=proposal.name, read_only=read_only) }}">
+                        data-folder="{{ proposal.folder_name }}"
+                        data-href="{{ url_for('proposal_details_query', folder_name=proposal.folder_name, read_only=row_read_only) }}">
                     <i class="bi bi-x-octagon"></i>
                 </button>
-            {% else %}
+            {% elif proposal.status == 'under_contract' %}
                 <button type="button" class="btn btn-outline-secondary action-btn">
                     <i class="bi bi-receipt"></i> Invoices
                 </button>
                 <button type="button"
                         class="btn btn-outline-success action-btn close-contract-btn"
-                        data-folder="{{ proposal.name }}"
-                        data-href="{{ url_for('proposal_details_query', folder_name=proposal.name, read_only=read_only) }}">
+                        data-folder="{{ proposal.folder_name }}"
+                        data-href="{{ url_for('proposal_details_query', folder_name=proposal.folder_name, read_only=row_read_only) }}">
                     <i class="bi bi-box-arrow-right"></i> Close
                 </button>
             {% endif %}
@@ -420,12 +620,15 @@
 
         <div class="topbar">
             <div>
-                <h1 class="screen-title">{{ status_label }}</h1>
+                <h1 class="screen-title">Proposal Management</h1>
                 <p class="screen-subtitle">Proposal folders sorted by customer and project address.</p>
             </div>
             <div class="topbar-actions">
                 <a href="{{ url_for('landing_page') }}" class="home-btn">
                     <i class="bi bi-house-door"></i> Home
+                </a>
+                <a href="{{ url_for('weekly_follow_ups') }}" class="home-btn">
+                    <i class="bi bi-calendar-check"></i> Follow-Up
                 </a>
                 <a href="{{ url_for('proposal_details_new', read_only='no') }}" class="new-proposal-btn">
                     <i class="bi bi-plus-lg"></i> New Proposal
@@ -434,23 +637,29 @@
         </div>
 
         <div class="toolbar">
-            <form method="get" aria-label="Proposal Status Toggle">
-                <div class="status-tabs" role="group">
-                    <input type="radio" class="btn-check" name="status" id="openProposals" value="open" {% if status == 'open' %}checked{% endif %} onchange="this.form.submit()">
-                    <label for="openProposals" role="button" aria-pressed="{{ 'true' if status == 'open' else 'false' }}">
-                        Open
-                    </label>
-
-                    <input type="radio" class="btn-check" name="status" id="underContract" value="under" {% if status == 'under' %}checked{% endif %} onchange="this.form.submit()">
-                    <label for="underContract" role="button" aria-pressed="{{ 'true' if status == 'under' else 'false' }}">
-                        Under Contract
-                    </label>
-
-                    <noscript>
-                        <button type="submit" class="btn btn-sm btn-secondary ms-2">Apply</button>
-                    </noscript>
+            <div class="filter-control" id="proposalFilterControl">
+                <button type="button"
+                        class="filter-button{% if selected_filter != 'all' %} is-active{% endif %}"
+                        id="proposalFilterButton"
+                        title="Filter proposals ({{ filter_labels[selected_filter] }})"
+                        aria-label="Filter proposals. Current filter: {{ filter_labels[selected_filter] }}"
+                        aria-haspopup="menu"
+                        aria-controls="proposalFilterMenu"
+                        aria-expanded="false">
+                    <i class="bi bi-funnel{% if selected_filter != 'all' %}-fill{% endif %}" aria-hidden="true"></i>
+                </button>
+                <div class="filter-menu" id="proposalFilterMenu" role="menu" aria-label="Filter proposals" hidden>
+                    {% for value, label in filter_labels.items() %}
+                        <a class="filter-option{% if selected_filter == value %} is-selected{% endif %}"
+                           href="{{ url_for('proposal_list', filter=value) }}"
+                           role="menuitem"
+                           {% if selected_filter == value %}aria-current="true"{% endif %}>
+                            <span>{{ label }}</span>
+                            {% if selected_filter == value %}<i class="bi bi-check-lg" aria-hidden="true"></i>{% endif %}
+                        </a>
+                    {% endfor %}
                 </div>
-            </form>
+            </div>
 
             <div class="search-wrap">
                 <i class="bi bi-search"></i>
@@ -459,40 +668,31 @@
 
             <div class="count-strip">
                 <span class="count-pill"><i class="bi bi-folder2-open"></i> {{ proposal_list|length }} total</span>
-                <span class="count-pill"><i class="bi bi-clock-history"></i> {{ recent_list|length }} recent</span>
             </div>
         </div>
 
         {% if proposal_list %}
-            {% if recent_list %}
-                <div class="section-header" data-section="recent">
-                    <h2>Recent</h2>
-                    <span>Updated in the last 7 days</span>
-                </div>
-                <section class="proposal-table" data-section-table="recent">
-                    <div class="proposal-row table-head">
-                        <div>Proposal</div>
-                        <div>Modified</div>
-                        <div class="text-end">Actions</div>
-                    </div>
-                    {% for proposal in recent_list %}
-                        {{ render_proposal_row(proposal, True) }}
-                    {% endfor %}
-                </section>
-            {% endif %}
-
-            <div class="section-header" data-section="all">
-                <h2>{{ all_heading }}</h2>
+            <div class="section-header" data-section="proposals">
+                <h2>{{ filter_labels[selected_filter] }} Proposals</h2>
                 <span id="visibleCount">{{ proposal_list|length }} visible</span>
             </div>
-            <section class="proposal-table" data-section-table="all">
+            <section class="proposal-table" data-section-table="proposals">
                 <div class="proposal-row table-head">
                     <div>Proposal</div>
+                    <div>Contact</div>
+                    <div>Sales Person</div>
+                    <div>Estimated By</div>
+                    <div>Estimated Dt</div>
+                    <div>Sent Dt</div>
+                    <div>Follow-Up Dt</div>
                     <div>Modified</div>
                     <div class="text-end">Actions</div>
                 </div>
                 {% for proposal in proposal_list %}
-                    {{ render_proposal_row(proposal, False) }}
+                    {{ render_proposal_row(
+                        proposal,
+                        proposal.status in ['draft', 'sent'] and not proposal.proposal_sent_date
+                    ) }}
                 {% endfor %}
             </section>
             <div class="empty-state is-hidden" id="searchEmptyState">No matching proposals found.</div>
@@ -503,9 +703,44 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
+    var filterControl = document.getElementById('proposalFilterControl');
+    var filterButton = document.getElementById('proposalFilterButton');
+    var filterMenu = document.getElementById('proposalFilterMenu');
     var searchInput = document.getElementById('proposalSearch');
     var visibleCount = document.getElementById('visibleCount');
     var emptyState = document.getElementById('searchEmptyState');
+
+    function closeFilterMenu() {
+      if (!filterMenu || !filterButton) return;
+      filterMenu.hidden = true;
+      filterButton.setAttribute('aria-expanded', 'false');
+    }
+
+    if (filterButton && filterMenu) {
+      filterButton.addEventListener('click', function(event) {
+        event.stopPropagation();
+        var willOpen = filterMenu.hidden;
+        filterMenu.hidden = !willOpen;
+        filterButton.setAttribute('aria-expanded', String(willOpen));
+        if (willOpen) {
+          var selectedOption = filterMenu.querySelector('.is-selected');
+          var firstOption = filterMenu.querySelector('.filter-option');
+          (selectedOption || firstOption)?.focus();
+        }
+      });
+      filterMenu.addEventListener('click', function(event) {
+        event.stopPropagation();
+      });
+      document.addEventListener('click', function(event) {
+        if (!filterControl || !filterControl.contains(event.target)) closeFilterMenu();
+      });
+      document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape' && !filterMenu.hidden) {
+          closeFilterMenu();
+          filterButton.focus();
+        }
+      });
+    }
 
     function updateSectionVisibility(sectionName) {
       var header = document.querySelector('[data-section="' + sectionName + '"]');
@@ -519,19 +754,18 @@
     function applySearchFilter() {
       var query = (searchInput && searchInput.value ? searchInput.value : '').trim().toLowerCase();
       var allRows = document.querySelectorAll('.proposal-item');
-      var visibleAllRows = 0;
+      var visibleRows = 0;
       allRows.forEach(function(row) {
         var matches = !query || (row.getAttribute('data-name') || '').indexOf(query) !== -1;
         row.classList.toggle('is-hidden', !matches);
-        if (matches && row.getAttribute('data-recent') !== '1') {
-          visibleAllRows += 1;
-        }
+        if (matches) visibleRows += 1;
       });
 
-      updateSectionVisibility('recent');
-      updateSectionVisibility('all');
+      document.querySelectorAll('[data-section-table]').forEach(function(table) {
+        updateSectionVisibility(table.getAttribute('data-section-table'));
+      });
       if (visibleCount) {
-        visibleCount.textContent = visibleAllRows + ' visible';
+        visibleCount.textContent = visibleRows + ' visible';
       }
       if (emptyState) {
         var anyVisible = document.querySelectorAll('.proposal-item:not(.is-hidden)').length > 0;

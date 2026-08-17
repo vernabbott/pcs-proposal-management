@@ -11,7 +11,6 @@ ENV/
 
 # Environment files
 .env
-pcs_local_settings.py
 
 # Logs and debug
 *.log
