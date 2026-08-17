@@ -81,13 +81,11 @@ def apply_integration_environment(
         environ["PCS_SUPABASE_URL"] = integration_url
         environ["PCS_SUPABASE_PUBLISHABLE_KEY"] = integration_key
     else:
-        # The integration build intentionally targets the existing local beta
-        # Supabase stack unless explicit integration credentials are supplied.
-        environ["PCS_SUPABASE_URL"] = "http://127.0.0.1:54321"
-        environ.setdefault(
-            "PCS_SUPABASE_PUBLISHABLE_KEY",
-            "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH",
-        )
+        # Do not inherit another app's project. With no explicit environment
+        # override, pcs_local_settings reads this integration installation's
+        # own settings file and otherwise falls back to the local beta stack.
+        environ.pop("PCS_SUPABASE_URL", None)
+        environ.pop("PCS_SUPABASE_PUBLISHABLE_KEY", None)
     # A desktop build must never inherit a privileged server credential.
     environ.pop("PCS_SUPABASE_SERVICE_ROLE_KEY", None)
     return values

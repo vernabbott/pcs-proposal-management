@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Set password · {{ app_display_name }}</title>
+  <style>
+    :root{--navy:#174f85;--ink:#182230;--muted:#667085;--line:#d0d5dd;--page:#f2f5f8;--danger:#912018;--danger-bg:#fee4e2;--success:#05603a;--success-bg:#d1fadf}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--page);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink)}
+    main{width:min(460px,calc(100% - 32px));padding:30px;border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:0 12px 35px rgba(16,24,40,.09)}
+    h1{margin:0;font-size:28px}.intro{margin:8px 0 24px;color:var(--muted);line-height:1.5}
+    label{display:block;margin:14px 0 6px;font-size:13px;font-weight:800}input{width:100%;min-height:44px;padding:10px 11px;border:1px solid var(--line);border-radius:7px;font:inherit}
+    button{width:100%;min-height:44px;margin-top:20px;border:0;border-radius:7px;background:var(--navy);color:#fff;font:inherit;font-weight:800;cursor:pointer}button:disabled{cursor:not-allowed;opacity:.6}
+    .message{margin:0 0 16px;padding:11px 12px;border-radius:7px;font-size:13px;line-height:1.4}.error{background:var(--danger-bg);color:var(--danger)}.success{background:var(--success-bg);color:var(--success)}
+    .hidden{display:none}.signin{display:block;margin-top:16px;text-align:center;color:var(--navy);font-size:13px;font-weight:700}
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Set your PCS password</h1>
+    <p class="intro">Use this one-time invitation to finish creating your account.</p>
+    {% if configuration_error %}
+      <div class="message error" role="alert">{{ configuration_error }}</div>
+    {% else %}
+      <div id="message" class="message error hidden" role="alert"></div>
+      <form id="password-form" autocomplete="off">
+        <label for="password">New password</label>
+        <input id="password" type="password" required minlength="12" autocomplete="new-password">
+        <label for="confirm-password">Confirm new password</label>
+        <input id="confirm-password" type="password" required minlength="12" autocomplete="new-password">
+        <button id="submit-button" type="submit">Set password</button>
+      </form>
+    {% endif %}
+    <a class="signin" href="{{ url_for('tenant_login') }}">Return to sign in</a>
+  </main>
+  {% if not configuration_error %}
+  <script>
+    (() => {
+      "use strict";
+      const projectUrl = {{ supabase_url|tojson }};
+      const publishableKey = {{ supabase_publishable_key|tojson }};
+      const parameters = new URLSearchParams(window.location.hash.slice(1));
+      const accessToken = parameters.get("access_token") || "";
+      const inviteType = parameters.get("type") || "";
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+      const form = document.getElementById("password-form");
+      const message = document.getElementById("message");
+      const button = document.getElementById("submit-button");
+      const showMessage = (text, success = false) => {
+        message.textContent = text;
+        message.className = `message ${success ? "success" : "error"}`;
+      };
+
+      if (!accessToken || (inviteType && inviteType !== "invite" && inviteType !== "recovery")) {
+        form.classList.add("hidden");
+        showMessage("This invitation link is invalid or has expired. Request a new invitation.");
+        return;
+      }
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const password = document.getElementById("password").value;
+        const confirmation = document.getElementById("confirm-password").value;
+        if (password.length < 12) {
+          showMessage("Use a password with at least 12 characters.");
+          return;
+        }
+        if (password !== confirmation) {
+          showMessage("The passwords do not match.");
+          return;
+        }
+        button.disabled = true;
+        try {
+          const response = await fetch(`${projectUrl}/auth/v1/user`, {
+            method: "PUT",
+            headers: {
+              "apikey": publishableKey,
+              "Authorization": `Bearer ${accessToken}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({password})
+          });
+          const result = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            throw new Error(result.msg || result.message || "Supabase could not set the password.");
+          }
+          form.classList.add("hidden");
+          showMessage("Your password is set. You can now sign in to PCS.", true);
+        } catch (error) {
+          showMessage(error.message || "PCS could not complete the invitation.");
+          button.disabled = false;
+        }
+      });
+    })();
+  </script>
+  {% endif %}
+</body>
+</html>

@@ -1859,7 +1859,7 @@ def application_identity():
 
 _AUTHENTICATION_EXEMPT_ENDPOINTS = {
     "static", "tenant_login", "desktop_session_heartbeat", "desktop_session_closed",
-    "application_settings",
+    "application_settings", "tenant_accept_invite",
 }
 
 
@@ -1888,6 +1888,28 @@ def tenant_login():
                 destination = url_for("landing_page")
             return redirect(destination)
     return render_template("tenant_login.html", next=request.args.get("next", ""))
+
+
+@app.get("/auth/accept-invite")
+def tenant_accept_invite():
+    """Render the local, fragment-safe password setup page for Auth invites."""
+    project_url, api_key = supabase_configuration()
+    if not project_url or not api_key:
+        return render_template(
+            "tenant_accept_invite.html",
+            configuration_error=(
+                "PCS is not connected to Supabase. Configure the production "
+                "Supabase URL and publishable key before accepting this invitation."
+            ),
+            supabase_url="",
+            supabase_publishable_key="",
+        ), 503
+    return render_template(
+        "tenant_accept_invite.html",
+        configuration_error="",
+        supabase_url=project_url,
+        supabase_publishable_key=api_key,
+    )
 
 
 @app.post("/sign-out")
