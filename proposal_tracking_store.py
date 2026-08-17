@@ -27,7 +27,7 @@ _LEGACY_STATUS_MAP = {
 class ProposalTrackingStore(ContactStore):
     PROPOSAL_SELECT = (
         "proposal_id,lead_source,submitted_by,estimated_by,estimate_completed_date,"
-        "proposal_sent_date,follow_up_date,response_notes,status,created_at,updated_at,"
+        "proposal_sent_date,follow_up_date,follow_up_required,response_notes,status,created_at,updated_at,"
         "proposal:proposal(id,customer_name,project_street_address,project_address_line_2,"
         "project_city,project_state,project_zip_code,display_name,proposal_folder_name,"
         "created_at,updated_at,proposal_contact(proposal_id,organization_contact_id,"
@@ -40,7 +40,7 @@ class ProposalTrackingStore(ContactStore):
         "project_city,project_state,project_zip_code,display_name,proposal_folder_name,draft_detail,"
         "created_at,updated_at,proposal_tracking!inner(status,submitted_by,"
         "estimated_by,lead_source,response_notes,estimate_completed_date,"
-        "proposal_sent_date,follow_up_date,created_at,updated_at),"
+        "proposal_sent_date,follow_up_date,follow_up_required,created_at,updated_at),"
         "proposal_contact(organization_contact_id,contact_role,is_primary,"
         "organization_contact:organization_contact(id,business_email,is_current,"
         "contact:contact(id,full_name),organization:organization(id,name)))"
@@ -143,6 +143,7 @@ class ProposalTrackingStore(ContactStore):
             "estimate_date_input": cls._display_date(row.get("estimate_completed_date")),
             "proposal_date_input": cls._display_date(row.get("proposal_sent_date")),
             "follow_up_date_input": cls._display_date(row.get("follow_up_date")),
+            "follow_up_required": bool(row.get("follow_up_required", True)),
             "response_notes": str(row.get("response_notes") or "").strip(),
             "status": str(row.get("status") or "draft").strip(),
             "proposal_date": row.get("proposal_sent_date"),
@@ -251,6 +252,7 @@ class ProposalTrackingStore(ContactStore):
             "follow_up_date_display": cls._display_date(
                 tracking.get("follow_up_date")
             ),
+            "follow_up_required": bool(tracking.get("follow_up_required", True)),
             "organization_contact_id": str(
                 primary_relationship.get("id") or ""
             ),
@@ -579,6 +581,7 @@ class ProposalTrackingStore(ContactStore):
                 "select": self.PROPOSAL_SELECT,
                 "proposal_sent_date": f"lte.{cutoff_date.isoformat()}",
                 "follow_up_date": "is.null",
+                "follow_up_required": "eq.true",
                 "status": "eq.sent",
                 "order": "submitted_by.asc,proposal_sent_date.asc",
                 "limit": "5000",

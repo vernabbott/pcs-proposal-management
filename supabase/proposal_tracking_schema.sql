@@ -46,6 +46,7 @@ create table if not exists public.proposal_tracking (
   estimate_completed_date date,
   proposal_sent_date date,
   follow_up_date date,
+  follow_up_required boolean not null default true,
   response_notes text,
   status text not null default 'draft' check (
     status in ('draft', 'sent', 'under_contract', 'finished', 'dead')
@@ -63,6 +64,8 @@ comment on table public.proposal_tracking is
   'One-to-one lifecycle, assignment, response, and import metadata for a proposal.';
 comment on column public.proposal_tracking.estimate_completed_date is
   'Date the estimate was completed; distinct from the date the proposal was sent.';
+comment on column public.proposal_tracking.follow_up_required is
+  'True when a sent proposal should remain eligible for the follow-up queue; false when no follow-up is intended.';
 comment on column public.proposal_tracking.source_row_number is
   'Original spreadsheet row number used for idempotent migration and reconciliation.';
 
@@ -72,7 +75,9 @@ create index if not exists proposal_display_name_idx
   on public.proposal (display_name);
 create index if not exists proposal_tracking_follow_up_queue_idx
   on public.proposal_tracking (proposal_sent_date, follow_up_date)
-  where proposal_sent_date is not null and follow_up_date is null;
+  where proposal_sent_date is not null
+    and follow_up_date is null
+    and follow_up_required;
 create index if not exists proposal_folder_name_idx
   on public.proposal (lower(btrim(proposal_folder_name)))
   where proposal_folder_name is not null;

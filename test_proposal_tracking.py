@@ -111,6 +111,7 @@ class ProposalTrackingStoreTests(unittest.TestCase):
             "estimate_completed_date": None,
             "proposal_sent_date": "2026-07-15",
             "follow_up_date": None,
+            "follow_up_required": True,
             "response_notes": None,
             "proposal": {
                 "id": PROPOSAL_ID,
@@ -366,6 +367,18 @@ class ProposalTrackingStoreTests(unittest.TestCase):
         row = self.proposal_row(status="dead")
         with patch.object(self.store, "list_proposals", return_value=[row]):
             self.assertEqual(self.store.list_missing_entries(), [])
+
+    def test_weekly_follow_up_queue_requires_explicit_eligibility(self):
+        with patch.object(self.store, "_request", return_value=[]) as request:
+            self.assertEqual(
+                self.store.list_weekly_follow_ups(datetime.date(2026, 8, 3)),
+                [],
+            )
+        params = request.call_args.kwargs["params"]
+        self.assertEqual(params["status"], "eq.sent")
+        self.assertEqual(params["proposal_sent_date"], "lte.2026-08-03")
+        self.assertEqual(params["follow_up_date"], "is.null")
+        self.assertEqual(params["follow_up_required"], "eq.true")
 
     def test_proposal_resolution_accepts_only_immutable_uuid(self):
         with patch.object(self.store, "_request") as request:
