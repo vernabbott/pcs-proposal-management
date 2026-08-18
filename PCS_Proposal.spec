@@ -20,7 +20,7 @@ else:
     datas.append((proposal_summary_template, 'resources'))
 
 a = Analysis(
-    ['run_app.py'],
+    ['run_production_app.py'],
     pathex=[],
     binaries=[],
     datas=datas,
