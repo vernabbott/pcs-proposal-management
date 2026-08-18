@@ -45,6 +45,7 @@ class TenantInvitationRouteTests(unittest.TestCase):
         self.assertIn("Sign in · PCS Proposal", body)
         self.assertIn("Sign in to PCS Proposal", body)
         self.assertNotIn("PCS Beta", body)
+        self.assertNotIn('<span class="beta">BETA</span>', body)
 
 
 if __name__ == "__main__":

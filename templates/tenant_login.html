@@ -17,7 +17,7 @@
 </head>
 <body>
   <main>
-    <span class="beta">BETA</span>
+    {% if app_is_beta %}<span class="beta">BETA</span>{% endif %}
     <h1>Sign in</h1>
     <p class="intro">Your account determines which company records, reports, and protected storage paths PCS can access.</p>
     {% with messages = get_flashed_messages(with_categories=true) %}
