@@ -37,6 +37,15 @@ class TenantInvitationRouteTests(unittest.TestCase):
             "PCS is not connected to Supabase", response.get_data(as_text=True)
         )
 
+    def test_sign_in_uses_runtime_application_name(self):
+        response = self.client.get("/sign-in")
+
+        self.assertEqual(response.status_code, 200)
+        body = response.get_data(as_text=True)
+        self.assertIn("Sign in · PCS Proposal", body)
+        self.assertIn("Sign in to PCS Proposal", body)
+        self.assertNotIn("PCS Beta", body)
+
 
 if __name__ == "__main__":
     unittest.main()
