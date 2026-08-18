@@ -70,6 +70,33 @@ class LauncherEnvironmentTests(unittest.TestCase):
         self.assertEqual(environment[run_app.LOCAL_ROOF_WORKER_ENV], "1")
 
 
+class RequestLoggingSecurityTests(unittest.TestCase):
+    def test_request_form_redacts_all_supported_credentials(self):
+        logged = pcs_proposal_web._redacted_request_form(
+            {
+                "action": "save_supabase_configuration",
+                "supabase_publishable_key": "sb_publishable_example",
+                "supabase_service_role_key": "sb_secret_example",
+                "google_maps_api_key": "AIza-example",
+                "password": "example-password",
+                "customer_name": "Visible Customer",
+            }
+        )
+
+        self.assertEqual(logged["supabase_publishable_key"], "[REDACTED]")
+        self.assertEqual(logged["supabase_service_role_key"], "[REDACTED]")
+        self.assertEqual(logged["google_maps_api_key"], "[REDACTED]")
+        self.assertEqual(logged["password"], "[REDACTED]")
+        self.assertEqual(logged["customer_name"], "Visible Customer")
+
+    def test_request_form_redacts_secret_value_under_unexpected_name(self):
+        logged = pcs_proposal_web._redacted_request_form(
+            {"configuration_value": "sb_secret_example"}
+        )
+
+        self.assertEqual(logged["configuration_value"], "[REDACTED]")
+
+
 class WeeklyFollowUpEmailTests(unittest.TestCase):
     def test_follow_up_sender_is_always_vern(self):
         self.assertEqual(

@@ -8,7 +8,12 @@ from typing import Mapping, MutableMapping
 
 
 TRUE_VALUES = {"1", "true", "yes", "on"}
-PROPOSAL_STORAGE_MODES = {"spreadsheet", "shadow", "supabase"}
+PROPOSAL_STORAGE_MODES = {
+    "spreadsheet",
+    "shadow",
+    "supabase",
+    "supabase_shadow",
+}
 
 
 def environment_flag(
@@ -48,6 +53,8 @@ def proposal_storage_mode(environment: Mapping[str, str] | None = None) -> str:
     shadow = master and environment_flag(
         values, "PROPOSAL_TRACKING_SUPABASE_SHADOW_WRITES_ENABLED"
     )
+    if reads and writes and shadow:
+        return "supabase_shadow"
     if reads and writes:
         return "supabase"
     if writes and shadow:
@@ -66,13 +73,13 @@ def proposal_storage_environment(mode: str) -> dict[str, str]:
         "PCS_SUPABASE_ONLY": "1" if normalized == "supabase" else "0",
         "PROPOSAL_TRACKING_SUPABASE_ENABLED": "1" if enabled else "0",
         "PROPOSAL_TRACKING_SUPABASE_READS_ENABLED": (
-            "1" if normalized == "supabase" else "0"
+            "1" if normalized in {"supabase", "supabase_shadow"} else "0"
         ),
         "PROPOSAL_TRACKING_SUPABASE_WRITES_ENABLED": (
             "1" if enabled else "0"
         ),
         "PROPOSAL_TRACKING_SUPABASE_SHADOW_WRITES_ENABLED": (
-            "1" if normalized == "shadow" else "0"
+            "1" if normalized in {"shadow", "supabase_shadow"} else "0"
         ),
     }
 
@@ -91,7 +98,7 @@ class RuntimeConfiguration:
 
     @property
     def proposal_database_source_enabled(self) -> bool:
-        return self.proposal_storage_mode == "supabase"
+        return self.proposal_storage_mode in {"supabase", "supabase_shadow"}
 
 
 def load_runtime_configuration(

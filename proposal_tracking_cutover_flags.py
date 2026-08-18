@@ -35,8 +35,12 @@ class ProposalTrackingCutoverFlags:
         return self.shadow_writes_enabled or not self.writes_enabled
 
     @property
-    def fully_cut_over(self) -> bool:
+    def database_source_authoritative(self) -> bool:
         return self.reads_enabled and self.writes_enabled
+
+    @property
+    def fully_cut_over(self) -> bool:
+        return self.database_source_authoritative
 
 
 def load_proposal_tracking_cutover_flags(

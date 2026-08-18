@@ -2,7 +2,7 @@ import datetime
 import os
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from openpyxl import Workbook, load_workbook
 
@@ -59,6 +59,44 @@ class ProposalTrackingCutoverFlagTests(unittest.TestCase):
         self.assertFalse(flags.writes_enabled)
         self.assertFalse(flags.shadow_writes_enabled)
 
+
+class ProposalTrackingWriteAuthorityTests(unittest.TestCase):
+    def setUp(self):
+        self.flags = load_proposal_tracking_cutover_flags({
+            "PCS_PROPOSAL_STORAGE_MODE": "supabase_shadow",
+        })
+
+    def test_authoritative_database_failure_does_not_mutate_shadow(self):
+        store = Mock()
+        store.update_entries.side_effect = RuntimeError("database unavailable")
+        with patch.object(
+            web, "load_proposal_tracking_cutover_flags", return_value=self.flags
+        ), patch.object(
+            web, "get_proposal_tracking_store", return_value=store
+        ), patch.object(
+            web, "_update_proposal_tracker_missing_entries_spreadsheet"
+        ) as spreadsheet_write:
+            with self.assertRaisesRegex(RuntimeError, "database unavailable"):
+                web.update_proposal_tracker_missing_entries([{"id": PROPOSAL_ID}])
+        spreadsheet_write.assert_not_called()
+
+    def test_shadow_failure_does_not_undo_authoritative_database_success(self):
+        store = Mock()
+        store.update_entries.return_value = 1
+        with patch.object(
+            web, "load_proposal_tracking_cutover_flags", return_value=self.flags
+        ), patch.object(
+            web, "get_proposal_tracking_store", return_value=store
+        ), patch.object(
+            web,
+            "_update_proposal_tracker_missing_entries_spreadsheet",
+            side_effect=RuntimeError("workbook locked"),
+        ):
+            updated = web.update_proposal_tracker_missing_entries(
+                [{"id": PROPOSAL_ID}]
+            )
+        self.assertEqual(updated, 1)
+
     def test_shadow_mode_keeps_spreadsheet_writes_active(self):
         flags = load_proposal_tracking_cutover_flags({
             MASTER_FLAG: "true",
@@ -79,6 +117,15 @@ class ProposalTrackingCutoverFlagTests(unittest.TestCase):
         self.assertTrue(flags.fully_cut_over)
         self.assertFalse(flags.spreadsheet_reads_active)
         self.assertFalse(flags.spreadsheet_writes_active)
+
+    def test_database_source_can_keep_spreadsheet_shadow_writes(self):
+        flags = load_proposal_tracking_cutover_flags({
+            "PCS_PROPOSAL_STORAGE_MODE": "supabase_shadow",
+        })
+        self.assertTrue(flags.database_source_authoritative)
+        self.assertFalse(flags.spreadsheet_reads_active)
+        self.assertTrue(flags.spreadsheet_writes_active)
+        self.assertTrue(flags.shadow_writes_enabled)
 
     def test_persistent_shadow_mode_is_used_when_environment_is_absent(self):
         persisted = {

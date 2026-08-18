@@ -37,12 +37,35 @@ class RuntimeConfigurationTests(unittest.TestCase):
         self.assertEqual(
             shadow["PROPOSAL_TRACKING_SUPABASE_SHADOW_WRITES_ENABLED"], "1"
         )
+        supabase_shadow = proposal_storage_environment("supabase_shadow")
+        self.assertEqual(
+            supabase_shadow["PROPOSAL_TRACKING_SUPABASE_READS_ENABLED"], "1"
+        )
+        self.assertEqual(
+            supabase_shadow["PROPOSAL_TRACKING_SUPABASE_WRITES_ENABLED"], "1"
+        )
+        self.assertEqual(
+            supabase_shadow["PROPOSAL_TRACKING_SUPABASE_SHADOW_WRITES_ENABLED"],
+            "1",
+        )
+        self.assertEqual(supabase_shadow["PCS_SUPABASE_ONLY"], "0")
         supabase = proposal_storage_environment("supabase")
         self.assertEqual(supabase["PROPOSAL_TRACKING_SUPABASE_READS_ENABLED"], "1")
         self.assertEqual(supabase["PCS_SUPABASE_ONLY"], "1")
 
     def test_supabase_only_alias_selects_supabase_mode(self):
         self.assertEqual(proposal_storage_mode({"PCS_SUPABASE_ONLY": "true"}), "supabase")
+
+    def test_legacy_database_reads_with_shadow_writes_selects_supabase_shadow(self):
+        self.assertEqual(
+            proposal_storage_mode({
+                "PROPOSAL_TRACKING_SUPABASE_ENABLED": "1",
+                "PROPOSAL_TRACKING_SUPABASE_READS_ENABLED": "1",
+                "PROPOSAL_TRACKING_SUPABASE_WRITES_ENABLED": "1",
+                "PROPOSAL_TRACKING_SUPABASE_SHADOW_WRITES_ENABLED": "1",
+            }),
+            "supabase_shadow",
+        )
 
     def test_invalid_storage_mode_fails_closed(self):
         with self.assertRaisesRegex(ValueError, "PCS_PROPOSAL_STORAGE_MODE"):

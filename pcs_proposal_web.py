@@ -1063,26 +1063,34 @@ def append_to_proposal_tracking(created_date,
         except Exception as exc:
             supabase_error = exc
             _safe_debug(f"[ERROR] Supabase proposal tracking write failed: {exc}")
+    if supabase_error is not None and flags.database_source_authoritative:
+        # Do not mutate the shadow workbook when the authoritative write failed.
+        raise supabase_error
     if flags.spreadsheet_writes_active:
-        _append_to_proposal_tracking_spreadsheet(
-            created_date=created_date,
-            customer_name=customer_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_code=zip_code,
-            product=product,
-            roof_type=roof_type,
-            total_squares=total_squares,
-            warranty_incl=warranty_incl,
-            submitted_by=submitted_by,
-            folder_name=folder_name,
-            proposal_folder=proposal_folder,
-            tp10=tp10,
-            tp15=tp15,
-            tp20=tp20,
-            lead_value=lead_value,
-        )
+        try:
+            _append_to_proposal_tracking_spreadsheet(
+                created_date=created_date,
+                customer_name=customer_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_code=zip_code,
+                product=product,
+                roof_type=roof_type,
+                total_squares=total_squares,
+                warranty_incl=warranty_incl,
+                submitted_by=submitted_by,
+                folder_name=folder_name,
+                proposal_folder=proposal_folder,
+                tp10=tp10,
+                tp15=tp15,
+                tp20=tp20,
+                lead_value=lead_value,
+            )
+        except Exception as exc:
+            if not flags.database_source_authoritative:
+                raise
+            _safe_debug(f"[ERROR] Excel tracker shadow append failed: {exc}")
     elif supabase_error is not None:
         raise supabase_error
 
@@ -2112,16 +2120,53 @@ except Exception:
 app.config['PROPAGATE_EXCEPTIONS'] = False
 
 # Lightweight request logging to the app error log.
+_SENSITIVE_FORM_FIELD_MARKERS = (
+    "api_key",
+    "apikey",
+    "authorization",
+    "credential",
+    "passcode",
+    "password",
+    "publishable_key",
+    "service_role",
+    "secret",
+    "token",
+)
+
+
+def _redacted_request_form(form_values):
+    """Return request fields suitable for diagnostic logging.
+
+    Credentials are redacted by field name and by known key-value prefixes so
+    a newly added settings field cannot silently leak a secret into logs.
+    """
+    logged_form = dict(form_values)
+    for field_name, field_value in logged_form.items():
+        normalized_name = str(field_name).strip().lower()
+        normalized_value = str(field_value or "").strip()
+        sensitive_name = (
+            normalized_name == "key"
+            or normalized_name.endswith("_key")
+            or any(
+                marker in normalized_name
+                for marker in _SENSITIVE_FORM_FIELD_MARKERS
+            )
+        )
+        sensitive_value = normalized_value.startswith(
+            ("sb_secret_", "sb_publishable_")
+        )
+        if sensitive_name or sensitive_value:
+            logged_form[field_name] = "[REDACTED]"
+    return logged_form
+
+
 @app.before_request
 def _log_request_min():
     try:
         with open(APP_ERROR_LOG, "a", encoding="utf-8") as _f:
             _f.write(f"\n[REQ] {request.method} {request.path}\n")
             if request.method == 'POST':
-                logged_form = dict(request.form)
-                for sensitive_name in ("google_maps_api_key", "api_key", "password", "secret", "token"):
-                    if sensitive_name in logged_form:
-                        logged_form[sensitive_name] = "[REDACTED]"
+                logged_form = _redacted_request_form(request.form)
                 _f.write(f"[FORM] {logged_form}\n")
     except Exception:
         pass
@@ -6083,12 +6128,19 @@ def update_proposal_tracker_missing_entries(entries, tracker_path=PROPOSAL_TRACK
         except Exception as exc:
             supabase_error = exc
             _safe_debug(f"[ERROR] Supabase proposal tracker save failed: {exc}")
+    if supabase_error is not None and flags.database_source_authoritative:
+        raise supabase_error
     if flags.spreadsheet_writes_active:
-        spreadsheet_count = _update_proposal_tracker_missing_entries_spreadsheet(
-            entries, tracker_path
-        )
-        if not flags.writes_enabled:
-            updated_count = spreadsheet_count
+        try:
+            spreadsheet_count = _update_proposal_tracker_missing_entries_spreadsheet(
+                entries, tracker_path
+            )
+            if not flags.writes_enabled:
+                updated_count = spreadsheet_count
+        except Exception as exc:
+            if not flags.database_source_authoritative:
+                raise
+            _safe_debug(f"[ERROR] Excel tracker shadow update failed: {exc}")
     elif supabase_error is not None:
         raise supabase_error
     return updated_count
@@ -6231,12 +6283,19 @@ def update_weekly_follow_up_dates(row_numbers, follow_up_date=None, tracker_path
         except Exception as exc:
             supabase_error = exc
             _safe_debug(f"[ERROR] Supabase follow-up update failed: {exc}")
+    if supabase_error is not None and flags.database_source_authoritative:
+        raise supabase_error
     if flags.spreadsheet_writes_active:
-        spreadsheet_count = _update_weekly_follow_up_dates_spreadsheet(
-            row_numbers, follow_up_date, tracker_path
-        )
-        if not flags.writes_enabled:
-            updated_count = spreadsheet_count
+        try:
+            spreadsheet_count = _update_weekly_follow_up_dates_spreadsheet(
+                row_numbers, follow_up_date, tracker_path
+            )
+            if not flags.writes_enabled:
+                updated_count = spreadsheet_count
+        except Exception as exc:
+            if not flags.database_source_authoritative:
+                raise
+            _safe_debug(f"[ERROR] Excel follow-up shadow update failed: {exc}")
     elif supabase_error is not None:
         raise supabase_error
     return updated_count
@@ -7908,25 +7967,34 @@ def update_tracking_after_save(folder_name,
         except Exception as exc:
             supabase_error = exc
             _safe_debug(f"[ERROR] Supabase tracker refresh failed for {folder_name}: {exc}")
+    if supabase_error is not None and flags.database_source_authoritative:
+        raise supabase_error
     if flags.spreadsheet_writes_active:
-        _update_tracking_after_save_spreadsheet(
-            folder_name=folder_name,
-            customer_name=customer_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_code=zip_code,
-            product=product,
-            roof_type=roof_type,
-            total_squares=total_squares,
-            warranty_incl=warranty_incl,
-            submitted_by=submitted_by,
-            proposal_folder=proposal_folder,
-            tp10=tp10,
-            tp15=tp15,
-            tp20=tp20,
-            lead_value=lead_value,
-        )
+        try:
+            _update_tracking_after_save_spreadsheet(
+                folder_name=folder_name,
+                customer_name=customer_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_code=zip_code,
+                product=product,
+                roof_type=roof_type,
+                total_squares=total_squares,
+                warranty_incl=warranty_incl,
+                submitted_by=submitted_by,
+                proposal_folder=proposal_folder,
+                tp10=tp10,
+                tp15=tp15,
+                tp20=tp20,
+                lead_value=lead_value,
+            )
+        except Exception as exc:
+            if not flags.database_source_authoritative:
+                raise
+            _safe_debug(
+                f"[ERROR] Excel tracker shadow refresh failed for {folder_name}: {exc}"
+            )
     elif supabase_error is not None:
         raise supabase_error
 
